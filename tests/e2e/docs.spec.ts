@@ -5,13 +5,13 @@ import { test, expect } from '@playwright/test';
 test.describe('Documentation', () => {
   test('renders the docs index page', async ({ page }) => {
     await page.goto('/docs');
-    await expect(page.getByRole('heading', { name: 'AEC-Bench Documentation' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'aec-bench Documentation' })).toBeVisible();
   });
 
   test('navigates to introduction page via sidebar', async ({ page }) => {
     await page.goto('/docs');
     await page.getByRole('link', { name: /introduction/i }).click();
-    await expect(page.getByRole('heading', { name: 'Why AEC-Bench?' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Why aec-bench?' })).toBeVisible();
   });
 
   test('renders quickstart page with code blocks', async ({ page }) => {

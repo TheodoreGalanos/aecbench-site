@@ -18,8 +18,8 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | AEC-Bench',
-    default: 'AEC-Bench — Benchmarking AI for Architecture, Engineering & Construction',
+    template: '%s | aec-bench',
+    default: 'aec-bench — Benchmarking AI for Architecture, Engineering & Construction',
   },
   description:
     'The definitive benchmark for measuring AI capability on real architecture, engineering and construction tasks.',

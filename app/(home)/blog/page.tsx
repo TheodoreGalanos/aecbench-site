@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Blog',
-  description: 'Announcements and updates from the AEC-Bench project.',
+  description: 'Announcements and updates from the aec-bench project.',
 };
 
 export default function BlogPage() {

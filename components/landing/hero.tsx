@@ -9,7 +9,7 @@ export function Hero() {
         How Capable Is AI at Real Engineering?
       </h1>
       <p className="mt-6 max-w-2xl text-lg text-landing-muted md:text-xl">
-        AEC-Bench measures AI performance across 500+ tasks in architecture,
+        aec-bench measures AI performance across 500+ tasks in architecture,
         engineering and construction — from cable sizing to seismic design.
       </p>
       <div className="mt-10 flex flex-wrap items-center justify-center gap-4">

@@ -5,7 +5,7 @@ import { describe, it, expect } from 'vitest';
 
 describe('test infrastructure', () => {
   it('renders a basic React element', () => {
-    render(<div>AEC-Bench</div>);
-    expect(screen.getByText('AEC-Bench')).toBeInTheDocument();
+    render(<div>aec-bench</div>);
+    expect(screen.getByText('aec-bench')).toBeInTheDocument();
   });
 });

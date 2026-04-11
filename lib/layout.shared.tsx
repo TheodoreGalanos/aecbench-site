@@ -10,19 +10,19 @@ export function baseOptions(): BaseLayoutProps {
         <div className="flex items-center gap-2">
           <Image
             src="/logo-dark.png"
-            alt="AEC-Bench"
+            alt="aec-bench"
             width={28}
             height={20}
             className="hidden dark:block"
           />
           <Image
             src="/logo-light.png"
-            alt="AEC-Bench"
+            alt="aec-bench"
             width={28}
             height={20}
             className="dark:hidden"
           />
-          <span className="font-bold">AEC-Bench</span>
+          <span className="font-bold">aec-bench</span>
         </div>
       ),
     },

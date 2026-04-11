@@ -1,4 +1,4 @@
-// ABOUTME: Landing page assembling all sections for the AEC-Bench site.
+// ABOUTME: Landing page assembling all sections for the aec-bench site.
 // ABOUTME: Uses the (home) route group with HomeLayout.
 import { Hero } from '@/components/landing/hero';
 import { LeaderboardPreview } from '@/components/landing/leaderboard-preview';

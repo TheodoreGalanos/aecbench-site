@@ -1,0 +1,73 @@
+---
+title: Installation
+description: Detailed installation and environment setup for AEC-Bench.
+---
+
+## System Requirements
+
+- **Python:** 3.11 or later
+- **OS:** macOS, Linux, or Windows (WSL recommended)
+- **Memory:** 4 GB RAM minimum (8 GB recommended for large datasets)
+
+## Installation Methods
+
+### pip
+
+```bash
+pip install aec-bench
+```
+
+### uv (recommended)
+
+```bash
+uv add aec-bench
+```
+
+### From source
+
+```bash
+git clone https://github.com/aurecon/aec-bench.git
+cd aec-bench
+uv sync
+```
+
+## Provider Configuration
+
+AEC-Bench supports multiple LLM providers. Set the appropriate environment variable for your provider:
+
+| Provider | Environment Variable |
+|----------|---------------------|
+| Anthropic | `ANTHROPIC_API_KEY` |
+| OpenAI | `OPENAI_API_KEY` |
+| Google | `GOOGLE_API_KEY` |
+
+## Configuration File
+
+AEC-Bench uses a `aec-bench.toml` file for configuration. Create one in your working directory:
+
+```toml
+[provider]
+name = "anthropic"           # anthropic, openai, google
+model = "claude-sonnet-4-20250514"
+
+[harness]
+strategy = "tool_loop"       # tool_loop, rlm, lambda_rlm, direct
+max_steps = 10
+timeout = 300                # seconds per task
+
+[evaluation]
+dataset = "core"             # dataset version to evaluate against
+parallel = 4                 # concurrent task evaluations
+```
+
+## Verify Installation
+
+```bash
+aec-bench --version
+aec-bench doctor             # check configuration and connectivity
+```
+
+## Next Steps
+
+- [Architecture](/docs/core/architecture) — Understand how AEC-Bench works under the hood
+- [Agent Harnesses](/docs/agents/harnesses) — Learn about different execution strategies

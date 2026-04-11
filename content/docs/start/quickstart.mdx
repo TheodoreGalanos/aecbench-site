@@ -1,0 +1,65 @@
+---
+title: Quickstart
+description: Run your first AEC-Bench evaluation in 5 minutes.
+---
+
+Get up and running with AEC-Bench in a few steps.
+
+## Prerequisites
+
+- Python 3.11+
+- An API key for at least one LLM provider (Anthropic, OpenAI, or Google)
+
+## Install
+
+```bash
+pip install aec-bench
+```
+
+Or with [uv](https://docs.astral.sh/uv/):
+
+```bash
+uv add aec-bench
+```
+
+## Configure
+
+Create an `aec-bench.toml` configuration file:
+
+```toml
+[provider]
+name = "anthropic"
+model = "claude-sonnet-4-20250514"
+
+[harness]
+strategy = "tool_loop"
+max_steps = 10
+```
+
+Set your API key as an environment variable:
+
+```bash
+export ANTHROPIC_API_KEY="your-key-here"
+```
+
+## Run
+
+Evaluate your agent against the core dataset:
+
+```bash
+aec-bench run --dataset core
+```
+
+This will:
+1. Load tasks from the core dataset
+2. Execute each task using your configured agent harness
+3. Score results using automated reward signals
+4. Output a summary to the terminal and save detailed traces
+
+## View Results
+
+```bash
+aec-bench results --latest
+```
+
+See the [full installation guide](/docs/start/installation) for advanced configuration options.

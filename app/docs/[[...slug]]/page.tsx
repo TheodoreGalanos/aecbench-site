@@ -9,6 +9,7 @@ import {
 } from 'fumadocs-ui/page';
 import { notFound } from 'next/navigation';
 import defaultMdxComponents from 'fumadocs-ui/mdx';
+import { Mermaid } from '@/components/mdx/mermaid';
 
 interface PageProps {
   params: Promise<{ slug?: string[] }>;
@@ -30,7 +31,7 @@ export default async function Page(props: PageProps) {
       <DocsTitle>{page.data.title}</DocsTitle>
       <DocsDescription>{page.data.description}</DocsDescription>
       <DocsBody>
-        <data.body components={{ ...defaultMdxComponents }} />
+        <data.body components={{ ...defaultMdxComponents, Mermaid }} />
       </DocsBody>
     </DocsPage>
   );

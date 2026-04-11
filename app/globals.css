@@ -1,0 +1,26 @@
+/* ABOUTME: Global stylesheet with Tailwind CSS v4 and Fumadocs theme. */
+/* ABOUTME: Custom dark theme variables defined in @theme block. */
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+
+@theme {
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+
+  /* Landing page palette */
+  --color-landing-bg: #0a0a0a;
+  --color-landing-bg-end: #1a1a1a;
+  --color-landing-card: #1e1e1e;
+  --color-landing-border: #2a2a2a;
+  --color-landing-text: #f0f0f0;
+  --color-landing-muted: #888888;
+  --color-accent-amber: #e8a838;
+  --color-accent-teal: #38b2ac;
+}
+
+/* Fumadocs dark mode overrides */
+.dark {
+  --color-fd-accent: #e8a838;
+  --color-fd-accent-foreground: #0a0a0a;
+}

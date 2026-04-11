@@ -1,0 +1,148 @@
+---
+title: Architecture
+description: How aec-bench works — from task definitions to evaluation results.
+---
+
+import { BenchmarkRunFlow } from '@/components/docs/benchmark-run-flow';
+
+aec-bench is built around a simple pipeline: **define tasks**, **run agents**, **score results**. Each stage is independent and composable.
+
+## End-to-End Flow
+
+A benchmark run goes through six stages:
+
+<BenchmarkRunFlow />
+
+| Stage | What happens | Key module |
+|-------|-------------|------------|
+| **Define** | A `task.toml` describes the problem, `instruction.md` provides the prompt, and a verifier script defines how to score | `contracts/task_definition` |
+| **Resolve** | Paths are resolved, tools discovered, and the task is packaged into a `ResolvedTaskInstance` | `tasks/instance` |
+| **Stage** | A Docker container is built from the task's `Dockerfile` with fixtures and tools staged inside | `harness/local_environment` |
+| **Execute** | An agent adapter runs the task — calling tools, writing output, recording a trajectory | `adapters/*` |
+| **Score** | The task's `verifier.py` runs against the agent's output, producing a reward (0.0–1.0) and per-field details | `evaluation/pipeline` |
+| **Aggregate** | Trial records are appended to the ledger, scores aggregated, and reports generated | `ledger`, `communication` |
+
+## Core Domains
+
+The library is organised into seven domains with strict dependency boundaries — each layer only depends on layers above it.
+
+<div className="flex justify-center">
+<Mermaid chart={`
+graph TD
+    Contracts --> Tasks
+    Contracts --> Adapters
+    Tasks --> Generation
+    Tasks --> Harness
+    Adapters --> Harness
+    Harness --> Evaluation
+    Evaluation --> Communication
+    Evaluation --> Feedback
+    style Contracts fill:#1e1e1e,stroke:#e8a838,color:#f0f0f0
+    style Tasks fill:#1e1e1e,stroke:#38b2ac,color:#f0f0f0
+    style Adapters fill:#1e1e1e,stroke:#38b2ac,color:#f0f0f0
+    style Generation fill:#1e1e1e,stroke:#38b2ac,color:#f0f0f0
+    style Harness fill:#1e1e1e,stroke:#38b2ac,color:#f0f0f0
+    style Evaluation fill:#1e1e1e,stroke:#38b2ac,color:#f0f0f0
+    style Communication fill:#1e1e1e,stroke:#888888,color:#f0f0f0
+    style Feedback fill:#1e1e1e,stroke:#888888,color:#f0f0f0
+`} />
+</div>
+
+### Contracts
+
+The foundation layer. Pydantic models that define the shape of data at every boundary:
+
+- `TaskDefinition` — what a task is (prompt, environment, verifier, difficulty)
+- `TrialRecord` — immutable record of one agent run with full provenance
+- `EvaluationResult` — reward score, per-field breakdown, confidence, behavioural classification
+- `ExperimentManifest` — which tasks x which agents x how many repetitions
+
+All other domains depend on contracts. Contracts depend on nothing.
+
+### Tasks
+
+Loading, discovery, and lifecycle management of benchmark tasks. Tasks live on the filesystem as directories containing `task.toml`, `instruction.md`, a Docker environment, and a verifier script.
+
+```
+tasks/
+└── electrical/
+    └── cable-voltage-drop/
+        ├── task.toml           # metadata, timeout, difficulty
+        ├── instruction.md      # the prompt sent to the agent
+        ├── environment/
+        │   ├── Dockerfile
+        │   └── fixtures/       # input data staged into the container
+        └── tests/
+            └── verify.py       # scoring script
+```
+
+See [Tasks](/docs/core/tasks) for the full reference.
+
+### Adapters
+
+Provider-neutral agent execution strategies. Four built-in harnesses, each implementing the same `Adapter` protocol:
+
+| Adapter | How it works | Best for |
+|---------|-------------|----------|
+| **Direct** | Single LLM call, no tools | Classification, extraction |
+| **Tool Loop** | Multi-turn with tool calls (max N turns) | General tasks with tool use |
+| **RLM** | Sandboxed REPL with structured sub-calls | Complex calculations, iterative work |
+| **Lambda-RLM** | Pre-planned steps with bounded execution | Structured reports, known workflows |
+
+All adapters produce the same output: an `AdapterResult` containing the agent's output, a full execution trajectory, and token usage.
+
+See [Harnesses](/docs/agents/harnesses) for details on each strategy.
+
+### Generation
+
+Parameterised templates that produce unlimited task instances. A template defines parameters (soil type, load magnitude, cable length), archetypes (sandy soil, clay), and difficulty presets. The generator samples parameters and renders concrete tasks.
+
+```
+Template (Jinja2 + ParamSpec)
+    → sample parameters
+    → render instruction
+    → generate verifier
+    → scaffold task directory
+```
+
+See [Templates](/docs/core/templates) for the template engine reference.
+
+### Harness
+
+Orchestrates trial execution. Handles container lifecycle, tool staging, adapter dispatch, and trajectory recording. Supports multiple backends:
+
+- **Local** — synchronous execution on your machine
+- **Harbor** — distributed execution via job queues
+- **Modal** — serverless cloud execution
+
+### Evaluation
+
+Multi-stage scoring pipeline:
+
+1. **Verifier** — task-specific script that checks agent output against expected results
+2. **Reward** — normalised score (0.0–1.0) with per-field breakdown
+3. **Confidence** — statistical metadata (Cohen's kappa, Wilson CI)
+4. **Behavioural classification** — categorise agent behaviour using bond taxonomy (Effective, Verbose, Defective, X-type)
+
+### Communication
+
+Reporting and visualisation: HTML reports, leaderboard tables, trace viewers, and structured exports (JSON, JSONL).
+
+## Design Principles
+
+aec-bench follows a strict priority order when design decisions conflict:
+
+| Priority | Principle | What it means |
+|----------|-----------|--------------|
+| 1 | **Validity** | Results reflect real agent capability, not benchmark artefacts |
+| 2 | **Reproducibility** | Any result can be reconstructed from recorded inputs |
+| 3 | **Coverage** | Benchmark spans meaningful AEC domain breadth and depth |
+| 4 | **Cost** | Experiments are affordable enough to run frequently |
+| 5 | **Throughput** | New tasks, agents, and models can be onboarded quickly |
+
+### Key invariants
+
+- **Trial records are immutable** — once written to the ledger, a trial record is never modified
+- **Tasks are self-contained** — everything needed to run and score a task lives in its directory
+- **Adapters are provider-neutral** — the same task can be run with any LLM provider
+- **Evaluation is deterministic** — the same output always produces the same score

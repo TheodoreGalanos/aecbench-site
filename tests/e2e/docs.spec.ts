@@ -23,4 +23,14 @@ test.describe('Documentation', () => {
     await page.goto('/docs/start/installation');
     await expect(page.getByText('ANTHROPIC_API_KEY')).toBeVisible();
   });
+
+  test('renders the architecture flow diagram', async ({ page }) => {
+    await page.goto('/docs/core/architecture');
+    await expect(page.getByTestId('benchmark-run-flow')).toBeVisible();
+    await expect(
+      page.getByRole('img', {
+        name: /benchmark run flow from define task through aggregate and report/i,
+      }),
+    ).toBeVisible();
+  });
 });

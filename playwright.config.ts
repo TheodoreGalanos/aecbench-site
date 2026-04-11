@@ -8,7 +8,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   webServer: {
-    command: 'pnpm dev',
+    command: 'npx next dev --turbopack',
     port: 3000,
     reuseExistingServer: !process.env.CI,
   },

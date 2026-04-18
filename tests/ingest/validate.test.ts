@@ -46,6 +46,7 @@ describe('validateExperiment', () => {
       tasks: [{ task_id: 'ground/foo', domain: 'ground', difficulty: 'easy', tags: [] }],
     };
     const [exp] = await discoverExperiments(VALID_ROOT);
+    await expect(validateExperiment(exp, strictManifest, 'aec-bench@0.4.1')).rejects.toThrow(ValidationError);
     await expect(validateExperiment(exp, strictManifest, 'aec-bench@0.4.1')).rejects.toThrow(/task_id/);
   });
 });

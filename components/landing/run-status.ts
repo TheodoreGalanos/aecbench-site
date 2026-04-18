@@ -1,20 +1,26 @@
-// ABOUTME: Run-status data consumed by the persistent landing status bar.
-// ABOUTME: Stubbed here; replaced by Supabase queries in Phase 3.
+// ABOUTME: Run-status values read from the build-emitted artefact.
+// ABOUTME: Field names align with the new LeaderboardArtefact.run_status shape.
+import { getRunStatus, getDataset } from '@/lib/aec-bench/read';
 
 export interface RunStatus {
-  runId: string;
   tasks: number;
   models: number;
+  adapters: number;
   disciplines: number;
+  lastSubmissionIso: string;
+  generatedAtIso: string;
   datasetVersion: string;
-  lastRunRelative: string;
 }
 
+const raw = getRunStatus();
+const dataset = getDataset();
+
 export const runStatus: RunStatus = {
-  runId: '0412-a7',
-  tasks: 547,
-  models: 14,
-  disciplines: 5,
-  datasetVersion: 'v0.4.1',
-  lastRunRelative: '2h ago',
+  tasks: raw.tasks,
+  models: raw.models,
+  adapters: raw.adapters,
+  disciplines: raw.disciplines,
+  lastSubmissionIso: raw.last_submission,
+  generatedAtIso: raw.generated_at,
+  datasetVersion: `v${dataset.version}`,
 };

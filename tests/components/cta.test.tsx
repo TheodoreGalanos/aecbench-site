@@ -1,24 +1,31 @@
-// ABOUTME: Tests for the bottom CTA landing page section.
-// ABOUTME: Verifies call-to-action headline and links render correctly.
+// ABOUTME: Tests the restyled CTA section — install command, meta line, secondary buttons.
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { CallToAction } from '@/components/landing/cta';
 
 describe('CallToAction', () => {
-  it('renders the CTA headline', () => {
+  it('renders the pitch', () => {
     render(<CallToAction />);
-    expect(screen.getByText(/evaluate your model/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /benchmark your model against real engineering/i }),
+    ).toBeInTheDocument();
   });
 
-  it('renders the Submit Your Model link', () => {
+  it('renders the pip install CopyBox', () => {
     render(<CallToAction />);
-    const link = screen.getByRole('link', { name: /submit your model/i });
-    expect(link).toHaveAttribute('href', '/docs/start/quickstart');
+    expect(screen.getByText('pip install aec-bench')).toBeInTheDocument();
   });
 
-  it('renders the Contribute Tasks link', () => {
+  it('renders the mono meta line with latest version and stars', () => {
     render(<CallToAction />);
-    const link = screen.getByRole('link', { name: /contribute tasks/i });
-    expect(link).toHaveAttribute('href', '/docs');
+    expect(screen.getByText(/v0\.4\.1/)).toBeInTheDocument();
+    expect(screen.getByText(/2\.4k/)).toBeInTheDocument();
+  });
+
+  it('renders three secondary commands', () => {
+    render(<CallToAction />);
+    expect(screen.getByRole('link', { name: /quickstart/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /contribute a task/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /submit your model/i })).toBeInTheDocument();
   });
 });

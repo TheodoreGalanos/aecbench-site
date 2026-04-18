@@ -27,7 +27,7 @@ const disciplines: Discipline[] = [
   { slug: 'electrical',  code: 'ELE·02', name: 'Electrical',  description: 'Cable sizing, fault current, lighting, power.', taskCount: 121, Glyph: ElectricalGlyph },
   { slug: 'ground',      code: 'GND·03', name: 'Ground',      description: 'Foundations, slopes, retaining walls.',         taskCount: 94,  Glyph: GroundGlyph     },
   { slug: 'mechanical',  code: 'MEC·04', name: 'Mechanical',  description: 'HVAC, fire protection, piping, acoustics.',     taskCount: 116, Glyph: MechanicalGlyph },
-  { slug: 'structural',  code: 'STR·05', name: 'Structural',  description: 'Steel/concrete design, seismic, connections.',  taskCount: 109, Glyph: StructuralGlyph },
+  { slug: 'structural',  code: 'STR·05', name: 'Structural',  description: 'Steel/concrete design, seismic, connections.',  taskCount: 108, Glyph: StructuralGlyph },
 ];
 
 export function Disciplines() {

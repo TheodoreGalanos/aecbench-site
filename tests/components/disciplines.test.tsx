@@ -27,8 +27,12 @@ describe('Disciplines', () => {
 
   it('renders task counts', () => {
     render(<Disciplines />);
-    expect(screen.getByText(/108/)).toBeInTheDocument();
+    // Civil and Structural both have 108 tasks — assert at least one of each.
+    const counts108 = screen.getAllByText(/108/);
+    expect(counts108.length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText(/121/)).toBeInTheDocument();
+    expect(screen.getByText(/94/)).toBeInTheDocument();
+    expect(screen.getByText(/116/)).toBeInTheDocument();
   });
 
   it('links each card to /leaderboard/[discipline]', () => {

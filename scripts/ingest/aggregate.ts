@@ -7,6 +7,7 @@ import type {
   TrialRecord,
 } from '@/lib/aec-bench/contracts';
 import { modelKey, resolveModel } from '@/scripts/ingest/registry';
+import seedrandom from 'seedrandom';
 
 export interface TrialGroup {
   key: string;          // model_key/adapter
@@ -32,4 +33,51 @@ export function groupTrials(trials: TrialRecord[], registry: ModelEntry[]): Map<
     }
   }
   return groups;
+}
+
+export interface RewardStats {
+  mean: number;
+  ci: [number, number] | null;
+  complete: number;
+  total: number;
+}
+
+const BOOTSTRAP_RESAMPLES = 10_000;
+
+export function computeReward(trials: TrialRecord[]): RewardStats {
+  const complete = trials.filter(isComplete);
+  const values = complete.map((t) => t.evaluation.reward);
+  const mean = values.length === 0 ? 0 : values.reduce((a, b) => a + b, 0) / values.length;
+
+  let ci: [number, number] | null = null;
+  if (complete.length >= 3) {
+    const seed = seedOf(complete.map((t) => t.trial_id));
+    const rng = seedrandom(seed);
+    const samples = new Array<number>(BOOTSTRAP_RESAMPLES);
+    for (let i = 0; i < BOOTSTRAP_RESAMPLES; i++) {
+      let sum = 0;
+      for (let j = 0; j < values.length; j++) {
+        sum += values[Math.floor(rng() * values.length)];
+      }
+      samples[i] = sum / values.length;
+    }
+    samples.sort((a, b) => a - b);
+    const lo = samples[Math.floor(0.025 * BOOTSTRAP_RESAMPLES)];
+    const hi = samples[Math.floor(0.975 * BOOTSTRAP_RESAMPLES)];
+    ci = [round2(lo), round2(hi)];
+  }
+
+  return { mean: round2(mean), ci, complete: complete.length, total: trials.length };
+}
+
+function isComplete(t: TrialRecord): boolean {
+  return t.completeness === 'complete' && t.evaluation.validity.verifier_completed;
+}
+
+function seedOf(trialIds: string[]): string {
+  return [...trialIds].sort().join('|');
+}
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
 }

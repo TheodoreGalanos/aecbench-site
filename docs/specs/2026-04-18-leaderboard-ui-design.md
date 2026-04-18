@@ -49,7 +49,7 @@ The design language is set: dark charcoal + amber `#e8a838` + teal `#38b2ac` + b
 
 ### Module tree
 
-```
+```text
 app/leaderboard/
   page.tsx                             # RSC; reads ingest artefact; renders <LeaderboardSurface>
   loading.tsx                          # Skeleton shimmer (optional, low priority)
@@ -143,7 +143,7 @@ interface LeaderboardSurfaceProps {
 
 ## Data flow & state
 
-```
+```text
 ┌──────────────────────────────────────────────────────────────────────┐
 │ Build time — scripts/ingest                                          │
 │   results/experiments/** → aggregate → public/data/leaderboard.json  │
@@ -210,7 +210,7 @@ type SortColumn =
 
 ### URL param convention
 
-```
+```text
 /leaderboard?x=cost&d=civil,electrical&h=rlm&sort=reward&dir=desc&open=claude-opus-4.7::rlm
 ```
 
@@ -239,7 +239,7 @@ A small footnote near the x-axis label reads `cost / tokens / latency are overal
 
 Renders the compact CLI prompt:
 
-```
+```text
 $ bench leaderboard --x [cost ▾]  --discipline [all ▾]  --harness [all ▾]
 ```
 
@@ -265,7 +265,7 @@ One responsive SVG (`viewBox="0 0 800 400"`, `preserveAspectRatio="xMidYMid meet
 
 **Layout regions (inset 40 left / 16 right / 16 top / 40 bottom for axis labels):**
 
-```
+```tsx
 <svg viewBox="0 0 800 400">
   <defs>                  # glow filter for hover
   <g class="gridlines">   # every 0.1 reward; quartile marks on x
@@ -332,7 +332,7 @@ function makeLinearScale(domainMin: number, domainMax: number, rangeMin: number,
 - Flips sides automatically when within 240px of the viewport's right or top edge.
 - Content:
 
-```
+```text
 claude-opus-4.7 · rlm
 reward   0.82  [0.79 – 0.85]
 cost     $1.80 / task
@@ -391,7 +391,7 @@ Renders an accessible `<table role="table">` inside a terminal window chrome (sa
 
 **Collapsed state (default, ~44px desktop / ~60px mobile tall):**
 
-```
+```text
 01  claude-opus-4.7 · rlm       ▌ ▌ ▌ ▌ ▌    0.82   +0.02    46k   $1.80
     anthropic                                 [frontier]
 ```
@@ -656,7 +656,7 @@ export const LeaderboardEntrySchema = z.object({
 |---|---|---|
 | 1 | Per-discipline CI is lost on reshape | Accept for MVP; track per-discipline CI emission as a follow-up ingest task. Row CI cell shows `—` when disciplines are active. |
 | 2 | `adapter` is a free-form string in `LeaderboardEntry` | Harness chip derives options from entries at render time; no enumerated union. Document this so Phase 4 doesn't accidentally hardcode. |
-| 3 | The `lambda-rlm` harness shape isn't observed in current mock data | Shape is defined but we can't test it until a real or mock entry exists. Add one `_mock-lambda-rlm-*` experiment to the fixtures. |
+| 3 | The `lambda-rlm` harness shape isn't observed in current mock data | Commit: the implementation plan includes a task to add one `_mock-lambda-rlm-*` experiment to `results/experiments/` (via the existing `pnpm mock:generate` pipeline, with `--adapter lambda-rlm`) so harness-glyph coverage is honest. `harness-glyph.test.ts` also covers the fallback diamond for truly-unknown adapters. |
 | 4 | Mobile sheet state-batching differs from desktop (apply vs live) | Intentional — live updates on mobile caused thrash in comparable patterns. Document in the test plan so behaviour is explicit. |
 | 5 | Expansion animation increment to bundle | Framer Motion is already imported by `components/landing/motion-primitives.tsx`, so the incremental cost is small. Use named imports (`motion.div`, `AnimatePresence`) and verify via the build report. If the chunk grows unexpectedly, fall back to plain CSS transitions. |
 

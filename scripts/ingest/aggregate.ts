@@ -145,3 +145,33 @@ export function computeCostAndTiming(trials: TrialRecord[]): CostTiming {
 function round4(n: number): number {
   return Math.round(n * 10000) / 10000;
 }
+
+export function rankEntries(entries: LeaderboardEntry[]): LeaderboardEntry[] {
+  const sorted = [...entries].sort((a, b) => {
+    if (b.reward !== a.reward) return b.reward - a.reward;
+    const aCost = a.mean_cost_usd ?? Number.POSITIVE_INFINITY;
+    const bCost = b.mean_cost_usd ?? Number.POSITIVE_INFINITY;
+    if (aCost !== bCost) return aCost - bCost;
+    return b.complete_trials - a.complete_trials;
+  });
+  return sorted.map((e, i) => ({ ...e, rank: i + 1 }));
+}
+
+export interface PreviousRow {
+  model_key: string;
+  reward: number;
+}
+
+export function applyDelta(
+  current: LeaderboardEntry[],
+  previous: PreviousRow[],
+): LeaderboardEntry[] {
+  const prev = new Map(previous.map((p) => [p.model_key, p.reward]));
+  return current.map((e) => {
+    const prior = prev.get(e.model_key);
+    if (prior === undefined) {
+      return { ...e, delta_vs_previous: null };
+    }
+    return { ...e, delta_vs_previous: round2(e.reward - prior) };
+  });
+}

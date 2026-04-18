@@ -8,11 +8,16 @@ test.describe('Landing page', () => {
     await expect(page.getByRole('heading', { name: /how capable is ai/i })).toBeVisible();
   });
 
-  test('shows the persistent status bar', async ({ page }) => {
+  test('shows the persistent status bar with honest labels', async ({ page }) => {
     await page.goto('/');
     const bar = page.getByRole('status', { name: /aec-bench run status/i });
     await expect(bar).toBeVisible();
-    await expect(bar.getByText('0412-a7')).toBeVisible();
+    // New honest labels — no fake run_id.
+    await expect(bar.getByText(/v0\.4\.1/)).toBeVisible();
+    await expect(bar.getByText(/last submission/i)).toBeVisible();
+    await expect(bar.getByText(/built/i)).toBeVisible();
+    // Mocks in play → PREVIEW mode.
+    await expect(bar.getByText(/PREVIEW/)).toBeVisible();
   });
 
   test('renders the leaderboard preview with model rows', async ({ page }) => {

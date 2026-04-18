@@ -38,12 +38,7 @@ export function baseOptions(): BaseLayoutProps {
         active: 'url',
       },
       {
-        text: 'Blog',
-        url: '/blog',
-        active: 'nested-url',
-      },
-      {
-        text: 'The Harness',
+        text: 'The Harness ↗',
         url: 'https://www.theharness.blog',
         active: 'none',
       },

@@ -1,41 +1,59 @@
-// ABOUTME: End-to-end tests for the landing page.
-// ABOUTME: Verifies page loads, sections visible, and navigation works.
+// ABOUTME: End-to-end tests for the landing page and nav.
+// ABOUTME: Verifies page loads, sections visible, status bar, nav, and deep links.
 import { test, expect } from '@playwright/test';
 
 test.describe('Landing page', () => {
-  test('renders the hero section', async ({ page }) => {
+  test('renders the hero headline', async ({ page }) => {
     await page.goto('/');
-    await expect(
-      page.getByRole('heading', { name: /how capable is ai/i }),
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: /how capable is ai/i })).toBeVisible();
   });
 
-  test('renders the leaderboard preview', async ({ page }) => {
+  test('shows the persistent status bar', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByText('Current Standings')).toBeVisible();
+    await expect(page.getByRole('status', { name: /aec-bench run status/i })).toBeVisible();
+    await expect(page.getByText('0412-a7')).toBeVisible();
+  });
+
+  test('renders the leaderboard preview with model rows', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByRole('heading', { name: /current standings/i })).toBeVisible();
     await expect(page.getByText('Claude Sonnet 4')).toBeVisible();
   });
 
-  test('renders the disciplines section', async ({ page }) => {
+  test('renders the reward × cost teaser', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByText('Five Engineering Disciplines')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /reward.*cost/i })).toBeVisible();
   });
 
-  test('renders the how it works section', async ({ page }) => {
+  test('renders disciplines and how-it-works', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByText('How It Works')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /five engineering disciplines/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /define.*run.*score/i })).toBeVisible();
   });
 
-  test('Explore Results CTA navigates to leaderboard', async ({ page }) => {
+  test('CTA copy button copies pip install command', async ({ page, context }) => {
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await page.goto('/');
-    await page.getByRole('link', { name: /explore results/i }).click();
+    await page.getByRole('button', { name: /^copy$/i }).click();
+    await expect(page.getByRole('button', { name: /copied/i })).toBeVisible();
+  });
+
+  test('explore_results CTA goes to /leaderboard', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('link', { name: /explore_results/i }).click();
     await expect(page).toHaveURL('/leaderboard');
-    await expect(page.getByRole('heading', { name: 'Leaderboard' })).toBeVisible();
   });
 
-  test('Read the Docs CTA navigates to docs', async ({ page }) => {
+  test('nav does not include Blog link', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('link', { name: /read the docs/i }).click();
-    await expect(page).toHaveURL(/\/docs/);
+    const navLinks = page.locator('nav a');
+    const texts = await navLinks.allInnerTexts();
+    expect(texts.every((t) => !/^blog$/i.test(t.trim()))).toBe(true);
+  });
+
+  test('nav includes The Harness linking to external blog', async ({ page }) => {
+    await page.goto('/');
+    const harness = page.getByRole('link', { name: /the harness/i }).first();
+    await expect(harness).toHaveAttribute('href', 'https://www.theharness.blog');
   });
 });

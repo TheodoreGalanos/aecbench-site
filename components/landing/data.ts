@@ -10,6 +10,7 @@ export interface PreviewModel {
   rank: number;
   model: string;
   provider: Provider;
+  adapter: string;
   overallScore: number;
   disciplines: {
     civil: number;
@@ -30,6 +31,7 @@ function adapt(entry: LeaderboardEntry): PreviewModel {
     rank: entry.rank,
     model: entry.model_display,
     provider: entry.provider,
+    adapter: entry.adapter,
     overallScore: entry.reward,
     disciplines: {
       civil: entry.per_discipline.civil ?? 0,

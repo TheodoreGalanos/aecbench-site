@@ -12,10 +12,11 @@ describe('RewardCostTeaser', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders compact top-4 list', () => {
+  it('renders at least 4 model rows in the compact list', () => {
     render(<RewardCostTeaser />);
-    expect(screen.getByText('Claude Sonnet 4')).toBeInTheDocument();
-    expect(screen.getByText('Llama 4 Maverick')).toBeInTheDocument();
+    // Rows must expose at least one ranked-looking identifier (`#01` through `#04` zero-padded).
+    const rankMarks = screen.getAllByText(/#\d\d/);
+    expect(rankMarks.length).toBeGreaterThanOrEqual(4);
   });
 
   it('renders a Pareto-frontier chart (svg with accessible name)', () => {

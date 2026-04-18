@@ -1,0 +1,105 @@
+---
+title: Scoring
+description: Scoring turns an agent's output into a reward by running the task's verifier and rolling per-field scores into a single value.
+---
+
+When a trial finishes, the harness runs the task's verifier against the agent's output file. The verifier emits two JSON artifacts; the evaluation pipeline parses them into an `EvaluationResult` and attaches it to the trial record.
+
+## The verifier contract
+
+Each task ships a `tests/test.sh` entry point (the shell script the container runs). The verifier reads the agent's output from `/workspace/{output_path}` and writes:
+
+```
+/logs/verifier/reward.json     # mandatory — {"reward": 0.0-1.0}
+/logs/verifier/details.json    # optional — per-field scores and evidence
+```
+
+A minimal `reward.json` is just the headline number:
+
+```json
+{ "reward": 0.93 }
+```
+
+The optional `details.json` carries the per-dimension breakdown:
+
+```json
+{
+  "voltage_drop_v": { "score": 0.95, "max_score": 1.0, "evidence": "within 2% of reference" },
+  "voltage_drop_pct": { "score": 1.0, "max_score": 1.0, "evidence": "exact match" },
+  "compliance": { "score": 1.0, "max_score": 1.0, "evidence": "correctly flagged compliant" }
+}
+```
+
+## Reward rollup
+
+When `details.json` is present, the rubric scorer rolls per-dimension scores into a single reward. Each dimension is normalised to `score / max_score` and clamped to `[0, 1]`, then combined using a rollup strategy:
+
+| Strategy | Behaviour | Used when |
+|----------|-----------|-----------|
+| `weighted_mean` (default) | `Σ(normalised × weight) / Σ(weight)` | Balanced judgement across fields |
+| `min` | Worst dimension wins | A single wrong field should fail the task |
+
+The final reward rounds to 4 decimals and must land in `[0.0, 1.0]`. If the verifier writes `reward.json` directly without a rubric, that value is used as-is.
+
+## Validity gates
+
+Before scoring, the pipeline checks whether the output is even fit for scoring:
+
+```python
+class ValidityCheck(StrictModel):
+    output_parseable: bool       # did the file parse as its declared format?
+    schema_valid: bool           # did it match the expected shape?
+    verifier_completed: bool     # did reward.json appear?
+    errors: list[str] = []
+```
+
+**The hard rule:** if `output_parseable=False`, the reward is forced to **0.0**. No partial credit for unreadable output. This invariant is enforced by a cross-field validator on `EvaluationResult`, not by convention.
+
+The other two flags are diagnostic — they don't force the reward, but they surface in reports and help distinguish "the agent was wrong" from "the agent didn't produce anything usable".
+
+## The full EvaluationResult
+
+Putting it together:
+
+```python
+class EvaluationResult(StrictModel):
+    reward: float                          # 0.0 to 1.0
+    validity: ValidityCheck
+    breakdown: dict | None                 # per-field scores + evidence
+    error_taxonomy: list[ErrorTag] | None  # classified failures
+    confidence: ConfidenceMetadata | None  # statistical metadata
+    annotations: list[Annotation] | None   # human review verdicts
+```
+
+## Error taxonomy
+
+Verifiers (or post-hoc analysis) can tag failures for grouping in reports:
+
+```python
+class ErrorTag(StrictModel):
+    category: str              # "tool failure", "parsing error", "unit mismatch"
+    description: str | None
+    source: ErrorSource        # MECHANICAL | HUMAN | JUDGE
+```
+
+Tasks define their own categories — there's no fixed taxonomy. `source` tracks whether the classification came from the harness (mechanical signal), a reviewer, or an automated judge.
+
+## Annotations
+
+`annotations` is for human review after the automated run:
+
+```python
+class Annotation(StrictModel):
+    reviewer_id: str
+    reviewer_discipline: str       # "Electrical", "Geotechnical", ...
+    timestamp: datetime
+    judgment: Judgment             # PASS | FAIL | DEFER
+    categories: list[str]
+    notes: str | None
+```
+
+These don't overwrite the automated reward — they sit alongside it. When a reviewer disagrees with the verifier, both verdicts stay on the record.
+
+## Determinism
+
+Scoring must be deterministic: the same agent output always produces the same reward. Non-deterministic verifier components (LLM-as-judge, network calls) sit behind a confidence band rather than the main reward — see [Classification](/docs/evaluation/classification).

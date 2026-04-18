@@ -1,11 +1,10 @@
 ---
 title: Architecture
-description: How aec-bench works — from task definitions to evaluation results.
+description: aec-bench is organised as a dependency-layered pipeline of seven domains, from contracts and tasks through to evaluation and reporting.
 ---
 
 import { BenchmarkRunFlow } from '@/components/docs/benchmark-run-flow';
-
-aec-bench is built around a simple pipeline: **define tasks**, **run agents**, **score results**. Each stage is independent and composable.
+import { CoreDomains } from '@/components/docs/core-domains';
 
 ## End-to-End Flow
 
@@ -26,27 +25,7 @@ A benchmark run goes through six stages:
 
 The library is organised into seven domains with strict dependency boundaries — each layer only depends on layers above it.
 
-<div className="flex justify-center">
-<Mermaid chart={`
-graph TD
-    Contracts --> Tasks
-    Contracts --> Adapters
-    Tasks --> Generation
-    Tasks --> Harness
-    Adapters --> Harness
-    Harness --> Evaluation
-    Evaluation --> Communication
-    Evaluation --> Feedback
-    style Contracts fill:#1e1e1e,stroke:#e8a838,color:#f0f0f0
-    style Tasks fill:#1e1e1e,stroke:#38b2ac,color:#f0f0f0
-    style Adapters fill:#1e1e1e,stroke:#38b2ac,color:#f0f0f0
-    style Generation fill:#1e1e1e,stroke:#38b2ac,color:#f0f0f0
-    style Harness fill:#1e1e1e,stroke:#38b2ac,color:#f0f0f0
-    style Evaluation fill:#1e1e1e,stroke:#38b2ac,color:#f0f0f0
-    style Communication fill:#1e1e1e,stroke:#888888,color:#f0f0f0
-    style Feedback fill:#1e1e1e,stroke:#888888,color:#f0f0f0
-`} />
-</div>
+<CoreDomains />
 
 ### Contracts
 
@@ -109,11 +88,13 @@ See [Templates](/docs/core/templates) for the template engine reference.
 
 ### Harness
 
-Orchestrates trial execution. Handles container lifecycle, tool staging, adapter dispatch, and trajectory recording. Supports multiple backends:
+Orchestrates trial execution. Handles container lifecycle, tool staging, adapter dispatch, and trajectory recording. Runs trials on pluggable compute backends:
 
-- **Local** — synchronous execution on your machine
-- **Harbor** — distributed execution via job queues
+- **Local** — in-process execution on your machine
 - **Modal** — serverless cloud execution
+- **Docker**, **e2b**, **Daytona** — alternative sandbox targets
+
+For production deployment across a shared fleet, aec-bench dispatches jobs through **Harbor** — a separate orchestration service that schedules trials across backends. See [Deployment](/docs/advanced/deployment).
 
 ### Evaluation
 

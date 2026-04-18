@@ -1,0 +1,177 @@
+---
+title: CLI
+description: The aec-bench CLI is the command-line interface for running experiments, managing tasks and datasets, and inspecting results.
+---
+
+Commands group by purpose — running trials, managing tasks and datasets, inspecting the ledger, driving evolution.
+
+```bash
+aec-bench --version
+aec-bench --help
+```
+
+Global flags `--json` and `--text` force output format; most commands auto-detect.
+
+## Running experiments
+
+The core loop: define an experiment, run it, import results, evaluate.
+
+### `run`
+
+Execute an experiment defined in YAML:
+
+```bash
+aec-bench run --config experiment.yaml
+```
+
+Common overrides:
+
+| Flag | Purpose |
+|------|---------|
+| `--tasks-root DIR` | Override the task catalog directory |
+| `--model MODEL` | Substitute the model across all agents |
+| `--adapter {tool_loop,rlm,pydantic_ai,script}` | Substitute the adapter |
+| `--backend {modal,docker,e2b,daytona}` | Select the compute backend |
+| `--repetitions N` | Override repetition count |
+| `--dry-run` | Print the plan without executing |
+| `--no-verify` | Skip the verifier (agent-only runs) |
+
+### `run-local`
+
+Execute locally without Docker or Modal — useful for fast iteration on adapter logic:
+
+```bash
+aec-bench run-local --config experiment.yaml
+```
+
+### `import`
+
+Pull a completed job directory into the ledger:
+
+```bash
+aec-bench import jobs/exp-20260412-001
+```
+
+`import-local` does the same for a local-runtime result directory.
+
+### `evaluate`
+
+Analyse an experiment's trial records and produce an HTML report:
+
+```bash
+aec-bench evaluate --experiment exp-20260412-001 --report report.html
+```
+
+Filters: `--adapter`, `--model`, `--task-prefix`.
+
+## Project setup
+
+### `init`
+
+Scaffold a new project with the standard directory layout:
+
+```bash
+aec-bench init my-bench
+```
+
+Creates `aec-bench.toml`, `tasks/`, `artefacts/`, and a starter skills directory.
+
+### `config`
+
+Manage the global user config at `~/.config/aec-bench/config.json`:
+
+```bash
+aec-bench config view
+aec-bench config set default_backend modal
+aec-bench config reset
+```
+
+## Tasks and datasets
+
+### `task validate`
+
+Check a task directory against the schema:
+
+```bash
+aec-bench task validate tasks/electrical/voltage-drop
+```
+
+Verifies `task.toml`, required files, verifier entry point, and environment definition.
+
+### `dataset`
+
+Freeze a group of tasks into a versioned snapshot:
+
+```bash
+aec-bench dataset create \
+  --name electrical-v1 \
+  --version 1.0.0 \
+  --domain electrical \
+  --summary "Electrical baseline" \
+  --purpose "AS/NZS 3008 compliance tasks"
+
+aec-bench dataset list
+aec-bench dataset validate electrical-v1@1.0.0
+```
+
+## Generation
+
+Scaffold tasks from templates:
+
+```bash
+aec-bench generate task voltage-drop \
+  --instances 10 \
+  --difficulty medium \
+  --output tasks/electrical/
+
+aec-bench generate templates           # list available templates
+aec-bench generate validate-template voltage-drop
+aec-bench generate dockerfiles         # refresh Dockerfiles from templates
+```
+
+## Ledger and reports
+
+The ledger is append-only; these commands just query it.
+
+```bash
+aec-bench ledger list --experiment-id exp-20260412-001
+aec-bench ledger export --experiment-id exp-20260412-001 --output trials.jsonl
+
+aec-bench report summary --experiment-id exp-20260412-001
+aec-bench report leaderboard
+```
+
+## Evolution
+
+Drive closed-loop agent improvement (see [Evolution](/docs/advanced/evolution)):
+
+```bash
+aec-bench evolve init workspaces/my-ws --name voltage-drop-evo --adapter rlm
+aec-bench evolve run --config evolution.yaml --tasks-root tasks/
+aec-bench evolve history workspaces/my-ws
+```
+
+`aec-bench swarm` runs MAP-Elites swarm evolution using the ribs library — useful when you want to maintain a diverse frontier of solutions rather than hill-climb a single one.
+
+## Discovery and inspection
+
+```bash
+aec-bench search "voltage drop"                   # search templates and seeds
+aec-bench search "cable" --discipline electrical --templates-only
+
+aec-bench tui                                     # interactive terminal UI
+aec-bench web                                     # web dashboard
+```
+
+## Exit codes
+
+The CLI uses conventional exit codes:
+
+| Code | Meaning |
+|------|---------|
+| `0` | Success |
+| `1` | User error (invalid args, missing file) |
+| `2` | Validation failure (task, dataset, or config failed validation) |
+| `3` | Runtime failure (backend error, provider error) |
+
+Scripts can branch on these to distinguish "the command couldn't run" from "the command ran and the agent failed".

@@ -1,0 +1,160 @@
+---
+title: Configuration
+description: Agent configuration covers provider credentials, per-experiment agent definitions, and registration of custom adapters.
+---
+
+## Providers
+
+aec-bench auto-detects the provider from the model name prefix:
+
+| Prefix | Provider | Required env vars |
+|--------|----------|-------------------|
+| `claude-` | Anthropic | `ANTHROPIC_API_KEY` |
+| `gpt-`, `gpt4`, `o1-`, `o3-`, `o4-` | Azure OpenAI | `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT` |
+
+Anything unrecognised falls back to Anthropic.
+
+```bash
+# .env
+ANTHROPIC_API_KEY=sk-ant-...
+AZURE_OPENAI_API_KEY=...
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
+```
+
+Keep credentials out of config files — agent definitions reference env vars directly.
+
+## Agent definitions
+
+An agent entry in an experiment manifest picks the adapter, model, and configuration:
+
+```yaml
+# experiment.yaml
+agents:
+  - name: claude-sonnet-tool-loop
+    adapter: tool_loop
+    model: claude-sonnet-4-20250514
+    configuration:
+      max_turns: 12
+
+  - name: gpt4-direct
+    adapter: direct
+    model: gpt-4.1
+    configuration:
+      max_tokens: 8192
+```
+
+The `model` field supports `$ENV_VAR` references so pinned model IDs stay out of config:
+
+```yaml
+agents:
+  - name: pinned
+    adapter: tool_loop
+    model: $ANTHROPIC_MODEL     # resolved at run time
+```
+
+## Adapter-specific config
+
+Each adapter takes different knobs. The `configuration` block in an agent entry is passed through as `request.configuration`.
+
+**Direct** — one knob:
+
+```toml
+max_tokens = 16384
+```
+
+**Tool Loop** — turn limit:
+
+```toml
+max_turns = 8
+```
+
+**RLM** — grouped into guardrails and execution:
+
+```toml
+# rlm.toml
+[guardrails]
+token_budget = 100_000
+max_iterations = 20
+max_subcall_depth = 3
+max_budget_usd = 5.00
+
+[execution]
+scaffolding = "standard"
+context_limit = 1_000_000
+compaction_threshold_pct = 0.85
+max_parallel_workers = 4
+```
+
+**Lambda-RLM** — planner and review phases:
+
+```toml
+# lambda-rlm.toml
+[planner]
+context_window_chars = 200_000
+max_branching_factor = 4
+
+[review]
+enabled = true
+max_retries = 2
+target_accuracy = 0.95
+
+[budget]
+token_budget = 500_000
+```
+
+RLM and Lambda-RLM configs live alongside the agent entry or in a shared directory referenced by name.
+
+## Custom adapters
+
+Any class matching the `Adapter` protocol can be registered. The protocol is three methods:
+
+```python
+from pathlib import Path
+from aec_bench.contracts import AdapterRequest, AdapterResult
+
+class MyAdapter:
+    def __init__(self, model_name: str, workspace: Path, **kwargs):
+        self.model_name = model_name
+        self.workspace = workspace
+
+    def execute(self, request: AdapterRequest) -> AdapterResult:
+        # your strategy here
+        ...
+
+    def adapter_name(self) -> str:
+        return "my_adapter"
+
+    def resolved_model(self) -> str:
+        return self.model_name
+```
+
+Register against a `LocalAdapterRegistry` with a builder function:
+
+```python
+from aec_bench.adapters import LocalAdapterRegistry
+
+registry = LocalAdapterRegistry()
+registry.register(
+    "my_adapter",
+    lambda model_name, workspace, **kwargs: MyAdapter(model_name, workspace, **kwargs),
+)
+```
+
+Once registered, the adapter is addressable from any experiment config:
+
+```yaml
+agents:
+  - name: my-experimental-agent
+    adapter: my_adapter
+    model: claude-sonnet-4
+```
+
+### What a good adapter does
+
+- **Respects the whitelist** — only call tools present in `request.tools`
+- **Writes to `request.output_path`** — producing that file is the adapter's job
+- **Records a transcript** — one entry per turn, including tool calls and results
+- **Reports token usage** — populate `usage_input_tokens` / `usage_output_tokens` so the ledger can track cost
+- **Classifies failures** — set `failure_kind` so downstream reports can group errors
+
+The contract is thin, but getting these right is what lets the same task compare cleanly across many adapters.

@@ -1,0 +1,87 @@
+---
+title: Evolution
+description: Evolution is a closed-loop system that mutates an agent's workspace — system prompt and skill library — based on trial failures.
+---
+
+The LLM itself doesn't change — only the **workspace** it reads. The workspace lives under git, so every cycle produces a new version with full lineage.
+
+## The cycle
+
+Each evolution cycle runs six phases in sequence:
+
+| Phase | What happens |
+|-------|-------------|
+| **Classify** | Score recent trials; tag failures by category (wrong tool use, missing domain knowledge, task misunderstanding, …) |
+| **Analyse** | Cluster failures; identify which skills or prompts are implicated |
+| **Auto-seed** | Propose candidate mutations (new skill, skill edit, prompt tweak, skill deletion) |
+| **Evolve** | Apply mutations to a copy of the workspace; commit to a new git version |
+| **Gate** | Run the new version on a batch of tasks; compare against the current best |
+| **Version** | If the improvement clears the threshold, promote the new version; else discard |
+
+The cycle repeats until a **stagnation window** of N consecutive cycles produces no improvement, or `max_cycles` is reached.
+
+## Configuration
+
+Evolution is driven by a YAML config file:
+
+```yaml
+# evolution.yaml
+workspace_path: workspaces/voltage-drop-evo
+models:
+  classifier: env:AWS_HAIKU_MODEL_ID    # cheap model for classification
+  evolver: env:AWS_SONNET_MODEL_ID      # stronger model for mutations
+
+backend: local                          # local | modal | harbor (via deployment)
+batch_size: 3                           # trials per gate
+max_cycles: 5
+improvement_threshold: 0.01             # reward gain required to promote
+stagnation_window: 5                    # stop after N non-improving cycles
+```
+
+Two models are used: a cheap one for classification in bulk, a stronger one for mutations.
+
+## Mutations
+
+A mutation is a structured edit to the workspace:
+
+```python
+MutationAction = (
+    WriteSkill(name, content)       # add a new reusable skill
+    | ModifySkill(name, diff)       # patch an existing one
+    | DeleteSkill(name)             # remove a skill that's causing regressions
+    | ModifyPrompt(section, edit)   # tweak the system prompt
+)
+```
+
+The evolver emits a list of `MutationAction`s per cycle. A parser validates each one before application; malformed mutations are rejected. Applied mutations become individual git commits so any version can be rolled back.
+
+## Selection strategy
+
+When it's time to pick a parent for the next cycle, a selection strategy decides which prior version to mutate from:
+
+```python
+class SelectionStrategy(Protocol):
+    def select_parent(self, history: list[WorkspaceVersion]) -> WorkspaceVersion: ...
+```
+
+The default is **hill-climbing** — mutate from the best-scoring version seen so far. Other strategies can be registered if you want tournament selection, exploration-weighted picks, or multi-objective frontiers.
+
+## Backend independence
+
+Evolution doesn't care where trials run. The engine takes a `SolveFn` callable that injects the current workspace snapshot into each task directory as `system_prompt.md`, then delegates to any backend:
+
+```python
+SolveFn = Callable[[TaskDir, WorkspaceSnapshot], TrialRecord]
+```
+
+The same evolution loop works against the local backend for iteration and Harbor or Modal for scale. The workspace evolves; the runtime stays pluggable.
+
+## When to use it
+
+Evolution is expensive — it consumes tokens across two models and needs many cycles to show signal. It's worth running when:
+
+- The agent keeps making the same class of mistake in a narrow domain
+- The workspace has explicit, editable skills (rather than tacit knowledge)
+- There's budget for a long enough run for hill-climbing to find a local optimum
+
+For one-off benchmark runs, use a fixed workspace with a well-tuned harness instead.

@@ -1,0 +1,230 @@
+---
+title: Templates
+description: A template defines a parameterised engineering problem family that generates concrete task instances through parameter sampling and Jinja2 rendering.
+---
+
+import { TemplateGenerationFlow } from '@/components/docs/template-generation-flow';
+
+## How templates work
+
+A template has three files — `params.toml` (parameters, archetypes, difficulty), `instruction.md` (Jinja2 prompt), and `engine.py` (ground truth computation). The generator samples parameters, renders the prompt, and scaffolds complete task instances.
+
+<TemplateGenerationFlow />
+
+## Template anatomy
+
+Each template is a directory with three files:
+
+```
+templates/builtin/ground/terzaghi_bearing_capacity/
+├── params.toml       # parameters, archetypes, difficulty presets
+├── instruction.md    # Jinja2 template for the prompt
+└── engine.py         # ground truth computation
+```
+
+### params.toml
+
+This is the core of a template. Here's an excerpt from the Terzaghi bearing capacity template:
+
+```toml title="params.toml"
+[meta]
+name = "terzaghi-bearing-capacity"
+description = "Ultimate bearing capacity using Terzaghi's 1943 equation"
+discipline = "ground"
+category = "shallow-foundations"
+standards = ["Terzaghi (1943)"]
+tool_mode = "with-tool"
+
+[params.cohesion_kpa]
+type = "float"
+unit = "kPa"
+description = "Effective cohesion c'"
+min = 0
+max = 150
+derivable_from = "archetype"
+
+[params.friction_angle_deg]
+type = "float"
+unit = "degrees"
+description = "Effective friction angle phi'"
+min = 0
+max = 50
+derivable_from = "archetype"
+
+[params.footing_width_m]
+type = "float"
+unit = "m"
+description = "Footing width B"
+min = 0.5
+max = 10.0
+
+[params.footing_shape]
+type = "enum"
+description = "Footing shape"
+values = ["strip", "square", "circular"]
+```
+
+Parameters have three types:
+
+| Type | What it does | Example |
+|------|-------------|---------|
+| `float` | Sampled uniformly between `min` and `max` | Cohesion: 0–150 kPa |
+| `int` | Integer sampled between `min` and `max` | Number of piles: 2–12 |
+| `enum` | Randomly chosen from `values` list | Footing shape: strip, square, circular |
+
+Parameters marked `derivable_from = "archetype"` get their ranges from the selected archetype rather than the global min/max.
+
+### Archetypes
+
+Archetypes represent realistic site conditions. They narrow parameter ranges to values that make engineering sense together:
+
+```toml title="params.toml (archetypes)"
+[archetypes.soft_nc_clay]
+description = "Soft normally consolidated clay"
+cohesion_kpa = {min = 5, max = 15}
+friction_angle_deg = {min = 0, max = 5}
+unit_weight_kn_m3 = {min = 15, max = 17}
+site_contexts = ["brisbane-alluvial", "darwin-estuarine"]
+
+[archetypes.dense_sand]
+description = "Dense sand"
+cohesion_kpa = {min = 0, max = 0}
+friction_angle_deg = {min = 36, max = 42}
+unit_weight_kn_m3 = {min = 19, max = 21}
+site_contexts = ["perth-coastal", "cairns-coral"]
+```
+
+Without archetypes, you'd get nonsensical combinations — a soil with high cohesion *and* high friction angle, which doesn't occur in nature. Archetypes enforce geotechnical reality.
+
+### Difficulty presets
+
+Difficulty controls two things: which archetypes are available and how much information the agent gets.
+
+```toml title="params.toml (difficulty)"
+[difficulty.easy]
+description = "All parameters given, strip footing, no water table"
+visibility = "all_given"
+archetypes = ["medium_dense_sand", "stiff_oc_clay"]
+
+[difficulty.hard]
+description = "Some soil parameters hidden, water table present"
+visibility = "partial"
+hidden_params = ["cohesion_kpa", "friction_angle_deg", "unit_weight_kn_m3"]
+replacement_text = "The foundation soil is {{ archetype.description }}"
+archetypes = ["soft_nc_clay", "medium_dense_sand", "stiff_oc_clay", "dense_sand"]
+```
+
+Three visibility levels:
+
+| Visibility | What the agent sees |
+|------------|-------------------|
+| `all_given` | Every parameter value is in the prompt |
+| `partial` | Some parameters hidden — agent must infer from context |
+| `scenario_only` | Only a narrative description — no numerical parameters |
+
+At `hard` difficulty, the agent doesn't get `cohesion_kpa = 12`. It gets *"The foundation soil is soft normally consolidated clay (Brisbane alluvial)"* and has to know what values to use.
+
+### instruction.md
+
+A Jinja2 template that renders into the final prompt. Conditional blocks handle parameter visibility:
+
+```markdown title="instruction.md"
+## Given
+
+| Parameter | Value | Unit |
+|-----------|-------|------|
+| Footing shape | {{ footing_shape }} | - |
+| Footing width (B) | {{ footing_width_m }} | m |
+{% if cohesion_kpa is defined %}
+| Effective cohesion (c') | {{ cohesion_kpa }} | kPa |
+{% endif %}
+{% if archetype_description is defined %}
+
+### Site Conditions
+
+{{ archetype_description }}
+{% endif %}
+```
+
+When parameters are hidden at harder difficulty levels, their `{% if ... is defined %}` blocks are skipped and the archetype description appears instead.
+
+### engine.py
+
+The computation engine calculates ground truth from the sampled parameters. It's used both for verifier generation and for validating that the template produces solvable problems.
+
+```python title="engine.py (excerpt)"
+# Terzaghi bearing capacity factors — interpolated from standard tables
+_FACTOR_TABLE = [
+    (0, 5.7, 1.0, 0.0),
+    (5, 7.3, 1.6, 0.5),
+    (10, 9.6, 2.7, 1.2),
+    # ...
+]
+
+_SHAPE_FACTORS = {
+    "strip": (1.0, 0.5),
+    "square": (1.3, 0.4),
+    "circular": (1.3, 0.3),
+}
+```
+
+## Generating instances
+
+Use the CLI to generate task instances from a template:
+
+```bash
+# Generate 5 easy instances from the terzaghi template
+aec-bench generate task terzaghi-bearing-capacity \
+    --instances 5 \
+    --difficulty easy \
+    --seed 42
+```
+
+```bash
+# List all available templates
+aec-bench generate list-templates
+```
+
+```bash
+# Validate a custom template before using it
+aec-bench generate validate-template --template ./my-template/
+```
+
+Options:
+
+| Flag | What it does |
+|------|-------------|
+| `--instances N` | Number of instances to generate (default: 3) |
+| `--difficulty` | Comma-separated difficulty levels (default: all) |
+| `--seed` | Random seed for reproducible sampling |
+| `--output` | Output directory (default: `./tasks/`) |
+| `--tool-mode` | Override template's tool availability |
+| `--dry-run` | Show what would be generated without writing files |
+
+Each generated instance gets a `source_task.json` linking it back to the template, sampled parameters, and seed — full provenance for reproducibility.
+
+## Built-in templates
+
+aec-bench ships with templates across three disciplines:
+
+| Discipline | Templates |
+|------------|----------|
+| Ground | Terzaghi bearing capacity, Meyerhof bearing capacity, SPT corrections, infinite slope, consolidation settlement, immediate settlement, lateral earth pressure, CPT parameter derivation, wall bearing, wall overturning |
+| Electrical | Cable ampacity, string sizing, AC resistance temperature, static thermal rating, Cv liquid incompressible |
+| Civil | (in development) |
+
+## Writing your own
+
+A template needs three files in a directory:
+
+1. **params.toml** — metadata, parameters with types and ranges, archetypes, difficulty presets
+2. **instruction.md** — Jinja2 template using `{{ param_name }}` placeholders and `{% if param is defined %}` conditionals
+3. **engine.py** — Python module that computes ground truth from sampled parameters
+
+Validate your template before generating:
+
+```bash
+aec-bench generate validate-template --template ./my-template/
+```
+
+The validator checks that all parameters referenced in the instruction template exist in params.toml, all archetypes reference valid parameters, and the engine produces consistent results across multiple seeds.

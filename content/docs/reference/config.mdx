@@ -1,0 +1,276 @@
+---
+title: Config
+description: aec-bench's configuration is split across several TOML and YAML files, each living near the concept it configures.
+---
+
+This page is the structural reference. Narrative docs for each concept live under [Core](/docs/core/tasks), [Agents](/docs/agents/configuration), and [Advanced](/docs/advanced/evolution).
+
+## `aec-bench.toml` — project root
+
+Defines paths and defaults for a project. Placed at the repo root.
+
+```toml
+[project]
+name = "my-bench"
+
+[paths]
+tasks      = "tasks"
+templates  = "templates"
+seeds      = "seeds"
+ledger     = "artefacts/ledger"
+feedback   = "artefacts/feedback"
+datasets   = "artefacts/datasets"
+jobs       = "jobs"
+
+[compute]
+backend = "modal"
+```
+
+All paths are relative to the project root. Omitted keys fall back to the defaults above.
+
+## `task.toml` — per task
+
+Every task directory has one. Full schema:
+
+```toml
+version = "1.0"
+
+[metadata]
+difficulty = "easy"              # easy | medium | hard
+visibility = "public"            # public | holdout
+category   = "reasoning"
+tags       = ["electrical", "AS-NZS-3008"]
+
+[agent]
+timeout_sec = 600.0
+
+[verifier]
+timeout_sec = 300.0
+
+[environment]
+extensions         = []
+build_timeout_sec  = 600.0
+cpus               = 2
+memory_mb          = 4096
+storage_mb         = 10240
+allow_internet     = true
+```
+
+See [Tasks](/docs/core/tasks) for what lives alongside `task.toml` in a task directory.
+
+## `experiment.yaml` — per run
+
+A single experiment: which tasks, which agents, how to run them.
+
+```yaml
+experiment_id: exp-20260412-001
+name: "Claude vs GPT electrical"
+description: "Optional narrative description"
+
+tasks:
+  dataset: electrical-v1@1.0.0
+  include_patterns: ["electrical/*"]
+  exclude_patterns: []
+  domains:      ["electrical"]
+  difficulties: ["easy", "medium"]
+
+agents:
+  - name: claude-tool-loop
+    adapter: tool_loop
+    model: claude-sonnet-4-20250514
+    parameters:
+      max_turns: 12
+    system_prompt_file: prompts/electrical.md   # optional
+
+  - name: gpt4-direct
+    adapter: direct
+    model: gpt-4.1
+    parameters:
+      max_tokens: 8192
+
+compute:
+  backend: modal
+  resource_limits:
+    timeout_override: 1200
+    memory_mb: 8192
+
+repetitions: 3
+disable_verification: false
+```
+
+The `model` field supports `$ENV_VAR` expansion. The `tasks` selector filters by dataset, patterns, domain, and difficulty — all are optional, applied as set intersections.
+
+## Adapter configs
+
+### `rlm.toml`
+
+Adapter-specific config for RLM runs:
+
+```toml
+[template]
+tier       = "flat"              # flat | dependency_tree
+definition = "report_template.toml"   # optional reference
+
+[inputs.source_doc]
+type        = "string"
+source      = "fixtures/spec.md"
+pre_parse   = false
+description = "Reference specification"
+
+[hints]
+phases     = ["understand", "calculate", "verify"]
+prohibited = ["guess", "skip_verification"]
+
+[subcalls.extract]
+enabled     = true
+custom_impl = null
+description = "Pull values from source doc"
+
+[guardrails]
+token_budget         = 500_000
+max_iterations       = 100
+max_subcall_depth    = 1
+budget_warning_pct   = 80.0
+max_subcalls         = 0          # 0 = unlimited
+max_budget_usd       = 0.0
+billable_input_budget = 0
+
+[execution]
+scaffolding              = true
+compaction_threshold_pct = 0.85
+hard_ceiling_pct         = 0.95
+compaction_model         = null   # null = use agent's model
+subcall_model            = null
+context_limit            = 1_000_000
+max_parallel_workers     = 4
+
+[advisor]
+model               = "claude-haiku-4-5-20251001"
+max_uses            = 5
+max_response_tokens = 500
+context_window      = 10
+enabled             = true
+```
+
+### `lambda-rlm.toml`
+
+```toml
+[template]
+tier       = "dependency_tree"
+definition = null
+
+[planner]
+context_window_chars  = 100_000
+accuracy_target       = 0.80
+leaf_accuracy         = 0.95
+compose_accuracy      = 0.90
+max_branching_factor  = 20
+
+[review]
+enabled                     = true
+max_retries_per_source      = 1
+max_supplements_per_section = 1
+
+[execution]
+max_parallel_workers = 4
+
+[guardrails]
+token_budget = 500_000
+
+[advisor]
+model   = "claude-haiku-4-5-20251001"
+enabled = true
+```
+
+## `evolution.yaml`
+
+Drives the evolution loop (see [Evolution](/docs/advanced/evolution)):
+
+```yaml
+workspace_path: workspaces/voltage-drop-evo
+
+models:
+  classifier: env:AWS_HAIKU_MODEL_ID
+  evolver:    env:AWS_SONNET_MODEL_ID
+
+solver:
+  name: solver-v1
+  adapter: rlm
+  model: env:AWS_SONNET_MODEL_ID
+  client:
+    kind: bedrock
+    settings: {}
+
+generate:
+  template: voltage-drop
+  count: 10
+  seed: 999
+  difficulties: ["easy", "medium"]
+
+tasks:
+  domains: [electrical]
+  include_patterns: ["electrical/*"]
+  exclude_patterns: []
+
+backend: local
+batch_size: 5
+max_cycles: 10
+improvement_threshold: 0.01
+stagnation_window: 5
+timeout: 1800
+harness_config: experiment.yaml      # optional
+```
+
+## `suite.toml` — template registry
+
+Declares which templates and seed sets a project uses:
+
+```toml
+[template_suite.voltage-drop]
+template_name       = "voltage-drop"
+versions            = ["1.0.0", "1.1.0"]
+difficulty_presets  = ["easy", "medium", "hard"]
+
+[seed_spec.my-seed]
+domains     = ["electrical"]
+task_types  = ["single-step"]
+count       = 5
+```
+
+## Dataset manifest
+
+Dataset manifests are **generated** by `aec-bench dataset create`, not hand-written. The structure is still worth knowing for tooling:
+
+```json
+{
+  "name": "electrical-v1",
+  "version": "1.0.0",
+  "content_hash": "sha256:...",
+  "created_at": "2026-04-12T00:00:00Z",
+  "description": {
+    "summary": "...",
+    "purpose": "...",
+    "standards": ["AS/NZS 3008"],
+    "domains": ["electrical"],
+    "difficulty_distribution": { "easy": 3, "medium": 3 },
+    "task_count": 6
+  },
+  "tasks": [
+    {
+      "task_id": "electrical.voltage-drop.basic",
+      "task_path": "tasks/electrical/voltage-drop",
+      "content_hash": "sha256:...",
+      "domain": "electrical",
+      "difficulty": "easy",
+      "tags": ["deterministic", "AS-NZS-3008"]
+    }
+  ],
+  "source": {
+    "method": "manual",
+    "suite_config": {},
+    "seed": null
+  }
+}
+```
+
+See [Datasets](/docs/advanced/datasets) for the content hashing and versioning policy.

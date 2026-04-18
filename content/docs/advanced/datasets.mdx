@@ -1,0 +1,112 @@
+---
+title: Datasets
+description: A dataset is a versioned, content-hashed snapshot of a task collection that anchors comparable leaderboard results.
+---
+
+Leaderboard entries reference a specific dataset version (e.g. `electrical-v1@1.0.0`) so scores remain comparable even as tasks evolve.
+
+## Anatomy
+
+A dataset lives under a versioned path:
+
+```
+datasets/
+└── electrical-v1/
+    └── 1.0.0/
+        └── manifest.json
+```
+
+The manifest pins every task the dataset contains:
+
+```json
+{
+  "name": "electrical-v1",
+  "version": "1.0.0",
+  "content_hash": "sha256:9b2f...a1c0",
+  "description": {
+    "summary": "Electrical engineering benchmark — voltage drop, cable sizing, compliance.",
+    "purpose": "Baseline evaluation for AS/NZS 3008 tasks.",
+    "domains": ["electrical"],
+    "difficulty_distribution": { "easy": 3, "medium": 3 },
+    "standards": ["AS/NZS 3008"],
+    "task_count": 6
+  },
+  "tasks": [
+    {
+      "task_id": "electrical.voltage-drop.basic",
+      "task_path": "tasks/electrical/voltage-drop",
+      "content_hash": "sha256:a4b1...7fd2",
+      "domain": "electrical",
+      "difficulty": "easy",
+      "tags": ["deterministic", "AS-NZS-3008"]
+    }
+  ],
+  "source": {
+    "method": "manual",
+    "template_versions": {}
+  }
+}
+```
+
+The `source` field tracks provenance — whether the dataset was assembled from a suite config, manually curated, or imported from an external source.
+
+## Content hashing
+
+Content hashes apply at two levels:
+
+1. **Per task** — each task directory (instruction, config, environment, verifier) is hashed recursively
+2. **Per manifest** — the dataset hash combines every task hash into a single SHA256
+
+Change a single comment in one task's verifier and both hashes change. The leaderboard refuses to aggregate runs that don't match the recorded manifest hash.
+
+## Referencing datasets
+
+Experiment manifests select tasks by dataset reference:
+
+```toml
+# experiment.toml
+[tasks]
+dataset = "electrical-v1@1.0.0"
+difficulties = ["easy", "medium"]
+```
+
+The selector resolves the manifest, intersects the task list with any additional filters (difficulty, tags, domain), and hands the result to the scheduler. Using a version like `@1.0.0` pins the run; using `@latest` moves with new releases.
+
+## Creating a dataset
+
+A dataset can be created from any set of task directories:
+
+```python
+from aec_bench.datasets import create_dataset_from_tasks
+
+manifest = create_dataset_from_tasks(
+    name="electrical-v1",
+    version="1.0.0",
+    task_paths=[
+        "tasks/electrical/voltage-drop",
+        "tasks/electrical/cable-sizing",
+        # ...
+    ],
+    description={
+        "summary": "Electrical engineering benchmark.",
+        "purpose": "Baseline evaluation for AS/NZS 3008 tasks.",
+        "standards": ["AS/NZS 3008"],
+    },
+    source={"method": "manual"},
+)
+# → writes datasets/electrical-v1/1.0.0/manifest.json
+```
+
+The creator hashes each task directory, computes the manifest hash, and writes the manifest — nothing is mutated in the original task directories.
+
+## Versioning policy
+
+Datasets follow semver-like discipline:
+
+| Change | Bump |
+|--------|------|
+| Adding a task | minor (`1.0.0 → 1.1.0`) |
+| Changing a task's content | major (`1.0.0 → 2.0.0`) |
+| Editing description metadata (non-content) | patch (`1.0.0 → 1.0.1`) |
+
+Content changes **always** bump major because they invalidate previous results — a reward from `1.0.0` is not comparable to one from `2.0.0` even if the task is nominally the same.

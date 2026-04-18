@@ -1,0 +1,86 @@
+---
+title: Traces
+description: A trace is the per-turn trajectory and sealed trial record produced by every aec-bench run, stored in an append-only ledger.
+---
+
+## The trajectory
+
+During execution, the adapter appends to `/workspace/trajectory.jsonl` — one entry per turn, flushed immediately so a crashed run still leaves a readable partial file:
+
+```jsonl
+{"version": 1, "format": "aec-bench-trajectory"}
+{"role": "system", "step": 0, "content": "You are a senior electrical engineer..."}
+{"role": "user", "step": 1, "content": "Calculate voltage drop..."}
+{"role": "assistant", "step": 2, "content": "I'll compute R and X contributions..."}
+{"role": "tool_call", "step": 2, "content": "{\"tool\": \"bash\", \"command\": \"python calc.py\"}"}
+{"role": "tool_result", "step": 2, "content": "V_drop = 5.2V", "metadata": {"exit_code": 0, "duration_ms": 142}}
+{"role": "assistant", "step": 3, "content": "Writing result to output.jsonl..."}
+```
+
+Each entry carries `role`, `step`, `content`, and `timestamp`. Tool results add structured metadata (exit codes, duration, any captured media). The schema is small on purpose — trajectories are primary evidence and should be cheap to parse.
+
+## The trial record
+
+Once evaluation finishes, the harness assembles a `TrialRecord` — the permanent, self-contained record of one agent run:
+
+```python
+class TrialRecord(StrictModel):
+    trial_id: NonEmptyStr
+    experiment_id: NonEmptyStr
+    timestamp: datetime
+
+    task: TaskReference              # task_id + content hash
+    agent: AgentReference            # adapter, model, configuration
+
+    environment: EnvironmentSnapshot # Docker image, compute backend
+    inputs: InputRecord              # instruction, system prompt, files
+    outputs: OutputRecord            # agent output + trajectory paths
+    evaluation: EvaluationResult
+
+    timing: TimingRecord             # wall-clock per phase
+    cost: CostRecord | None          # tokens + estimated USD
+    completeness: Completeness       # complete | partial
+```
+
+Everything needed to reproduce the run is pinned by hash:
+
+- **Task hash** — the exact contents of `task.toml`, `instruction.md`, the environment definition, and the verifier at run time
+- **Agent hash** — adapter version + resolved model ID + effective configuration
+- **Input hashes** — every file staged into the container
+- **Environment snapshot** — Docker image digest and compute backend identifier
+
+If any of these change later, the hashes diverge and the old trial cannot be reproduced from the new artefacts.
+
+## Completeness
+
+Trial records have two states:
+
+| State | Meaning |
+|-------|---------|
+| `partial` | Written during execution. Some provenance fields may be missing. |
+| `complete` | Sealed after evaluation with full hashes. Eligible for the ledger. |
+
+Only `complete` records can be promoted to the official ledger. Partial records are kept for debugging, but they can't back a leaderboard number.
+
+## Cost tracking
+
+Each trial optionally records token usage and an estimated USD cost:
+
+```python
+class CostRecord(StrictModel):
+    tokens_in: int | None
+    tokens_out: int | None
+    cache_read_tokens: int | None
+    cache_write_tokens: int | None
+    estimated_cost_usd: float | None
+```
+
+These feed the leaderboard's cost-efficiency view and surface runaway agents before they hit the budget guardrails.
+
+## The ledger
+
+Completed trial records are **append-only**. Once written to the ledger, a trial record is never modified. New information attaches through new records (re-scoring runs, review annotations) that reference the original `trial_id`.
+
+## Inspecting a trace
+
+For quick diagnostics, the evaluation layer produces a trace summary with turn counts, tool errors, first error seen, and the behavioural classification described in [Classification](/docs/evaluation/classification). Full trajectories render in the trace viewer for step-by-step inspection.

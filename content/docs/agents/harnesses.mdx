@@ -1,0 +1,192 @@
+---
+title: Harnesses
+description: A harness is an adapter that executes a task — taking an instruction and tools, driving the agent, and returning an output file plus a transcript.
+---
+
+Four harnesses ship built in. They all implement the same protocol, so a task can be run with any of them without modification.
+
+## The protocol
+
+An adapter takes a request and returns a result:
+
+```python
+class Adapter(Protocol):
+    def execute(self, request: AdapterRequest) -> AdapterResult: ...
+    def adapter_name(self) -> str: ...
+    def resolved_model(self) -> str: ...
+```
+
+The `AdapterRequest` carries everything the harness needs — the instruction, an optional system prompt, declared tools, adapter-specific config, and where to write output:
+
+```python
+class AdapterRequest:
+    instruction: str
+    system_prompt: str | None
+    tools: list[ToolSpec]
+    configuration: dict[str, Any]
+    output_path: str              # defaults to /workspace/output.jsonl
+    output_format: str            # "jsonl", "markdown", "json"
+```
+
+The `AdapterResult` captures what happened — the output envelope, the full transcript, any failure classification, and token usage:
+
+```python
+class AdapterResult:
+    adapter_name: str
+    resolved_model: str
+    agent_output: AgentOutput
+    transcript: list[TranscriptEntry]
+    failure_kind: AdapterFailureKind | None
+    usage_input_tokens: int | None
+    usage_output_tokens: int | None
+    # + cache usage, raw output, provider error
+```
+
+## Choosing a harness
+
+| Harness | Turns | Tools | Best for |
+|---------|-------|-------|----------|
+| **Direct** | 1 | — | Classification, extraction, simple generation |
+| **Tool Loop** | N | Whitelist | Shell execution, search, general tool use |
+| **RLM** | Recursive | Python REPL | Iterative analysis, multi-step reasoning |
+| **Lambda-RLM** | 5-phase pipeline | Extract + generate | Structured reports, known workflows |
+
+## Direct
+
+The simplest harness. One LLM call, no tools, one response. Good for tasks where the agent just needs to read the instruction and produce an answer.
+
+```python
+result = direct_adapter.execute(
+    AdapterRequest(
+        instruction="Classify this beam as simply-supported or cantilever...",
+        configuration={"max_tokens": 8192},
+    )
+)
+```
+
+Direct **ignores any tools declared in the task** — it only sees the instruction. If the task needs tool use, pick Tool Loop.
+
+## Tool Loop
+
+The workhorse for tasks with tools. The adapter runs a multi-turn loop: model produces a tool call, harness executes it, result goes back to the model, repeat until the model writes output or hits `max_turns` (default 8).
+
+```toml
+adapter = "tool_loop"
+model = "claude-sonnet-4"
+
+[configuration]
+max_turns = 12
+```
+
+Tool Loop enforces a **strict whitelist**: it can only call tools declared in the task's `tools` list. An undeclared tool request fails the run with `UNDECLARED_TOOL_REQUEST` — this stops silent drift where an agent invents a tool the task never allowed.
+
+A typical turn sequence for the voltage-drop task:
+
+```
+user:      "Calculate voltage drop using bash and the supplied cable data."
+assistant: [tool_call: bash, command: "python voltage_calc.py"]
+tool:      [stdout: "V_drop = 5.2V (compliant)"]
+assistant: [writes /workspace/output.jsonl]
+```
+
+## RLM (Recursive Language Model)
+
+Based on [Recursive Language Models](https://arxiv.org/abs/2512.24601) (Zhang, Kraska, Khattab et al., 2025). For tasks that need **persistent state across turns**. RLM gives the model a sandboxed Python REPL with helper functions — it can read files, run calculations, take notes, and reference variables across steps.
+
+```toml
+# rlm.toml
+[guardrails]
+token_budget = 100_000
+max_iterations = 20
+max_subcall_depth = 3
+
+[execution]
+context_limit = 1_000_000
+compaction_threshold_pct = 0.85
+```
+
+Key features:
+
+- **REPL scratchpad** — `NOTE("key", value)` and `RECALL("key")` persist data between turns
+- **Helpers** — `HELP`, `DOCS`, `grep`, `extract`, `FINAL_VAR` make file and text handling easier
+- **Auto-compaction** — when context exceeds `compaction_threshold_pct`, older turns are summarised so the run can continue
+- **Budget guardrails** — `token_budget`, `max_iterations`, and `max_subcall_depth` stop runaway loops
+
+RLM fits report generation, iterative data analysis, or any task where the agent needs to reason over a document in chunks.
+
+## Lambda-RLM
+
+A deterministic pipeline rather than a free-form loop. Lambda-RLM breaks work into five phases and executes them in order:
+
+1. **Plan** — build an extraction schedule from the report template
+2. **Extract** — pull required facts from source documents
+3. **Review** *(optional)* — check extraction against contract requirements
+4. **Generate** — produce prose per section
+5. **Output** — assemble the final document
+
+```toml
+# lambda-rlm.toml
+[planner]
+context_window_chars = 200_000
+max_branching_factor = 4
+
+[review]
+enabled = true
+max_retries = 2
+
+[budget]
+token_budget = 500_000
+```
+
+Use Lambda-RLM when the output has a **known structure** — SOWs, compliance reports, templated proposals. The planner optimises for cost (fewer extractions, better context packing) at the expense of flexibility.
+
+## Tools
+
+Harnesses that support tools (Tool Loop, RLM) receive a list of `ToolSpec` from the task:
+
+```python
+class ToolSpec(StrictModel):
+    name: NonEmptyStr
+    source: str             # relative path in the task dir
+    description: NonEmptyStr
+    returns_image: bool = False
+```
+
+Each name resolves to a `ToolExecutor` in the adapter's tool registry:
+
+```python
+class ToolExecutor(Protocol):
+    def execute(self, tool_name: str, arguments: dict[str, Any]) -> ToolExecutionResult: ...
+```
+
+The **`bash`** executor ships built in — it runs shell commands in the staged workspace and returns stdout, stderr, and exit code (default timeout 30s). Custom tools register by name against the same protocol.
+
+## Failure modes
+
+When something goes wrong, the result's `failure_kind` tells you which category:
+
+| Kind | Meaning |
+|------|---------|
+| `PROVIDER_ERROR` | LLM API returned an error (rate limit, 5xx) |
+| `TURN_LIMIT_REACHED` | Tool Loop exhausted `max_turns` without output |
+| `TIMEOUT` | Adapter exceeded the wall-clock budget |
+| `UNDECLARED_TOOL_REQUEST` | Agent tried to use a tool not in the task's whitelist |
+| `TOOL_EXECUTION_FAILED` | A tool call raised an error (non-zero exit, exception) |
+| `MISSING_OUTPUT` | Adapter finished but no output file was written |
+
+The evaluation pipeline treats any `failure_kind` as a structural failure — reward is **0.0**, regardless of how close the transcript got.
+
+## Transcripts
+
+Every run writes a JSONL trajectory to `/workspace/trajectory.jsonl`, one entry per turn, flushed immediately:
+
+```jsonl
+{"version": 1, "format": "aec-bench-trajectory"}
+{"role": "system", "step": 0, "content": "..."}
+{"role": "user", "step": 1, "content": "Calculate voltage drop..."}
+{"role": "assistant", "step": 2, "content": "I'll run the calculation..."}
+{"role": "tool_call", "step": 2, "content": "{\"tool\": \"bash\", \"command\": \"python ...\"}"}
+{"role": "tool_result", "step": 2, "content": "V_drop = 5.2V"}
+```
+
+Because entries are flushed per turn, a crashed run still leaves a readable partial trajectory. Trajectories feed the trace viewer and behavioural classification (see [Evaluation](/docs/evaluation/scoring)).

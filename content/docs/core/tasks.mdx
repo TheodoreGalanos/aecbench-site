@@ -1,0 +1,192 @@
+---
+title: Tasks
+description: A task is a self-contained engineering problem — prompt, environment, and verifier — that an agent attempts and the system scores.
+---
+
+aec-bench currently includes **247 tasks** across five engineering disciplines:
+
+| Discipline | Tasks | Examples |
+|------------|------:|---------|
+| Electrical | 79 | Voltage drop, cable sizing, arc flash, lighting design |
+| Mechanical | 74 | HVAC sizing, fire protection, piping, acoustics |
+| Civil | 50 | Road geometry, drainage, hydraulics, earthworks |
+| Structural | 39 | Concrete beam design, seismic analysis, connections |
+| Ground | 5 | Bearing capacity, slope stability, settlement |
+
+## Anatomy of a task
+
+Every task is a directory with four parts:
+
+```
+tasks/electrical/voltage-drop/
+├── task.toml          # metadata and resource limits
+├── instruction.md     # the prompt sent to the agent
+├── environment/
+│   └── Dockerfile     # container the agent runs in
+├── solution/
+│   └── solve.py       # reference solution (not sent to agent)
+└── tests/
+    ├── verify.py      # scoring script
+    └── fixtures/      # golden pass/fail examples for verifier testing
+        ├── golden_pass.md
+        └── golden_fail.md
+```
+
+### The prompt
+
+`instruction.md` is the complete, self-contained prompt. The agent sees this and nothing else. No hidden context, no follow-up clarifications.
+
+```markdown title="instruction.md (voltage drop task)"
+You are a senior electrical engineer specializing in building services.
+
+## Problem
+Calculate the voltage drop for a three-phase cable circuit using the
+impedance method, and determine whether it complies with the maximum
+allowable voltage drop limit.
+
+## Given
+| Parameter | Value | Unit |
+|-----------|-------|------|
+| Load current | 45 | A |
+| Cable length (one way) | 80 | m |
+| Cable resistance (R) | 0.524 | ohm/km |
+| Cable reactance (X) | 0.08 | ohm/km |
+| Power factor (cos phi) | 0.85 | - |
+| System voltage (line-to-line) | 400 | V |
+| Maximum allowable voltage drop | 5 | % |
+
+## Required
+Calculate the following:
+- Voltage drop (V)
+- Voltage drop as a percentage of system voltage (%)
+- Compliance with the 5% limit (1 if compliant, 0 if not)
+```
+
+### The configuration
+
+`task.toml` describes metadata and resource limits — not the problem itself. The schema follows the [Harbor framework](https://github.com/harbor-ai/harbor) task specification, so tasks are compatible with Harbor's orchestration and container runtime out of the box.
+
+```toml title="task.toml"
+version = "1.0"
+
+[metadata]
+difficulty = "easy"
+category = "reasoning"
+tags = ["electrical", "buildings-electrical", "deterministic", "AS-NZS-3008"]
+
+[agent]
+timeout_sec = 600.0
+
+[verifier]
+timeout_sec = 120.0
+
+[environment]
+cpus = 1
+memory_mb = 2048
+```
+
+### The environment
+
+Each task provides a `Dockerfile` that defines the container the agent runs in. This is typically minimal — just the tools the task requires:
+
+```dockerfile title="environment/Dockerfile"
+FROM --platform=linux/amd64 ubuntu:24.04
+
+RUN apt-get update && apt-get install -y \
+    python3 \
+    bc \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace
+```
+
+Some tasks stage input files (spreadsheets, CAD data, code standards) into the container via `fixtures/` directories. The agent can read these files but doesn't know they're staged — they look like files on disk.
+
+### The verifier
+
+`verify.py` is the scoring script. It computes ground truth independently, reads the agent's output, and produces a reward (0.0–1.0) plus per-field details.
+
+Here's the core scoring logic from the voltage drop verifier:
+
+```python title="tests/verify.py"
+def compute_ground_truth() -> dict[str, float]:
+    """Compute expected answers from three-phase voltage drop formula."""
+    current = 45.0
+    L = 80.0       # cable length (m)
+    R = 0.524      # resistance (ohm/km)
+    X = 0.08       # reactance (ohm/km)
+    pf = 0.85      # power factor
+    V = 400.0      # system voltage (V)
+
+    sin_phi = math.sin(math.acos(pf))
+    Vd = math.sqrt(3) * current * L * (R * pf + X * sin_phi) / 1000
+    Vd_pct = Vd / V * 100
+    compliance = 1.0 if Vd_pct <= 5.0 else 0.0
+
+    return {
+        "voltage_drop_v": Vd,
+        "voltage_drop_pct": Vd_pct,
+        "compliance": compliance,
+    }
+```
+
+The verifier writes two files:
+- `reward.json` — the headline score: `{"reward": 0.67}`
+- `details.json` — per-field breakdown: `{"voltage_drop_v": 1.0, "voltage_drop_pct": 1.0, "compliance": 0.0}`
+
+Each field is scored independently with configurable tolerances. Numerical fields typically allow 3% relative tolerance; boolean/categorical fields require an exact match.
+
+### Golden fixtures
+
+Every verifier ships with test fixtures — a `golden_pass.md` that should score 1.0 and a `golden_fail.md` that should score less. These are used to test the verifier itself, not the agent.
+
+```markdown title="fixtures/golden_pass.md (excerpt)"
+## Step 2: Voltage Drop
+Vd = sqrt(3) x 45 x 80 x (0.524 x 0.85 + 0.08 x 0.5268) / 1000
+Vd = 3.0400 V
+
+## Step 3: Percentage
+Vd% = 3.0400 / 400 x 100 = 0.7600%
+```
+
+## Task lifecycle
+
+Tasks move through four stages: `proposed` → `active` → `deprecated` → `retired`.
+
+- **Proposed** — draft task, under review. Not runnable.
+- **Active** — production benchmark. Included in datasets and reports.
+- **Deprecated** — superseded by a better version but still runnable for historical comparison.
+- **Retired** — permanently archived. Not runnable.
+
+Separately, tasks can be **public** (appears in reports and leaderboard) or **holdout** (runs but results are hidden). Holdout tasks are used for anti-contamination testing — if a model scores suspiciously well on holdout tasks it hasn't seen, that's a red flag.
+
+## Task categories
+
+Categories describe the type of cognitive work a task demands. They're a free-form string — the ones below are used in the current benchmark, but you can define your own when contributing tasks. Use the one that best describes the *primary* cognitive demand.
+
+| Category | What the agent does |
+|----------|-------------------|
+| `reasoning` | Apply formulas and first principles to produce a numerical or boolean answer |
+| `audit` | Review an existing design for compliance with a code or standard |
+| `design` | Produce a design meeting given constraints (multiple valid solutions possible) |
+| `interpretation` | Extract structured information from raw technical data |
+
+## Difficulty levels
+
+Each task is rated `easy`, `medium`, or `hard`. Ratings are calibrated by domain experts against what a professional engineer at each level would be expected to handle.
+
+| Difficulty | Characteristics | Calibrated against |
+|------------|----------------|-------------------|
+| **Easy** | Single-step, all parameters given, clear formula | Junior engineer, no references needed |
+| **Medium** | Multi-step, some judgment, may need standard lookups | Intermediate engineer |
+| **Hard** | Complex analysis, multiple variables, judgment critical | Senior engineer |
+
+## Seed tasks vs generated instances
+
+There are two ways tasks enter the benchmark:
+
+**Seed tasks** are hand-crafted by domain experts. Each one is a carefully designed problem with a custom verifier, reviewed for correctness and fairness. The 247 current tasks are all seeds.
+
+**Generated instances** come from parameterised templates. A template defines the problem structure with variable parameters, and the generator samples concrete values to create unlimited task instances. See [Templates](/docs/core/templates) for how this works.
+
+Generated instances have a `source_task.json` linking them back to their template and sampled parameters. This preserves full provenance — you can always trace a generated instance back to the template that created it.

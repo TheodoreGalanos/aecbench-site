@@ -99,21 +99,21 @@ export function BenchmarkRunFlow() {
 
           <line
             x1="28.6"
-            y1="5"
+            y1="4"
             x2="35.1"
-            y2="5"
+            y2="4"
             stroke="#94a3b8"
-            strokeWidth="0.35"
+            strokeWidth="0.3"
             strokeLinecap="round"
             markerEnd="url(#benchmark-run-flow-arrow)"
           />
           <line
             x1="64.6"
-            y1="5"
+            y1="4"
             x2="71.1"
-            y2="5"
+            y2="4"
             stroke="#94a3b8"
-            strokeWidth="0.35"
+            strokeWidth="0.3"
             strokeLinecap="round"
             markerEnd="url(#benchmark-run-flow-arrow)"
           />
@@ -121,28 +121,28 @@ export function BenchmarkRunFlow() {
             d="M 86 8.8 V 13.4 H 14 V 17.4"
             fill="none"
             stroke="#94a3b8"
-            strokeWidth="0.35"
+            strokeWidth="0.3"
             strokeLinecap="round"
             strokeLinejoin="round"
             markerEnd="url(#benchmark-run-flow-arrow)"
           />
           <line
             x1="28.6"
-            y1="23"
+            y1="22"
             x2="35.1"
-            y2="23"
+            y2="22"
             stroke="#94a3b8"
-            strokeWidth="0.35"
+            strokeWidth="0.3"
             strokeLinecap="round"
             markerEnd="url(#benchmark-run-flow-arrow)"
           />
           <line
             x1="64.6"
-            y1="23"
+            y1="22"
             x2="71.1"
-            y2="23"
+            y2="22"
             stroke="#94a3b8"
-            strokeWidth="0.35"
+            strokeWidth="0.3"
             strokeLinecap="round"
             markerEnd="url(#benchmark-run-flow-arrow)"
           />

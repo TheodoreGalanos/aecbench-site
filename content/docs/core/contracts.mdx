@@ -1,0 +1,212 @@
+---
+title: Contracts
+description: Contracts are the Pydantic models that define the shape of data crossing every boundary in aec-bench.
+---
+
+import { ContractsFlow } from '@/components/docs/contracts-flow';
+
+The four core contracts — `TaskDefinition`, `AgentOutput`, `EvaluationResult`, `TrialRecord` — connect in sequence:
+
+<ContractsFlow />
+
+## TaskDefinition — what to solve
+
+A `TaskDefinition` is the complete description of a benchmark problem. It carries the prompt, the environment the agent runs in, and the script that scores the output.
+
+Here's a real example — a voltage drop calculation task:
+
+```toml title="tasks/electrical/voltage-drop/task.toml"
+version = "1.0"
+
+[metadata]
+difficulty = "easy"
+category = "reasoning"
+tags = ["electrical", "buildings-electrical", "deterministic", "AS-NZS-3008"]
+
+[agent]
+timeout_sec = 600.0
+
+[verifier]
+timeout_sec = 120.0
+
+[environment]
+extensions = []
+build_timeout_sec = 600.0
+cpus = 1
+memory_mb = 2048
+```
+
+The `instruction.md` alongside it contains the actual prompt:
+
+```markdown title="tasks/electrical/voltage-drop/instruction.md"
+You are a senior electrical engineer specializing in building services.
+
+## Problem
+
+Calculate the voltage drop for a three-phase cable circuit using the
+impedance method, and determine whether it complies with the maximum
+allowable voltage drop limit.
+
+## Given
+
+| Parameter | Value | Unit |
+|-----------|-------|------|
+| Load current | 45 | A |
+| Cable length (one way) | 80 | m |
+| Cable resistance (R) | 0.524 | ohm/km |
+| ...
+```
+
+Every task has three key pieces:
+
+- **Instruction** — the self-contained prompt sent to the agent
+- **Environment** — a Docker container with tools, fixtures, and resource limits
+- **Verifier** — a Python script that computes ground truth and scores the agent's output
+
+### Lifecycle and visibility
+
+Tasks have two independent axes that control when and where they appear:
+
+| | `public` | `holdout` |
+|---|---|---|
+| **`active`** | Standard benchmark task | Runs but hidden from reports (anti-contamination) |
+| **`deprecated`** | Still runnable, shown as superseded | Rarely used |
+
+`proposed` tasks aren't runnable yet. `retired` tasks are archived permanently.
+
+## AgentOutput — what came back
+
+When an adapter finishes executing, it returns an `AgentOutput` — a minimal envelope that says what the agent produced and where to find it:
+
+```python
+class AgentOutput(StrictModel):
+    status: AgentOutputStatus   # completed | partial | failed | empty
+    output_path: NonEmptyStr    # where the result file lives
+    output_format: NonEmptyStr  # "jsonl", "markdown", "json"
+    error_message: str | None   # what went wrong (if anything)
+```
+
+The adapter reports status and location; parsing the output file is the evaluation pipeline's job.
+
+## EvaluationResult — how it scored
+
+The evaluation pipeline reads the agent's output file, runs the task's verifier script, and produces an `EvaluationResult`:
+
+```python
+class EvaluationResult(StrictModel):
+    reward: float                # 0.0 to 1.0
+    validity: ValidityCheck      # did the output parse correctly?
+    breakdown: dict | None       # per-field scores
+    error_taxonomy: list | None  # classified errors
+    confidence: ConfidenceMetadata | None
+    annotations: list | None     # human review verdicts
+```
+
+The `reward` is a normalised score from 0.0 to 1.0. The supporting fields add diagnostic detail:
+
+**Validity** checks whether the output was structurally sound before scoring:
+
+```python
+class ValidityCheck(StrictModel):
+    output_parseable: bool    # could we read the file at all?
+    schema_valid: bool        # did it match the expected format?
+    verifier_completed: bool  # did the scoring script finish?
+    errors: list[str]         # what went wrong
+```
+
+**Breakdown** gives per-field scores. For the voltage drop task, this looks like:
+
+```json
+{
+  "voltage_drop_v": 0.95,
+  "voltage_drop_pct": 1.0,
+  "compliance": 1.0
+}
+```
+
+**One strict rule:** if the output isn't parseable, the reward is always 0.0. No partial credit for unreadable output.
+
+## TrialRecord — the permanent record
+
+A `TrialRecord` captures everything about one agent run — enough provenance to reproduce it from scratch.
+
+```python
+class TrialRecord(StrictModel):
+    trial_id: NonEmptyStr
+    experiment_id: NonEmptyStr
+    timestamp: datetime
+
+    # What was tested
+    task: TaskReference              # task_id + content hash
+    agent: AgentReference            # adapter, model, configuration
+
+    # How it ran
+    environment: EnvironmentSnapshot # Docker image, compute backend
+    inputs: InputRecord              # instruction, system prompt, files
+
+    # What happened
+    outputs: OutputRecord            # agent output + trajectory paths
+    evaluation: EvaluationResult     # the score
+
+    # Metadata
+    timing: TimingRecord             # wall-clock times per phase
+    cost: CostRecord | None          # tokens + estimated USD
+    completeness: Completeness       # complete | partial
+```
+
+Trial records are **immutable and append-only**. Once written to the ledger, they are never modified. This is the core reproducibility guarantee.
+
+A `complete` trial must include full provenance — adapter version hashes, tool versions, and input file hashes. Partial records are allowed during execution but cannot be promoted to the official ledger.
+
+### Cost tracking
+
+Every trial optionally records token usage and cost:
+
+```python
+class CostRecord(StrictModel):
+    tokens_in: int | None
+    tokens_out: int | None
+    cache_read_tokens: int | None
+    cache_write_tokens: int | None
+    estimated_cost_usd: float | None
+```
+
+This feeds into the leaderboard's cost-efficiency analysis — how much does it cost a model to achieve a given score?
+
+## ExperimentManifest — what to run
+
+An experiment defines which tasks to run, with which agents, how many times:
+
+```toml title="experiment.toml"
+experiment_id = "claude-vs-gpt-electrical"
+name = "Claude vs GPT on electrical tasks"
+repetitions = 3
+
+[tasks]
+dataset = "electrical-v1@1.0.0"
+difficulties = ["easy", "medium"]
+
+[[agents]]
+name = "claude-sonnet"
+adapter = "tool_loop"
+model = "$ANTHROPIC_MODEL"
+
+[[agents]]
+name = "gpt-4.1"
+adapter = "tool_loop"
+model = "gpt-4.1"
+
+[compute]
+backend = "local"
+```
+
+The `TaskSelector` supports filtering by dataset, domain, difficulty, and glob patterns. The `model` field supports `$ENV_VAR` references so you can keep API keys and model names out of config files.
+
+## Design rules
+
+A few principles that apply across all contracts:
+
+- **No extra fields** — `StrictModel` rejects any field not in the schema. This catches typos and version mismatches early.
+- **Non-empty strings** — the `NonEmptyStr` type prevents accidental blank values. A task with an empty `instruction` fails validation at load time, not at runtime.
+- **Relative paths** — all file paths in contracts are relative to the task directory. No absolute paths leak into the data model.
+- **Validators over conventions** — invariants like "unparseable output = reward 0.0" are enforced by Pydantic model validators, not by documentation.

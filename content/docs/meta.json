@@ -1,5 +1,5 @@
 {
   "root": true,
   "title": "aec-bench",
-  "pages": ["---Start---", "...start", "---Core---", "...core"]
+  "pages": ["---Start---", "...start", "---Core---", "...core", "---Agents---", "...agents", "---Evaluation---", "...evaluation", "---Advanced---", "...advanced", "---Reference---", "...reference"]
 }

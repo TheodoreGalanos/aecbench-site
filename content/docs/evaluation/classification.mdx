@@ -1,0 +1,70 @@
+---
+title: Classification
+description: Classification tags each assistant turn with a bond type and scores the trace against canonical high-reward sequences.
+---
+
+## The bond taxonomy
+
+Each assistant turn in a trajectory gets tagged with one of four **bond types** — an analogy borrowed from chemistry to describe how a turn "bonds" to the rest of the trace:
+
+| Bond | Chemical analogue | Behavioural shape | Typical signals |
+|------|-------------------|-------------------|-----------------|
+| **EXECUTION** | Covalent | Normal operation | tool calls, code execution, structured output |
+| **VERIFICATION** | Hydrogen | Self-reflection | result comparison, error checking, backward references |
+| **DELIBERATION** | Metallic | Deep reasoning | causal chains, committed plans, step-by-step logic |
+| **EXPLORATION** | Van der Waals | Hypothesising | hedging, alternatives, branching, open questions |
+
+A canonical successful sequence is `DELIBERATION → EXECUTION → VERIFICATION`. Deviations from this shape are reported by the structural score.
+
+## Turn classification
+
+A small LLM classifier reads the trajectory in batches (5 turns at a time) and emits a `TurnClassification` per assistant turn:
+
+```python
+class TurnClassification(StrictModel):
+    turn_index: int
+    bond_type: BondType           # EXECUTION | VERIFICATION | DELIBERATION | EXPLORATION
+    confidence: float             # 0.0–1.0
+    rationale: str                # why this bond was assigned
+```
+
+The classifier works from the structured trajectory when available and falls back to the raw conversation when not. Each classification carries its own confidence so low-certainty tags can be filtered out of aggregates.
+
+## Structural scoring
+
+Individual turn tags are only half the picture — the **sequence** of bonds is what characterises a run. Two metrics compare a trajectory against a reference built from high-reward trials:
+
+- **Transition matrix similarity** — cosine distance between the Markov transition matrices of the observed trace and the reference. Captures "which bonds follow which".
+- **Sequence edit distance** — how many insertions, deletions, and substitutions separate the observed bond sequence from the canonical one. Captures the overall narrative arc.
+
+A run can have the right bond counts but the wrong order (e.g. verifying before executing) — the structural score catches this where a simple tag histogram would not.
+
+## Confidence metadata
+
+Before a classification is trusted for aggregation, its statistical footing gets recorded:
+
+```python
+class ConfidenceMetadata(StrictModel):
+    annotator_count: int                          # how many raters
+    inter_rater_agreement: float                  # Cohen's kappa or % agreement
+    confidence_interval: tuple[float, float]      # Wilson CI bounds
+    confidence_method: str = "behavioral-turn-classifier"
+```
+
+Two standard statistical tools do the work:
+
+- **Cohen's kappa** measures inter-rater agreement above chance. Values above 0.8 indicate strong agreement; below 0.6 means the classification should not be trusted.
+- **Wilson confidence interval** gives a binomial CI for the success rate — tighter than the naive normal approximation at small sample sizes, which is exactly where behavioural data lives.
+
+## Judgment readiness
+
+Automated behavioural judgment is only trusted when four conditions hold:
+
+| Gate | Threshold | Why |
+|------|-----------|-----|
+| Annotator count | ≥ 2 | Single-rater classifications can't produce agreement stats |
+| Inter-rater agreement | ≥ 0.8 | Low agreement means raters — or the classifier — are inconsistent |
+| CI width | &lt; 0.2 | Wide intervals mean the sample isn't decisive |
+| Calibration sample size | ≥ 12 | Fewer than a dozen trials can't resist one odd run |
+
+If any gate fails, the classification is recorded but **not rolled into aggregate metrics**.

@@ -1,0 +1,148 @@
+---
+title: Environment
+description: aec-bench reads a handful of environment variables for credentials and runtime overrides, alongside a canonical on-disk project layout.
+---
+
+## `.env` loading
+
+aec-bench loads `.env` from the project root at CLI startup via `dotenv.load_dotenv()`. Anything set in the shell takes precedence; `.env` fills in the gaps.
+
+```bash
+# .env
+ANTHROPIC_API_KEY=sk-ant-...
+AZURE_OPENAI_API_KEY=...
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
+```
+
+Don't commit `.env` — the project template adds it to `.gitignore`.
+
+## Provider credentials
+
+Which variables are required depends on which models appear in your agent configs.
+
+| Variable | Used by | Notes |
+|----------|---------|-------|
+| `ANTHROPIC_API_KEY` | Claude models | Required for any `claude-*` model |
+| `AZURE_OPENAI_API_KEY` | Azure-routed OpenAI | Required alongside endpoint |
+| `AZURE_OPENAI_ENDPOINT` | Azure-routed OpenAI | Full URL to the resource |
+| `OPENAI_API_KEY` | OpenAI direct | Fallback when Azure isn't configured |
+| `AWS_BEARER_TOKEN_BEDROCK` | AWS Bedrock | For `bedrock` client kind |
+| `AWS_REGION` / `AWS_DEFAULT_REGION` | AWS Bedrock | Region selector |
+
+Model routing is prefix-based — see [Providers](/docs/agents/configuration#providers).
+
+## Agent runtime overrides
+
+The runtime that actually invokes an agent inside the container reads a few env vars, mostly for script-style and RLM adapters where arguments are passed through the environment rather than on a Python call:
+
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `AGENT_MODEL` | Model name override | — |
+| `AGENT_INSTRUCTION` | Task instruction (if not piped through files) | — |
+| `AGENT_MAX_TOKENS` | Max output tokens | `16384` |
+| `AGENT_MAX_TURNS` | Max turns in a multi-turn loop | `10` |
+| `AGENT_COMMAND_TIMEOUT` | Per-command timeout (seconds) | `120` |
+| `AGENT_TOOLS_JSON` | JSON array of tool specs | — |
+| `AGENT_API_VERSION` | Azure API version | `2024-10-21` |
+
+These are usually set by the harness automatically; you'd override them only for custom adapter shells.
+
+## Backend credentials
+
+| Variable | Backend | Notes |
+|----------|---------|-------|
+| `MODAL_TOKEN_ID`, `MODAL_TOKEN_SECRET` | Modal | Set via `modal token set` |
+| `HARBOR_ENDPOINT` | Harbor | Service URL |
+| `HARBOR_TOKEN` | Harbor | Auth token |
+
+Backend configs reference these with `$VAR` expansion so secrets never land in YAML.
+
+## File layout
+
+A project initialised with `aec-bench init` follows this layout:
+
+```
+project_root/
+├── aec-bench.toml              # project config
+├── suite.toml                  # template/seed registry (optional)
+├── .env                        # local secrets (gitignored)
+│
+├── tasks/                      # task catalog
+│   └── electrical/
+│       └── voltage-drop/
+│           ├── task.toml
+│           ├── instruction.md
+│           ├── rlm.toml                  (optional)
+│           ├── environment/
+│           │   ├── Dockerfile
+│           │   └── docker-compose.yaml   (optional)
+│           ├── tests/
+│           │   ├── test.sh               # verifier entry
+│           │   └── verify.py
+│           └── tools/
+│               └── tool_name.py
+│
+├── templates/                  # template definitions
+│   └── voltage-drop/
+│       ├── template_meta.toml
+│       ├── engine.py
+│       ├── params.toml
+│       └── instruction.md
+│
+├── artefacts/
+│   ├── ledger/                 # trial records (append-only)
+│   │   └── exp-20260412-001/
+│   │       ├── trial-uuid.json
+│   │       └── ...
+│   ├── feedback/               # agent feedback / evolution artefacts
+│   └── datasets/               # dataset manifests
+│       └── electrical-v1/
+│           └── 1.0.0/
+│               └── manifest.json
+│
+├── jobs/                       # raw trial outputs
+│   └── exp-20260412-001/
+│       └── trial-uuid/
+│           └── workspace/
+│               ├── output.jsonl
+│               ├── trajectory.jsonl
+│               └── logs/verifier/
+│                   ├── reward.json
+│                   └── details.json
+│
+├── seeds/                      # seed task fixtures
+│
+└── workspaces/                 # evolution workspaces (git-versioned)
+    └── voltage-drop-evo/
+        ├── manifest.yaml
+        ├── prompts/system.md
+        └── skills/
+```
+
+Every path is overridable in `aec-bench.toml`. Commands that consume artefacts (`ledger list`, `report leaderboard`, `evaluate`) resolve paths through the same project config.
+
+## Global user config
+
+Per-user defaults live at `~/.config/aec-bench/config.json`:
+
+```json
+{
+  "default_backend": "modal",
+  "default_output_format": "text",
+  "default_tasks_root": "~/work/aec-bench/tasks"
+}
+```
+
+Managed via `aec-bench config view|set|reset`. These are the fallbacks when a project-level setting isn't specified.
+
+## Precedence
+
+When the same setting can come from multiple places, aec-bench resolves in this order (highest wins):
+
+1. **CLI flag** (`--backend modal`)
+2. **Experiment YAML** (`compute.backend`)
+3. **Project config** (`aec-bench.toml`)
+4. **Global user config** (`~/.config/aec-bench/config.json`)
+5. **Built-in defaults**
+
+Environment variables bypass this ladder — they're either credentials (required by the provider SDK at call time) or agent-runtime overrides (read by the container's entry script).

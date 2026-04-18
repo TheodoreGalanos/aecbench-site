@@ -1,0 +1,92 @@
+---
+title: Advisor
+description: The advisor is an optional per-adapter hook that lets a stronger model answer focused strategic questions during a trial.
+---
+
+## How it works
+
+Inside a harness run, an adapter can issue an `AdvisorRequest` whenever it hits a decision point:
+
+```python
+class AdvisorRequest(StrictModel):
+    goal: NonEmptyStr        # what the agent is trying to do overall
+    problem: NonEmptyStr     # the specific thing it's stuck on now
+    attempt: str | None      # what it already tried, if anything
+```
+
+The advisor returns a structured response:
+
+```python
+class AdvisorResponse(StrictModel):
+    advice: NonEmptyStr         # strategic guidance
+    suggested_action: NonEmptyStr  # one concrete next step
+    confidence: float           # 0.0–1.0
+    reasoning: str              # why this suggestion
+```
+
+The advisor returns guidance only — it doesn't write output files or invoke tools. The agent decides what to do with the response.
+
+## Configuration
+
+Advisor settings live in the adapter's config, not the task:
+
+```toml
+[advisor]
+model = "au.anthropic.claude-sonnet-4-6"  # the advising model
+max_uses = 5                              # calls allowed per trial
+max_response_tokens = 500                 # keep advice concise
+context_window = 10                       # recent turns to include
+enabled = true
+```
+
+`max_uses` is a hard cap per trial.
+
+## Per-adapter context
+
+Different adapters give the advisor different context. A tool-loop adapter might show recent tool calls and their results. An RLM adapter might show recent REPL commands and scratchpad notes. The `AdvisorContextStrategy` protocol lets each adapter curate exactly what the advisor sees:
+
+```python
+class AdvisorContextStrategy(Protocol):
+    def build_context(self, state: AdapterState, window: int) -> list[Message]: ...
+```
+
+This is why the same advisor model can sensibly coach both a REPL agent and a tool-loop agent — the adapter shapes the context to match its own execution model.
+
+## Usage tracking
+
+Advisor calls are **tracked separately** from the main agent's token budget so they don't leak into the headline cost:
+
+```python
+class AdvisorUsageStats(StrictModel):
+    calls_made: int
+    calls_remaining: int
+    advisor_input_tokens: int
+    advisor_output_tokens: int
+    advisor_cost_usd: float
+```
+
+Reports surface these alongside the base cost so readers can see the split — "this run cost $0.42 to execute, plus $0.18 in advisor calls".
+
+## Failure handling
+
+If the advisor call fails (network error, provider timeout, parsing failure), the agent receives a safe fallback response:
+
+```python
+AdvisorResponse(
+    advice="Advisor unavailable — proceed on your own.",
+    suggested_action="Continue with the current approach.",
+    confidence=0.0,
+    reasoning="fallback",
+)
+```
+
+A fallback response means the trial continues without useful guidance; the zero confidence indicates the advice should be ignored.
+
+## When to use it
+
+The advisor pays off when the base model is fast and cheap but stumbles on strategic choices — a Haiku executor with Sonnet as the coach, say. Two signals that it's worth wiring up:
+
+- Your agent consistently makes **early wrong-direction choices** that ripple into the rest of the trial
+- The cheap model is **competent at execution** but chooses poorly — raising its ceiling matters more than raising its throughput
+
+For a strong base model, the advisor is usually overkill — better to spend the tokens on longer turn budgets. For a weak base model, the advisor can lift a task's success rate substantially at a fraction of the cost of upgrading the executor.

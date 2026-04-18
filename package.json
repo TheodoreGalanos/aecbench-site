@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "pnpm ingest && next dev --turbopack",
-    "build": "pnpm ingest && next build",
+    "build": "next build",
     "start": "next start",
     "prebuild": "pnpm ingest",
     "ingest": "tsx scripts/ingest/cli.ts",

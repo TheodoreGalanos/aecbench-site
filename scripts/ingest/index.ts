@@ -31,14 +31,19 @@ export async function runIngest(opts: RunOptions): Promise<LeaderboardArtefact> 
     validated.push(await validateExperiment(exp, manifest, activeKey));
   }
 
-  // Gather trials, count submissions per (model, adapter)
+  // Gather trials, count distinct experiments per (model, adapter)
+  // An experiment = one PR = one submission.yml = N trials; dedupe within an
+  // experiment before counting so submission_count reflects PRs, not trial rows.
   const allTrials: TrialRecord[] = validated.flatMap((v) => v.trials);
   const submissionCounts = new Map<string, number>();
   for (const v of validated) {
+    const seenKeys = new Set<string>();
     for (const trial of v.trials) {
       const entry = registry.find((r) => trial.agent.model.toLowerCase().includes(r.match.toLowerCase()));
       if (!entry) continue;
       const key = `${entry.display}/${trial.agent.adapter}`;
+      if (seenKeys.has(key)) continue;
+      seenKeys.add(key);
       submissionCounts.set(key, (submissionCounts.get(key) ?? 0) + 1);
     }
   }
@@ -76,7 +81,9 @@ export async function runIngest(opts: RunOptions): Promise<LeaderboardArtefact> 
       tasks: new Set(allTrials.map((t) => t.task.task_id)).size,
       models: new Set(withDelta.map((e) => e.model_display)).size,
       adapters: new Set(withDelta.map((e) => e.adapter)).size,
-      disciplines: DOMAINS.length,
+      disciplines: new Set(
+        withDelta.flatMap((e) => Object.keys(e.per_discipline)),
+      ).size,
       last_submission: lastSubmission,
       generated_at: generatedAt,
     },

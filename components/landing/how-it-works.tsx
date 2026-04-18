@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { BlueprintBg } from './blueprint-bg';
 import { SectionAnno } from './section-anno';
 import { SheetCorners } from './sheet-corners';
+import { FadeUp } from './motion-primitives';
 
 interface Stage {
   n: string;
@@ -25,7 +26,8 @@ export function HowItWorks() {
   return (
     <BlueprintBg>
       <SheetCorners figNumber={5} figName="METHOD" />
-      <div className="mx-auto max-w-5xl px-6 py-16 md:py-20">
+      <FadeUp>
+        <div className="mx-auto max-w-5xl px-6 py-16 md:py-20">
         <SectionAnno number={5} name="How It Works" />
         <h2 className="mt-2 text-3xl font-bold text-landing-text md:text-4xl">
           Define → run → score
@@ -77,6 +79,7 @@ export function HowItWorks() {
           </Link>
         </div>
       </div>
+      </FadeUp>
     </BlueprintBg>
   );
 }

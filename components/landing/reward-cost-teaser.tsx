@@ -5,6 +5,7 @@ import { previewModels, type Provider } from './data';
 import { BlueprintBg } from './blueprint-bg';
 import { SectionAnno } from './section-anno';
 import { SheetCorners } from './sheet-corners';
+import { FadeUp } from './motion-primitives';
 
 const providerColour: Record<Provider, string> = {
   anthropic: 'var(--color-provider-anthropic)',
@@ -77,7 +78,8 @@ export function RewardCostTeaser() {
   return (
     <BlueprintBg>
       <SheetCorners figNumber={3} figName="REWARD × COST" />
-      <div className="mx-auto max-w-4xl px-6 py-16 md:py-20">
+      <FadeUp>
+        <div className="mx-auto max-w-4xl px-6 py-16 md:py-20">
         <SectionAnno number={3} name="Reward × Cost" />
         <h2 className="mt-2 text-3xl font-bold text-landing-text md:text-4xl">
           Reward × Cost
@@ -114,6 +116,7 @@ export function RewardCostTeaser() {
           </div>
         </div>
       </div>
+      </FadeUp>
     </BlueprintBg>
   );
 }

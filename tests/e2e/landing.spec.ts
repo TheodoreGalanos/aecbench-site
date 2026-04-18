@@ -36,8 +36,8 @@ test.describe('Landing page', () => {
   test('CTA copy button copies pip install command', async ({ page, context }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await page.goto('/');
-    await page.getByRole('button', { name: /^copy$/i }).click();
-    await expect(page.getByRole('button', { name: /copied/i })).toBeVisible();
+    await page.locator('button', { hasText: /^copy$/i }).first().click();
+    await expect(page.locator('button', { hasText: /^copied$/i })).toBeVisible();
   });
 
   test('explore_results CTA goes to /leaderboard', async ({ page }) => {

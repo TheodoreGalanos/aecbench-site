@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { BlueprintBg } from './blueprint-bg';
 import { SectionAnno } from './section-anno';
 import { SheetCorners } from './sheet-corners';
+import { FadeUp } from './motion-primitives';
 import {
   CivilGlyph,
   ElectricalGlyph,
@@ -34,7 +35,8 @@ export function Disciplines() {
   return (
     <BlueprintBg>
       <SheetCorners figNumber={4} figName="DISCIPLINES" />
-      <div className="mx-auto max-w-5xl px-6 py-16 md:py-20">
+      <FadeUp>
+        <div className="mx-auto max-w-5xl px-6 py-16 md:py-20">
         <SectionAnno number={4} name="Disciplines" />
         <h2 className="mt-2 text-3xl font-bold text-landing-text md:text-4xl">
           Five engineering disciplines
@@ -66,6 +68,7 @@ export function Disciplines() {
           ))}
         </div>
       </div>
+      </FadeUp>
     </BlueprintBg>
   );
 }

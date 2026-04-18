@@ -4,12 +4,14 @@ import { BlueprintBg } from './blueprint-bg';
 import { SectionAnno } from './section-anno';
 import { SheetCorners } from './sheet-corners';
 import { CopyBox } from './copy-box';
+import { FadeUp } from './motion-primitives';
 
 export function CallToAction() {
   return (
     <BlueprintBg>
       <SheetCorners figNumber={6} figName="CTA" />
-      <div className="mx-auto max-w-3xl px-6 py-20 text-center md:py-24">
+      <FadeUp>
+        <div className="mx-auto max-w-3xl px-6 py-20 text-center md:py-24">
         <div className="flex justify-center">
           <SectionAnno number={6} name="Run it yourself" />
         </div>
@@ -62,6 +64,7 @@ export function CallToAction() {
           </Link>
         </div>
       </div>
+      </FadeUp>
     </BlueprintBg>
   );
 }

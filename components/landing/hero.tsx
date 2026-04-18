@@ -5,13 +5,15 @@ import { BlueprintBg } from './blueprint-bg';
 import { SectionAnno } from './section-anno';
 import { SheetCorners } from './sheet-corners';
 import { HeroReadout } from './hero-readout';
+import { FadeUp } from './motion-primitives';
 
 export function Hero() {
   return (
     <BlueprintBg className="scanlines overflow-hidden">
       <SheetCorners figNumber={1} figName="HERO" />
       <HeroReadout />
-      <div className="mx-auto flex max-w-3xl flex-col items-start px-6 py-24 md:py-32">
+      <FadeUp>
+        <div className="mx-auto flex max-w-3xl flex-col items-start px-6 py-24 md:py-32">
         <SectionAnno number={1} name="Hero" />
         <h1 className="mt-4 text-4xl font-bold tracking-tight text-landing-text md:text-6xl">
           How capable is AI at real engineering?
@@ -42,6 +44,7 @@ export function Hero() {
           </Link>
         </div>
       </div>
+      </FadeUp>
     </BlueprintBg>
   );
 }

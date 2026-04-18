@@ -9,7 +9,7 @@ export function StatusBar() {
   const reduced = useReducedMotion();
   return (
     <div
-      className="border-b border-landing-border bg-[#050505] font-mono text-[0.68rem] tracking-wide text-landing-muted"
+      className="sticky top-14 z-30 border-b border-landing-border bg-[#050505] font-mono text-[0.68rem] tracking-wide text-landing-muted"
       role="status"
       aria-label="aec-bench run status"
     >

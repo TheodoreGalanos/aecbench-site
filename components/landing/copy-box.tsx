@@ -31,10 +31,15 @@ export function CopyBox({ command, prompt = '$' }: CopyBoxProps) {
       <button
         type="button"
         onClick={handleCopy}
+        aria-label={copied ? 'Copied to clipboard' : `Copy command ${command}`}
         className="border-l border-landing-border bg-landing-card px-4 font-mono text-xs uppercase tracking-wider text-landing-muted transition-colors hover:text-accent-amber"
       >
         {copied ? 'copied' : 'copy'}
       </button>
+      {/* Politely announces state change to screen readers. */}
+      <span role="status" aria-live="polite" className="sr-only">
+        {copied ? 'Copied to clipboard' : ''}
+      </span>
     </div>
   );
 }

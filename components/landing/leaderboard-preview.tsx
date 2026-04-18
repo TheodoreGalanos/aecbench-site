@@ -6,6 +6,7 @@ import { runStatus } from './run-status';
 import { BlueprintBg } from './blueprint-bg';
 import { SectionAnno } from './section-anno';
 import { SheetCorners } from './sheet-corners';
+import { FadeUp } from './motion-primitives';
 
 function Bars({ model, topTier }: { model: PreviewModel; topTier: boolean }) {
   const d = model.disciplines;
@@ -44,7 +45,8 @@ export function LeaderboardPreview() {
   return (
     <BlueprintBg>
       <SheetCorners figNumber={2} figName="STANDINGS" />
-      <div className="mx-auto max-w-4xl px-6 py-16 md:py-20">
+      <FadeUp>
+        <div className="mx-auto max-w-4xl px-6 py-16 md:py-20">
         <SectionAnno number={2} name="Current Standings" />
         <h2 className="mt-2 text-3xl font-bold text-landing-text md:text-4xl">
           Current standings
@@ -144,6 +146,7 @@ export function LeaderboardPreview() {
           <span className="ml-3 text-[#888]">{runStatus.models - 4} more models</span>
         </div>
       </div>
+      </FadeUp>
     </BlueprintBg>
   );
 }

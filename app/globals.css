@@ -17,10 +17,52 @@
   --color-landing-muted: #888888;
   --color-accent-amber: #e8a838;
   --color-accent-teal: #38b2ac;
+
+  /* Landing polish — blueprint + terminal */
+  --color-bg-grid: rgba(56, 178, 172, 0.06);
+  --color-bg-grid-major: rgba(56, 178, 172, 0.14);
+  --color-terminal-bg: #050505;
+  --color-cursor: #e8a838;
+  --color-delta-up: #6fd08a;
+  --color-delta-down: #e07b7b;
+  --color-provider-anthropic: #e8a838;
+  --color-provider-openai: #38b2ac;
+  --color-provider-google: #c792ea;
+  --color-provider-meta: #6fd08a;
 }
 
 /* Fumadocs dark mode overrides */
 .dark {
   --color-fd-accent: #e8a838;
   --color-fd-accent-foreground: #0a0a0a;
+}
+
+/* Dimension-line section annotation */
+.anno {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-accent-teal);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.anno::before { content: ""; width: 32px; height: 1px; background: var(--color-accent-teal); }
+.anno::after  { content: ""; width: 80px; height: 1px; background: var(--color-accent-teal); }
+
+/* Subtle scanline overlay — applied only where chosen via className */
+.scanlines {
+  position: relative;
+}
+.scanlines::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    180deg,
+    transparent 0 3px,
+    rgba(255, 255, 255, 0.018) 3px 4px
+  );
 }

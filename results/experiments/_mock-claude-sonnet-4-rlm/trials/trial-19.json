@@ -1,0 +1,36 @@
+{
+  "trial_id": "trial-19",
+  "experiment_id": "_mock-claude-sonnet-4-rlm",
+  "dataset_id": "aec-bench@0.4.1",
+  "timestamp": "2026-04-10T12:19:00.000Z",
+  "task": {
+    "task_id": "mechanical/heat-load",
+    "task_revision": "mock-rev"
+  },
+  "agent": {
+    "adapter": "rlm",
+    "model": "claude-sonnet-4-6",
+    "adapter_revision": "1.0.0",
+    "configuration": {}
+  },
+  "evaluation": {
+    "reward": 0.81,
+    "validity": {
+      "output_parseable": true,
+      "schema_valid": true,
+      "verifier_completed": true
+    }
+  },
+  "timing": {
+    "total_seconds": 35.73,
+    "agent_seconds": 27.02
+  },
+  "cost": {
+    "tokens_in": 56630,
+    "tokens_out": 9454,
+    "cache_read_tokens": null,
+    "cache_write_tokens": null,
+    "estimated_cost_usd": 0.3117
+  },
+  "completeness": "complete"
+}

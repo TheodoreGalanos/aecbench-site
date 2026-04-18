@@ -1,0 +1,7 @@
+experiment_id: exp-a
+dataset: aec-bench@0.4.1
+submitter:
+  github: tester
+model_claim:
+  library_model: claude-sonnet-4-6
+submitted_at: "2026-04-10T12:00:00Z"

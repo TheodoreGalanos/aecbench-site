@@ -1,0 +1,36 @@
+{
+  "trial_id": "trial-29",
+  "experiment_id": "_mock-gpt-4.1-mini-tool_loop",
+  "dataset_id": "aec-bench@0.4.1",
+  "timestamp": "2026-04-10T12:29:00.000Z",
+  "task": {
+    "task_id": "structural/connections",
+    "task_revision": "mock-rev"
+  },
+  "agent": {
+    "adapter": "tool_loop",
+    "model": "gpt-4.1-mini",
+    "adapter_revision": "1.0.0",
+    "configuration": {}
+  },
+  "evaluation": {
+    "reward": 0.35,
+    "validity": {
+      "output_parseable": true,
+      "schema_valid": true,
+      "verifier_completed": true
+    }
+  },
+  "timing": {
+    "total_seconds": 32,
+    "agent_seconds": 18.94
+  },
+  "cost": {
+    "tokens_in": 39975,
+    "tokens_out": 12121,
+    "cache_read_tokens": null,
+    "cache_write_tokens": null,
+    "estimated_cost_usd": 0.0354
+  },
+  "completeness": "complete"
+}

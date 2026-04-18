@@ -29,6 +29,7 @@
   --color-provider-openai: #38b2ac;
   --color-provider-google: #c792ea;
   --color-provider-meta: #6fd08a;
+  --color-provider-other: #a0a0a0;
 }
 
 /* Fumadocs dark mode overrides */

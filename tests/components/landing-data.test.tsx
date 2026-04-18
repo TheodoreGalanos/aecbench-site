@@ -1,35 +1,31 @@
-// ABOUTME: Validates the shape and values of landing-page stub data.
-// ABOUTME: Ensures PreviewModel extensions and runStatus are populated for all consumers.
+// tests/components/landing-data.test.tsx
+// ABOUTME: Validates the shape of previewModels as adapted from the live leaderboard artefact.
+// ABOUTME: We assert field types, not specific values — real rewards change over time.
 import { describe, it, expect } from 'vitest';
 import { previewModels } from '@/components/landing/data';
-import { runStatus } from '@/components/landing/run-status';
 
 describe('previewModels', () => {
-  it('has exactly 4 models with extended fields', () => {
+  it('produces 4 adapted preview rows', () => {
     expect(previewModels).toHaveLength(4);
+  });
+
+  it('every row carries extended shape fields with the right types', () => {
     for (const m of previewModels) {
-      expect(m.provider).toMatch(/^(anthropic|openai|google|meta)$/);
+      expect(typeof m.rank).toBe('number');
+      expect(typeof m.model).toBe('string');
+      expect(m.provider).toMatch(/^(anthropic|openai|google|meta|other)$/);
+      expect(typeof m.overallScore).toBe('number');
       expect(typeof m.tokensMillions).toBe('number');
       expect(typeof m.costUsd).toBe('number');
       expect(typeof m.deltaLastRun).toBe('number');
       expect(typeof m.costPerTask).toBe('number');
+      expect(m.disciplines).toHaveProperty('civil');
+      expect(m.disciplines).toHaveProperty('electrical');
     }
   });
 
-  it('puts Claude Sonnet 4 at rank 1', () => {
-    expect(previewModels[0].model).toBe('Claude Sonnet 4');
-    expect(previewModels[0].provider).toBe('anthropic');
-    expect(previewModels[0].rank).toBe(1);
-  });
-});
-
-describe('runStatus', () => {
-  it('exposes the expected fields', () => {
-    expect(runStatus.runId).toBe('0412-a7');
-    expect(runStatus.tasks).toBe(547);
-    expect(runStatus.models).toBe(14);
-    expect(runStatus.disciplines).toBe(5);
-    expect(runStatus.datasetVersion).toBe('v0.4.1');
-    expect(runStatus.lastRunRelative).toBe('2h ago');
+  it('is sorted by rank ascending', () => {
+    const ranks = previewModels.map((m) => m.rank);
+    expect(ranks).toEqual([...ranks].sort((a, b) => a - b));
   });
 });

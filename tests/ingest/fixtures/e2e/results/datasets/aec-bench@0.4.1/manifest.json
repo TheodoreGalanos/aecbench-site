@@ -1,0 +1,10 @@
+{
+  "name": "aec-bench",
+  "version": "0.4.1",
+  "content_hash": "h",
+  "description": { "summary": "s", "task_count": 2 },
+  "tasks": [
+    { "task_id": "civil/a", "domain": "civil", "difficulty": "easy", "tags": [] },
+    { "task_id": "electrical/b", "domain": "electrical", "difficulty": "easy", "tags": [] }
+  ]
+}

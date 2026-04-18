@@ -1,0 +1,36 @@
+{
+  "trial_id": "trial-21",
+  "experiment_id": "_mock-gpt-4.1-tool_loop",
+  "dataset_id": "aec-bench@0.4.1",
+  "timestamp": "2026-04-10T12:21:00.000Z",
+  "task": {
+    "task_id": "mechanical/piping",
+    "task_revision": "mock-rev"
+  },
+  "agent": {
+    "adapter": "tool_loop",
+    "model": "gpt-4.1",
+    "adapter_revision": "1.0.0",
+    "configuration": {}
+  },
+  "evaluation": {
+    "reward": 0.53,
+    "validity": {
+      "output_parseable": true,
+      "schema_valid": true,
+      "verifier_completed": true
+    }
+  },
+  "timing": {
+    "total_seconds": 26.88,
+    "agent_seconds": 13.94
+  },
+  "cost": {
+    "tokens_in": 45566,
+    "tokens_out": 10233,
+    "cache_read_tokens": null,
+    "cache_write_tokens": null,
+    "estimated_cost_usd": 0.173
+  },
+  "completeness": "complete"
+}

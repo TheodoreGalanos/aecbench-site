@@ -1,0 +1,6 @@
+{
+  "generated_at": "2026-04-12T12:00:00Z",
+  "entries": [
+    { "model_key": "claude-sonnet-4/tool_loop", "reward": 0.7 }
+  ]
+}

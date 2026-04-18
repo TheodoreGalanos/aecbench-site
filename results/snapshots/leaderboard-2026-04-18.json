@@ -1,0 +1,285 @@
+{
+  "generated_at": "2026-04-18T10:11:54.893Z",
+  "dataset": {
+    "name": "aec-bench",
+    "version": "0.4.1",
+    "content_hash": "mock-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "description": {
+      "summary": "Mock aec-bench dataset (synthetic)",
+      "task_count": 10
+    },
+    "tasks": [
+      {
+        "task_id": "civil/bearing-capacity",
+        "domain": "civil",
+        "difficulty": "medium",
+        "tags": [
+          "mock"
+        ]
+      },
+      {
+        "task_id": "civil/retaining-wall",
+        "domain": "civil",
+        "difficulty": "medium",
+        "tags": [
+          "mock"
+        ]
+      },
+      {
+        "task_id": "electrical/pf-droop",
+        "domain": "electrical",
+        "difficulty": "medium",
+        "tags": [
+          "mock"
+        ]
+      },
+      {
+        "task_id": "electrical/cable-ampacity",
+        "domain": "electrical",
+        "difficulty": "medium",
+        "tags": [
+          "mock"
+        ]
+      },
+      {
+        "task_id": "ground/terzaghi",
+        "domain": "ground",
+        "difficulty": "medium",
+        "tags": [
+          "mock"
+        ]
+      },
+      {
+        "task_id": "ground/infinite-slope",
+        "domain": "ground",
+        "difficulty": "medium",
+        "tags": [
+          "mock"
+        ]
+      },
+      {
+        "task_id": "mechanical/heat-load",
+        "domain": "mechanical",
+        "difficulty": "medium",
+        "tags": [
+          "mock"
+        ]
+      },
+      {
+        "task_id": "mechanical/piping",
+        "domain": "mechanical",
+        "difficulty": "medium",
+        "tags": [
+          "mock"
+        ]
+      },
+      {
+        "task_id": "structural/beam-sizing",
+        "domain": "structural",
+        "difficulty": "medium",
+        "tags": [
+          "mock"
+        ]
+      },
+      {
+        "task_id": "structural/connections",
+        "domain": "structural",
+        "difficulty": "medium",
+        "tags": [
+          "mock"
+        ]
+      }
+    ]
+  },
+  "entries": [
+    {
+      "rank": 1,
+      "model_key": "claude-sonnet-4/tool_loop",
+      "model_display": "Claude Sonnet 4",
+      "provider": "anthropic",
+      "adapter": "tool_loop",
+      "reward": 0.74,
+      "reward_ci": [
+        0.69,
+        0.78
+      ],
+      "per_discipline": {
+        "civil": 0.68,
+        "electrical": 0.73,
+        "ground": 0.79,
+        "mechanical": 0.76,
+        "structural": 0.73
+      },
+      "trials": 30,
+      "complete_trials": 30,
+      "repetitions": 3,
+      "mean_cost_usd": 0.3138,
+      "total_cost_usd": 9.413,
+      "mean_tokens": 61171,
+      "mean_duration_seconds": 31.2,
+      "dataset": "aec-bench@0.4.1",
+      "last_submission": "2026-04-10T12:29:00.000Z",
+      "submission_count": 30,
+      "delta_vs_previous": null
+    },
+    {
+      "rank": 2,
+      "model_key": "gpt-4-1/tool_loop",
+      "model_display": "GPT-4.1",
+      "provider": "openai",
+      "adapter": "tool_loop",
+      "reward": 0.65,
+      "reward_ci": [
+        0.6,
+        0.7
+      ],
+      "per_discipline": {
+        "civil": 0.72,
+        "electrical": 0.7,
+        "ground": 0.66,
+        "mechanical": 0.63,
+        "structural": 0.56
+      },
+      "trials": 30,
+      "complete_trials": 30,
+      "repetitions": 3,
+      "mean_cost_usd": 0.1922,
+      "total_cost_usd": 5.7667,
+      "mean_tokens": 64041,
+      "mean_duration_seconds": 29.93,
+      "dataset": "aec-bench@0.4.1",
+      "last_submission": "2026-04-10T12:29:00.000Z",
+      "submission_count": 30,
+      "delta_vs_previous": null
+    },
+    {
+      "rank": 3,
+      "model_key": "claude-sonnet-4/rlm",
+      "model_display": "Claude Sonnet 4",
+      "provider": "anthropic",
+      "adapter": "rlm",
+      "reward": 0.62,
+      "reward_ci": [
+        0.57,
+        0.67
+      ],
+      "per_discipline": {
+        "civil": 0.58,
+        "electrical": 0.6,
+        "ground": 0.64,
+        "mechanical": 0.66,
+        "structural": 0.61
+      },
+      "trials": 30,
+      "complete_trials": 30,
+      "repetitions": 3,
+      "mean_cost_usd": 0.305,
+      "total_cost_usd": 9.1509,
+      "mean_tokens": 61023,
+      "mean_duration_seconds": 30.86,
+      "dataset": "aec-bench@0.4.1",
+      "last_submission": "2026-04-10T12:29:00.000Z",
+      "submission_count": 30,
+      "delta_vs_previous": null
+    },
+    {
+      "rank": 4,
+      "model_key": "gemini-2-5-pro/tool_loop",
+      "model_display": "Gemini 2.5 Pro",
+      "provider": "google",
+      "adapter": "tool_loop",
+      "reward": 0.5,
+      "reward_ci": [
+        0.44,
+        0.57
+      ],
+      "per_discipline": {
+        "civil": 0.64,
+        "electrical": 0.38,
+        "ground": 0.64,
+        "mechanical": 0.38,
+        "structural": 0.47
+      },
+      "trials": 30,
+      "complete_trials": 30,
+      "repetitions": 3,
+      "mean_cost_usd": 0.1066,
+      "total_cost_usd": 3.1993,
+      "mean_tokens": 57973,
+      "mean_duration_seconds": 29.42,
+      "dataset": "aec-bench@0.4.1",
+      "last_submission": "2026-04-10T12:29:00.000Z",
+      "submission_count": 30,
+      "delta_vs_previous": null
+    },
+    {
+      "rank": 5,
+      "model_key": "llama-4-maverick/direct",
+      "model_display": "Llama 4 Maverick",
+      "provider": "meta",
+      "adapter": "direct",
+      "reward": 0.42,
+      "reward_ci": [
+        0.37,
+        0.46
+      ],
+      "per_discipline": {
+        "civil": 0.39,
+        "electrical": 0.44,
+        "ground": 0.43,
+        "mechanical": 0.41,
+        "structural": 0.41
+      },
+      "trials": 30,
+      "complete_trials": 30,
+      "repetitions": 3,
+      "mean_cost_usd": 0.0219,
+      "total_cost_usd": 0.6584,
+      "mean_tokens": 62979,
+      "mean_duration_seconds": 28.55,
+      "dataset": "aec-bench@0.4.1",
+      "last_submission": "2026-04-10T12:29:00.000Z",
+      "submission_count": 30,
+      "delta_vs_previous": null
+    },
+    {
+      "rank": 6,
+      "model_key": "gpt-4-1-mini/tool_loop",
+      "model_display": "GPT-4.1 Mini",
+      "provider": "openai",
+      "adapter": "tool_loop",
+      "reward": 0.37,
+      "reward_ci": [
+        0.33,
+        0.41
+      ],
+      "per_discipline": {
+        "civil": 0.37,
+        "electrical": 0.44,
+        "ground": 0.35,
+        "mechanical": 0.36,
+        "structural": 0.35
+      },
+      "trials": 30,
+      "complete_trials": 30,
+      "repetitions": 3,
+      "mean_cost_usd": 0.0362,
+      "total_cost_usd": 1.0873,
+      "mean_tokens": 61049,
+      "mean_duration_seconds": 28.55,
+      "dataset": "aec-bench@0.4.1",
+      "last_submission": "2026-04-10T12:29:00.000Z",
+      "submission_count": 30,
+      "delta_vs_previous": null
+    }
+  ],
+  "is_mock": true,
+  "run_status": {
+    "tasks": 10,
+    "models": 5,
+    "adapters": 3,
+    "disciplines": 5,
+    "last_submission": "2026-04-10T12:29:00.000Z",
+    "generated_at": "2026-04-18T10:11:54.893Z"
+  }
+}

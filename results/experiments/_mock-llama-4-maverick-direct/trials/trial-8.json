@@ -1,0 +1,36 @@
+{
+  "trial_id": "trial-8",
+  "experiment_id": "_mock-llama-4-maverick-direct",
+  "dataset_id": "aec-bench@0.4.1",
+  "timestamp": "2026-04-10T12:08:00.000Z",
+  "task": {
+    "task_id": "electrical/pf-droop",
+    "task_revision": "mock-rev"
+  },
+  "agent": {
+    "adapter": "direct",
+    "model": "llama-4-maverick",
+    "adapter_revision": "1.0.0",
+    "configuration": {}
+  },
+  "evaluation": {
+    "reward": 0.35,
+    "validity": {
+      "output_parseable": true,
+      "schema_valid": true,
+      "verifier_completed": true
+    }
+  },
+  "timing": {
+    "total_seconds": 30.28,
+    "agent_seconds": 18.61
+  },
+  "cost": {
+    "tokens_in": 67812,
+    "tokens_out": 12604,
+    "cache_read_tokens": null,
+    "cache_write_tokens": null,
+    "estimated_cost_usd": 0.0279
+  },
+  "completeness": "complete"
+}

@@ -1,0 +1,36 @@
+{
+  "trial_id": "trial-12",
+  "experiment_id": "_mock-claude-sonnet-4-rlm",
+  "dataset_id": "aec-bench@0.4.1",
+  "timestamp": "2026-04-10T12:12:00.000Z",
+  "task": {
+    "task_id": "ground/terzaghi",
+    "task_revision": "mock-rev"
+  },
+  "agent": {
+    "adapter": "rlm",
+    "model": "claude-sonnet-4-6",
+    "adapter_revision": "1.0.0",
+    "configuration": {}
+  },
+  "evaluation": {
+    "reward": 0.76,
+    "validity": {
+      "output_parseable": true,
+      "schema_valid": true,
+      "verifier_completed": true
+    }
+  },
+  "timing": {
+    "total_seconds": 38.42,
+    "agent_seconds": 15.52
+  },
+  "cost": {
+    "tokens_in": 45462,
+    "tokens_out": 6618,
+    "cache_read_tokens": null,
+    "cache_write_tokens": null,
+    "estimated_cost_usd": 0.2357
+  },
+  "completeness": "complete"
+}

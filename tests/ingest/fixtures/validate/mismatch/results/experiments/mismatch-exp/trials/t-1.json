@@ -1,0 +1,26 @@
+{
+  "trial_id": "t-1",
+  "experiment_id": "mismatch-exp",
+  "dataset_id": "aec-bench@0.5.0",
+  "timestamp": "2026-04-10T12:00:00Z",
+  "task": { "task_id": "electrical/pf-droop", "task_revision": "r1" },
+  "agent": {
+    "adapter": "tool_loop",
+    "model": "claude-sonnet-4-6",
+    "adapter_revision": "1.0.0",
+    "configuration": {}
+  },
+  "evaluation": {
+    "reward": 0.8,
+    "validity": { "output_parseable": true, "schema_valid": true, "verifier_completed": true }
+  },
+  "timing": { "total_seconds": 10.0, "agent_seconds": 8.0 },
+  "cost": {
+    "tokens_in": 50000,
+    "tokens_out": 10000,
+    "cache_read_tokens": null,
+    "cache_write_tokens": null,
+    "estimated_cost_usd": 0.3
+  },
+  "completeness": "complete"
+}

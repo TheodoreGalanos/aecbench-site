@@ -2,14 +2,20 @@
   "name": "aecbench-site",
   "version": "1.0.0",
   "description": "",
+  "type": "module",
   "main": "index.js",
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "pnpm ingest && next dev --turbopack",
     "build": "next build",
     "start": "next start",
+    "prebuild": "pnpm ingest",
+    "ingest": "tsx scripts/ingest/cli.ts",
+    "ingest:snapshot": "tsx scripts/ingest/promote-snapshot.ts",
+    "mock:generate": "tsx scripts/mock/cli.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:registry": "tsx -e \"import('./scripts/ingest/pricing-parity.ts').then(async (m) => { import('./scripts/ingest/registry.ts').then(async (r) => { m.checkParity(await m.loadSnapshot(), await r.loadRegistry()); }); });\""
   },
   "keywords": [],
   "author": "",
@@ -21,23 +27,29 @@
     "fumadocs-core": "^16.7.11",
     "fumadocs-mdx": "^14.2.11",
     "fumadocs-ui": "^16.7.11",
+    "js-yaml": "^4.1.1",
     "lucide-react": "^1.8.0",
     "next": "^16.2.3",
     "react": "^19.2.5",
-    "react-dom": "^19.2.5"
+    "react-dom": "^19.2.5",
+    "seedrandom": "^3.0.5",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
     "@tailwindcss/postcss": "^4.2.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^25.6.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@types/seedrandom": "^3.0.8",
     "@vitejs/plugin-react": "^6.0.1",
     "jsdom": "^29.0.2",
     "postcss": "^8.5.9",
     "tailwindcss": "^4.2.2",
+    "tsx": "^4.21.0",
     "typescript": "^6.0.2",
     "vitest": "^4.1.4"
   }

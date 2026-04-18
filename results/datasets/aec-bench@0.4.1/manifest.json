@@ -1,0 +1,91 @@
+{
+  "name": "aec-bench",
+  "version": "0.4.1",
+  "content_hash": "mock-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "description": {
+    "summary": "Mock aec-bench dataset (synthetic)",
+    "task_count": 10
+  },
+  "tasks": [
+    {
+      "task_id": "civil/bearing-capacity",
+      "domain": "civil",
+      "difficulty": "medium",
+      "tags": [
+        "mock"
+      ]
+    },
+    {
+      "task_id": "civil/retaining-wall",
+      "domain": "civil",
+      "difficulty": "medium",
+      "tags": [
+        "mock"
+      ]
+    },
+    {
+      "task_id": "electrical/pf-droop",
+      "domain": "electrical",
+      "difficulty": "medium",
+      "tags": [
+        "mock"
+      ]
+    },
+    {
+      "task_id": "electrical/cable-ampacity",
+      "domain": "electrical",
+      "difficulty": "medium",
+      "tags": [
+        "mock"
+      ]
+    },
+    {
+      "task_id": "ground/terzaghi",
+      "domain": "ground",
+      "difficulty": "medium",
+      "tags": [
+        "mock"
+      ]
+    },
+    {
+      "task_id": "ground/infinite-slope",
+      "domain": "ground",
+      "difficulty": "medium",
+      "tags": [
+        "mock"
+      ]
+    },
+    {
+      "task_id": "mechanical/heat-load",
+      "domain": "mechanical",
+      "difficulty": "medium",
+      "tags": [
+        "mock"
+      ]
+    },
+    {
+      "task_id": "mechanical/piping",
+      "domain": "mechanical",
+      "difficulty": "medium",
+      "tags": [
+        "mock"
+      ]
+    },
+    {
+      "task_id": "structural/beam-sizing",
+      "domain": "structural",
+      "difficulty": "medium",
+      "tags": [
+        "mock"
+      ]
+    },
+    {
+      "task_id": "structural/connections",
+      "domain": "structural",
+      "difficulty": "medium",
+      "tags": [
+        "mock"
+      ]
+    }
+  ]
+}

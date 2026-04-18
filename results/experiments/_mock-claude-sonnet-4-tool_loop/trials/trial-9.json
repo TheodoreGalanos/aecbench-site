@@ -1,0 +1,36 @@
+{
+  "trial_id": "trial-9",
+  "experiment_id": "_mock-claude-sonnet-4-tool_loop",
+  "dataset_id": "aec-bench@0.4.1",
+  "timestamp": "2026-04-10T12:09:00.000Z",
+  "task": {
+    "task_id": "electrical/cable-ampacity",
+    "task_revision": "mock-rev"
+  },
+  "agent": {
+    "adapter": "tool_loop",
+    "model": "claude-sonnet-4-6",
+    "adapter_revision": "1.0.0",
+    "configuration": {}
+  },
+  "evaluation": {
+    "reward": 0.68,
+    "validity": {
+      "output_parseable": true,
+      "schema_valid": true,
+      "verifier_completed": true
+    }
+  },
+  "timing": {
+    "total_seconds": 27.13,
+    "agent_seconds": 21.02
+  },
+  "cost": {
+    "tokens_in": 53180,
+    "tokens_out": 8710,
+    "cache_read_tokens": null,
+    "cache_write_tokens": null,
+    "estimated_cost_usd": 0.2902
+  },
+  "completeness": "complete"
+}

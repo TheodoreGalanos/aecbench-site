@@ -1,0 +1,36 @@
+{
+  "trial_id": "trial-26",
+  "experiment_id": "_mock-gemini-2.5-pro-tool_loop",
+  "dataset_id": "aec-bench@0.4.1",
+  "timestamp": "2026-04-10T12:26:00.000Z",
+  "task": {
+    "task_id": "structural/beam-sizing",
+    "task_revision": "mock-rev"
+  },
+  "agent": {
+    "adapter": "tool_loop",
+    "model": "gemini-2.5-pro",
+    "adapter_revision": "1.0.0",
+    "configuration": {}
+  },
+  "evaluation": {
+    "reward": 0.24,
+    "validity": {
+      "output_parseable": true,
+      "schema_valid": true,
+      "verifier_completed": true
+    }
+  },
+  "timing": {
+    "total_seconds": 31.14,
+    "agent_seconds": 33.9
+  },
+  "cost": {
+    "tokens_in": 40143,
+    "tokens_out": 7116,
+    "cache_read_tokens": null,
+    "cache_write_tokens": null,
+    "estimated_cost_usd": 0.0858
+  },
+  "completeness": "complete"
+}

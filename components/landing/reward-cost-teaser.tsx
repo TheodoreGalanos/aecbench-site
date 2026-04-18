@@ -12,6 +12,7 @@ const providerColour: Record<Provider, string> = {
   openai: 'var(--color-provider-openai)',
   google: 'var(--color-provider-google)',
   meta: 'var(--color-provider-meta)',
+  other: 'var(--color-provider-other)',
 };
 
 function MiniScatter() {

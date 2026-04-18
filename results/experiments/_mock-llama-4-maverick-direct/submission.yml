@@ -1,0 +1,9 @@
+experiment_id: _mock-llama-4-maverick-direct
+dataset: aec-bench@0.4.1
+submitter:
+  github: aec-bench-bot
+model_claim:
+  library_model: llama-4-maverick
+submitted_at: '2026-04-10T12:00:00Z'
+mock: true
+mock_notes: Synthetic data; generated with seed "aecbench-seed-2026-04-18"

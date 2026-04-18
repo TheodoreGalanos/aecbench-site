@@ -1,0 +1,36 @@
+{
+  "trial_id": "trial-8",
+  "experiment_id": "_mock-claude-sonnet-4-tool_loop",
+  "dataset_id": "aec-bench@0.4.1",
+  "timestamp": "2026-04-10T12:08:00.000Z",
+  "task": {
+    "task_id": "electrical/pf-droop",
+    "task_revision": "mock-rev"
+  },
+  "agent": {
+    "adapter": "tool_loop",
+    "model": "claude-sonnet-4-6",
+    "adapter_revision": "1.0.0",
+    "configuration": {}
+  },
+  "evaluation": {
+    "reward": 0.61,
+    "validity": {
+      "output_parseable": true,
+      "schema_valid": true,
+      "verifier_completed": true
+    }
+  },
+  "timing": {
+    "total_seconds": 37.83,
+    "agent_seconds": 13.98
+  },
+  "cost": {
+    "tokens_in": 49812,
+    "tokens_out": 12173,
+    "cache_read_tokens": null,
+    "cache_write_tokens": null,
+    "estimated_cost_usd": 0.332
+  },
+  "completeness": "complete"
+}

@@ -1,12 +1,16 @@
-// ABOUTME: Static placeholder data for the landing page leaderboard preview.
-// ABOUTME: Replaced by live Supabase queries in Phase 3.
+// components/landing/data.ts
+// ABOUTME: Adapts the build-emitted leaderboard artefact into the PreviewModel shape.
+// ABOUTME: Existing landing components read PreviewModel without knowing the source changed.
+import { getTopN } from '@/lib/aec-bench/read';
+import type { LeaderboardEntry } from '@/lib/aec-bench/contracts';
 
-export type Provider = 'anthropic' | 'openai' | 'google' | 'meta';
+export type Provider = 'anthropic' | 'openai' | 'google' | 'meta' | 'other';
 
 export interface PreviewModel {
   rank: number;
   model: string;
   provider: Provider;
+  adapter: string;
   overallScore: number;
   disciplines: {
     civil: number;
@@ -22,49 +26,26 @@ export interface PreviewModel {
   costPerTask: number;
 }
 
-export const previewModels: PreviewModel[] = [
-  {
-    rank: 1,
-    model: 'Claude Sonnet 4',
-    provider: 'anthropic',
-    overallScore: 0.72,
-    disciplines: { civil: 0.75, electrical: 0.68, ground: 0.71, mechanical: 0.74, structural: 0.72 },
-    tokensMillions: 2.14,
-    costUsd: 18.4,
-    deltaLastRun: 0.04,
-    costPerTask: 0.034,
-  },
-  {
-    rank: 2,
-    model: 'GPT-4.1',
-    provider: 'openai',
-    overallScore: 0.68,
-    disciplines: { civil: 0.70, electrical: 0.65, ground: 0.66, mechanical: 0.71, structural: 0.68 },
-    tokensMillions: 1.98,
-    costUsd: 21.6,
-    deltaLastRun: 0.02,
-    costPerTask: 0.040,
-  },
-  {
-    rank: 3,
-    model: 'Gemini 2.5 Pro',
-    provider: 'google',
-    overallScore: 0.65,
-    disciplines: { civil: 0.67, electrical: 0.62, ground: 0.64, mechanical: 0.68, structural: 0.64 },
-    tokensMillions: 2.41,
-    costUsd: 14.8,
-    deltaLastRun: -0.01,
-    costPerTask: 0.027,
-  },
-  {
-    rank: 4,
-    model: 'Llama 4 Maverick',
-    provider: 'meta',
-    overallScore: 0.58,
-    disciplines: { civil: 0.60, electrical: 0.55, ground: 0.57, mechanical: 0.61, structural: 0.57 },
-    tokensMillions: 2.07,
-    costUsd: 9.2,
-    deltaLastRun: 0.06,
-    costPerTask: 0.017,
-  },
-];
+function adapt(entry: LeaderboardEntry): PreviewModel {
+  return {
+    rank: entry.rank,
+    model: entry.model_display,
+    provider: entry.provider,
+    adapter: entry.adapter,
+    overallScore: entry.reward,
+    disciplines: {
+      civil: entry.per_discipline.civil ?? 0,
+      electrical: entry.per_discipline.electrical ?? 0,
+      ground: entry.per_discipline.ground ?? 0,
+      mechanical: entry.per_discipline.mechanical ?? 0,
+      structural: entry.per_discipline.structural ?? 0,
+    },
+    tokensMillions:
+      entry.mean_tokens === null ? 0 : Math.round((entry.mean_tokens * entry.trials) / 1e4) / 100,
+    costUsd: entry.total_cost_usd ?? 0,
+    deltaLastRun: entry.delta_vs_previous ?? 0,
+    costPerTask: entry.mean_cost_usd ?? 0,
+  };
+}
+
+export const previewModels: PreviewModel[] = getTopN(4).map(adapt);

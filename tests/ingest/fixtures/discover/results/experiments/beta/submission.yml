@@ -1,0 +1,7 @@
+experiment_id: beta
+dataset: aec-bench@0.4.1
+submitter:
+  github: tester
+model_claim:
+  library_model: gpt-4.1
+submitted_at: 2026-04-10T12:00:00Z

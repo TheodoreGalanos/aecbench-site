@@ -52,9 +52,8 @@ export function LeaderboardPreview() {
           Current standings
         </h2>
         <p className="mb-6 mt-1 font-mono text-xs text-landing-muted">
-          dataset <span className="text-accent-amber">{runStatus.datasetVersion}</span> · run{' '}
-          <span className="text-accent-amber">{runStatus.runId}</span> · {runStatus.tasks} tasks ·{' '}
-          {runStatus.disciplines} disciplines · last eval {runStatus.lastRunRelative}
+          dataset <span className="text-accent-amber">{runStatus.datasetVersion}</span> ·{' '}
+          {runStatus.tasks} tasks · {runStatus.disciplines} disciplines
         </p>
 
         <div className="overflow-hidden rounded-lg border border-landing-border bg-[#050505]">
@@ -102,7 +101,7 @@ export function LeaderboardPreview() {
                   </div>
                   <div className="px-3 py-3">
                     <div className="font-sans font-semibold text-landing-text">{m.model}</div>
-                    <div className="text-[0.7rem] text-[#888]">{m.provider}</div>
+                    <div className="text-[0.7rem] text-[#888]">{m.provider} · <span className="text-[#666]">{m.adapter}</span></div>
                   </div>
                   <div className="hidden px-3 py-3 md:block">
                     <Bars model={m} topTier={topTier} />

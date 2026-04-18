@@ -1,10 +1,12 @@
 // ABOUTME: Smoke test that new landing design tokens are declared in globals.css.
 // ABOUTME: We read the file as text; we don't attempt to evaluate CSS variables.
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, it, expect } from 'vitest';
 
-const css = readFileSync(resolve(__dirname, '../../app/globals.css'), 'utf8');
+const here = dirname(fileURLToPath(import.meta.url));
+const css = readFileSync(resolve(here, '../../app/globals.css'), 'utf8');
 
 describe('globals.css landing tokens', () => {
   it('declares the blueprint grid tokens', () => {
@@ -25,5 +27,10 @@ describe('globals.css landing tokens', () => {
 
   it('defines .anno utility', () => {
     expect(css).toMatch(/\.anno\s*\{/);
+  });
+
+  it('defines .scanlines utility', () => {
+    expect(css).toMatch(/\.scanlines\s*\{/);
+    expect(css).toMatch(/repeating-linear-gradient/);
   });
 });

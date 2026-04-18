@@ -10,14 +10,16 @@ test.describe('Landing page', () => {
 
   test('shows the persistent status bar', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('status', { name: /aec-bench run status/i })).toBeVisible();
-    await expect(page.getByText('0412-a7')).toBeVisible();
+    const bar = page.getByRole('status', { name: /aec-bench run status/i });
+    await expect(bar).toBeVisible();
+    await expect(bar.getByText('0412-a7')).toBeVisible();
   });
 
   test('renders the leaderboard preview with model rows', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /current standings/i })).toBeVisible();
-    await expect(page.getByText('Claude Sonnet 4')).toBeVisible();
+    // Claude Sonnet 4 appears in multiple sections — assert at least one is visible.
+    await expect(page.getByText('Claude Sonnet 4').first()).toBeVisible();
   });
 
   test('renders the reward × cost teaser', async ({ page }) => {

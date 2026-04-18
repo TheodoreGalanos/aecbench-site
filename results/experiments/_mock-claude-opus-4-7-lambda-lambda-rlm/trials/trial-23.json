@@ -1,0 +1,36 @@
+{
+  "trial_id": "trial-23",
+  "experiment_id": "_mock-claude-opus-4-7-lambda-lambda-rlm",
+  "dataset_id": "aec-bench@0.4.1",
+  "timestamp": "2026-04-10T12:23:00.000Z",
+  "task": {
+    "task_id": "mechanical/piping",
+    "task_revision": "mock-rev"
+  },
+  "agent": {
+    "adapter": "lambda-rlm",
+    "model": "claude-opus-4-7-lambda",
+    "adapter_revision": "1.0.0",
+    "configuration": {}
+  },
+  "evaluation": {
+    "reward": 0.94,
+    "validity": {
+      "output_parseable": true,
+      "schema_valid": true,
+      "verifier_completed": true
+    }
+  },
+  "timing": {
+    "total_seconds": 29.18,
+    "agent_seconds": 18.74
+  },
+  "cost": {
+    "tokens_in": 61788,
+    "tokens_out": 5580,
+    "cache_read_tokens": null,
+    "cache_write_tokens": null,
+    "estimated_cost_usd": 1.3453
+  },
+  "completeness": "complete"
+}

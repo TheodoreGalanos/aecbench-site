@@ -175,3 +175,48 @@ export function applyDelta(
     return { ...e, delta_vs_previous: round2(e.reward - prior) };
   });
 }
+
+export interface BuildEntryContext {
+  group: TrialGroup;
+  manifest: DatasetManifest;
+  activeKey: string;
+  submissionCount: number;
+}
+
+export function buildEntry(ctx: BuildEntryContext): LeaderboardEntry {
+  const { group, manifest, activeKey, submissionCount } = ctx;
+  const reward = computeReward(group.trials);
+  const perDiscipline = computePerDiscipline(group.trials, manifest);
+  const costTiming = computeCostAndTiming(group.trials);
+
+  const lastSubmission = group.trials
+    .map((t) => t.timestamp)
+    .sort()
+    .at(-1)!;
+
+  const uniqueTasks = new Set(group.trials.map((t) => t.task.task_id));
+  const repetitions =
+    uniqueTasks.size === 0 ? 0 : Math.floor(reward.complete / uniqueTasks.size);
+
+  return {
+    rank: 0,
+    model_key: group.key,
+    model_display: group.entry.display,
+    provider: group.entry.provider,
+    adapter: group.adapter,
+    reward: reward.mean,
+    reward_ci: reward.ci,
+    per_discipline: perDiscipline,
+    trials: reward.total,
+    complete_trials: reward.complete,
+    repetitions,
+    mean_cost_usd: costTiming.mean_cost_usd,
+    total_cost_usd: costTiming.total_cost_usd,
+    mean_tokens: costTiming.mean_tokens,
+    mean_duration_seconds: costTiming.mean_duration_seconds,
+    dataset: activeKey,
+    last_submission: lastSubmission,
+    submission_count: submissionCount,
+    delta_vs_previous: null,
+  };
+}

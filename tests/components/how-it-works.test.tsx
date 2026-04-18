@@ -1,26 +1,30 @@
-// ABOUTME: Tests for the How It Works landing page section.
-// ABOUTME: Verifies the three methodology steps render correctly.
+// ABOUTME: Tests the restyled how-it-works section — 6 stages, CLI readout, docs link.
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { HowItWorks } from '@/components/landing/how-it-works';
 
 describe('HowItWorks', () => {
-  it('renders the section heading', () => {
+  it('renders the heading', () => {
     render(<HowItWorks />);
-    expect(screen.getByRole('heading', { name: /how it works/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /define.*run.*score/i })).toBeInTheDocument();
   });
 
-  it('renders three methodology steps', () => {
+  it('renders six numbered stages', () => {
     render(<HowItWorks />);
-    expect(screen.getByText('Tasks')).toBeInTheDocument();
-    expect(screen.getByText('Run')).toBeInTheDocument();
-    expect(screen.getByText('Score')).toBeInTheDocument();
+    for (const n of ['01', '02', '03', '04', '05', '06']) {
+      expect(screen.getByText(n)).toBeInTheDocument();
+    }
   });
 
-  it('renders step descriptions', () => {
+  it('renders the CLI readout mock', () => {
     render(<HowItWorks />);
-    expect(screen.getByText(/500\+ seed tasks/i)).toBeInTheDocument();
-    expect(screen.getByText(/tool-calling/i)).toBeInTheDocument();
-    expect(screen.getByText(/reward signals/i)).toBeInTheDocument();
+    expect(screen.getByText(/bench run/)).toBeInTheDocument();
+    expect(screen.getByText(/cable-sizing/)).toBeInTheDocument();
+  });
+
+  it('links to architecture docs', () => {
+    render(<HowItWorks />);
+    const link = screen.getByRole('link', { name: /full pipeline/i });
+    expect(link).toHaveAttribute('href', '/docs/core/architecture');
   });
 });

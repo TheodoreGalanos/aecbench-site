@@ -102,3 +102,46 @@ function seedOf(trialIds: string[]): string {
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
+
+export interface CostTiming {
+  mean_cost_usd: number | null;
+  total_cost_usd: number | null;
+  mean_tokens: number | null;
+  mean_duration_seconds: number | null;
+}
+
+export function computeCostAndTiming(trials: TrialRecord[]): CostTiming {
+  const withCost = trials.filter((t) => t.cost !== null) as Array<
+    TrialRecord & { cost: NonNullable<TrialRecord['cost']> }
+  >;
+
+  const costs = withCost
+    .map((t) => t.cost.estimated_cost_usd)
+    .filter((v): v is number => v !== null);
+  const tokens = withCost
+    .map((t) => {
+      const tin = t.cost.tokens_in ?? 0;
+      const tout = t.cost.tokens_out ?? 0;
+      return t.cost.tokens_in === null && t.cost.tokens_out === null ? null : tin + tout;
+    })
+    .filter((v): v is number => v !== null);
+
+  const mean = (xs: number[]): number | null =>
+    xs.length === 0 ? null : xs.reduce((a, b) => a + b, 0) / xs.length;
+  const total = (xs: number[]): number | null =>
+    xs.length === 0 ? null : xs.reduce((a, b) => a + b, 0);
+
+  return {
+    mean_cost_usd: mean(costs) !== null ? round4(mean(costs)!) : null,
+    total_cost_usd: total(costs) !== null ? round4(total(costs)!) : null,
+    mean_tokens: mean(tokens) !== null ? Math.round(mean(tokens)!) : null,
+    mean_duration_seconds:
+      trials.length === 0
+        ? null
+        : round2(trials.reduce((a, b) => a + b.timing.total_seconds, 0) / trials.length),
+  };
+}
+
+function round4(n: number): number {
+  return Math.round(n * 10000) / 10000;
+}

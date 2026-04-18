@@ -2,6 +2,8 @@
 // ABOUTME: Aggregation — grouping, reward mean+CI, per-discipline, cost rollup, ranking, delta.
 // ABOUTME: Functions are pure. Orchestrator calls them in sequence.
 import type {
+  DatasetManifest,
+  Domain,
   LeaderboardEntry,
   ModelEntry,
   TrialRecord,
@@ -68,6 +70,25 @@ export function computeReward(trials: TrialRecord[]): RewardStats {
   }
 
   return { mean: round2(mean), ci, complete: complete.length, total: trials.length };
+}
+
+export type PerDiscipline = Partial<Record<Domain, number>>;
+
+export function computePerDiscipline(trials: TrialRecord[], manifest: DatasetManifest): PerDiscipline {
+  const taskDomain = new Map(manifest.tasks.map((t) => [t.task_id, t.domain]));
+  const buckets = new Map<Domain, number[]>();
+  for (const trial of trials.filter(isComplete)) {
+    const domain = taskDomain.get(trial.task.task_id);
+    if (!domain) continue;
+    const arr = buckets.get(domain) ?? [];
+    arr.push(trial.evaluation.reward);
+    buckets.set(domain, arr);
+  }
+  const out: PerDiscipline = {};
+  for (const [domain, values] of buckets) {
+    out[domain] = round2(values.reduce((a, b) => a + b, 0) / values.length);
+  }
+  return out;
 }
 
 function isComplete(t: TrialRecord): boolean {

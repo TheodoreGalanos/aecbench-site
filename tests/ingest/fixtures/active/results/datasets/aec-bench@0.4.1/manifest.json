@@ -1,0 +1,9 @@
+{
+  "name": "aec-bench",
+  "version": "0.4.1",
+  "content_hash": "hash",
+  "description": { "summary": "AEC engineering tasks", "task_count": 1 },
+  "tasks": [
+    { "task_id": "electrical/pf-droop", "domain": "electrical", "difficulty": "medium", "tags": [] }
+  ]
+}

@@ -9,7 +9,9 @@
     "start": "next start",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "mock:generate": "tsx scripts/mock/cli.ts",
+    "ingest": "tsx scripts/ingest/cli.ts"
   },
   "keywords": [],
   "author": "",
@@ -43,6 +45,7 @@
     "jsdom": "^29.0.2",
     "postcss": "^8.5.9",
     "tailwindcss": "^4.2.2",
+    "tsx": "^4.21.0",
     "typescript": "^6.0.2",
     "vitest": "^4.1.4"
   }

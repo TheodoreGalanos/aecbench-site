@@ -1,0 +1,36 @@
+{
+  "trial_id": "trial-18",
+  "experiment_id": "_mock-gpt-4.1-mini-tool_loop",
+  "dataset_id": "aec-bench@0.4.1",
+  "timestamp": "2026-04-10T12:18:00.000Z",
+  "task": {
+    "task_id": "mechanical/heat-load",
+    "task_revision": "mock-rev"
+  },
+  "agent": {
+    "adapter": "tool_loop",
+    "model": "gpt-4.1-mini",
+    "adapter_revision": "1.0.0",
+    "configuration": {}
+  },
+  "evaluation": {
+    "reward": 0.41,
+    "validity": {
+      "output_parseable": true,
+      "schema_valid": true,
+      "verifier_completed": true
+    }
+  },
+  "timing": {
+    "total_seconds": 25.28,
+    "agent_seconds": 29.52
+  },
+  "cost": {
+    "tokens_in": 50561,
+    "tokens_out": 10466,
+    "cache_read_tokens": null,
+    "cache_write_tokens": null,
+    "estimated_cost_usd": 0.037
+  },
+  "completeness": "complete"
+}

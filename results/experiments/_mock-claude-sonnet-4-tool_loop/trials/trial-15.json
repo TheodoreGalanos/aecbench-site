@@ -1,0 +1,36 @@
+{
+  "trial_id": "trial-15",
+  "experiment_id": "_mock-claude-sonnet-4-tool_loop",
+  "dataset_id": "aec-bench@0.4.1",
+  "timestamp": "2026-04-10T12:15:00.000Z",
+  "task": {
+    "task_id": "ground/infinite-slope",
+    "task_revision": "mock-rev"
+  },
+  "agent": {
+    "adapter": "tool_loop",
+    "model": "claude-sonnet-4-6",
+    "adapter_revision": "1.0.0",
+    "configuration": {}
+  },
+  "evaluation": {
+    "reward": 0.6,
+    "validity": {
+      "output_parseable": true,
+      "schema_valid": true,
+      "verifier_completed": true
+    }
+  },
+  "timing": {
+    "total_seconds": 32.37,
+    "agent_seconds": 18.81
+  },
+  "cost": {
+    "tokens_in": 41051,
+    "tokens_out": 10129,
+    "cache_read_tokens": null,
+    "cache_write_tokens": null,
+    "estimated_cost_usd": 0.2751
+  },
+  "completeness": "complete"
+}

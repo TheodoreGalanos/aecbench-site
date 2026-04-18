@@ -1,0 +1,36 @@
+{
+  "trial_id": "trial-21",
+  "experiment_id": "_mock-claude-sonnet-4-tool_loop",
+  "dataset_id": "aec-bench@0.4.1",
+  "timestamp": "2026-04-10T12:21:00.000Z",
+  "task": {
+    "task_id": "mechanical/piping",
+    "task_revision": "mock-rev"
+  },
+  "agent": {
+    "adapter": "tool_loop",
+    "model": "claude-sonnet-4-6",
+    "adapter_revision": "1.0.0",
+    "configuration": {}
+  },
+  "evaluation": {
+    "reward": 0.82,
+    "validity": {
+      "output_parseable": true,
+      "schema_valid": true,
+      "verifier_completed": true
+    }
+  },
+  "timing": {
+    "total_seconds": 35.33,
+    "agent_seconds": 8.99
+  },
+  "cost": {
+    "tokens_in": 33953,
+    "tokens_out": 7846,
+    "cache_read_tokens": null,
+    "cache_write_tokens": null,
+    "estimated_cost_usd": 0.2195
+  },
+  "completeness": "complete"
+}

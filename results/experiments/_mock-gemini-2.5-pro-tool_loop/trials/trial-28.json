@@ -1,0 +1,36 @@
+{
+  "trial_id": "trial-28",
+  "experiment_id": "_mock-gemini-2.5-pro-tool_loop",
+  "dataset_id": "aec-bench@0.4.1",
+  "timestamp": "2026-04-10T12:28:00.000Z",
+  "task": {
+    "task_id": "structural/connections",
+    "task_revision": "mock-rev"
+  },
+  "agent": {
+    "adapter": "tool_loop",
+    "model": "gemini-2.5-pro",
+    "adapter_revision": "1.0.0",
+    "configuration": {}
+  },
+  "evaluation": {
+    "reward": 0.81,
+    "validity": {
+      "output_parseable": true,
+      "schema_valid": true,
+      "verifier_completed": true
+    }
+  },
+  "timing": {
+    "total_seconds": 32.21,
+    "agent_seconds": 41.12
+  },
+  "cost": {
+    "tokens_in": 63909,
+    "tokens_out": 9067,
+    "cache_read_tokens": null,
+    "cache_write_tokens": null,
+    "estimated_cost_usd": 0.1252
+  },
+  "completeness": "complete"
+}

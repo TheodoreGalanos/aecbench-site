@@ -25,3 +25,6 @@ journal/
 
 # internal working docs
 docs/superpowers/
+
+# superpowers brainstorm artefacts (visual companion mockups)
+.superpowers/

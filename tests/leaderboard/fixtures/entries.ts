@@ -1,0 +1,135 @@
+// ABOUTME: Synthetic LeaderboardEntry fixtures for unit tests.
+// ABOUTME: Use makeEntry({...overrides}) for one-offs; FIXTURE_ENTRIES is a varied set.
+import type { LeaderboardEntry } from '@/lib/aec-bench/contracts';
+
+const BASE: LeaderboardEntry = {
+  rank: 1,
+  model_key: 'claude-opus-4.7',
+  model_display: 'Claude Opus 4.7',
+  provider: 'anthropic',
+  adapter: 'rlm',
+  reward: 0.82,
+  reward_ci: [0.79, 0.85],
+  per_discipline: {
+    civil: 0.84,
+    electrical: 0.79,
+    ground: 0.81,
+    mechanical: 0.86,
+    structural: 0.80,
+  },
+  trials: 180,
+  complete_trials: 180,
+  repetitions: 30,
+  mean_cost_usd: 1.8,
+  total_cost_usd: 324,
+  mean_tokens: 46000,
+  mean_duration_seconds: 12.4,
+  dataset: 'aec-bench@0.4.1',
+  last_submission: '2026-04-18T10:00:00Z',
+  submission_count: 1,
+  delta_vs_previous: 0.02,
+  // is_mock: true,  // TEMPORARILY COMMENTED OUT — contract doesn't have this field yet; T7 will add it and un-comment
+};
+
+export function makeEntry(overrides: Partial<LeaderboardEntry> = {}): LeaderboardEntry {
+  return { ...BASE, ...overrides };
+}
+
+export const FIXTURE_ENTRIES: LeaderboardEntry[] = [
+  makeEntry({
+    rank: 1,
+    model_key: 'claude-opus-4.7',
+    model_display: 'Claude Opus 4.7',
+    provider: 'anthropic',
+    adapter: 'rlm',
+    reward: 0.82,
+    reward_ci: [0.79, 0.85],
+    mean_cost_usd: 1.8,
+    mean_tokens: 46000,
+    mean_duration_seconds: 12.4,
+    delta_vs_previous: 0.02,
+  }),
+  makeEntry({
+    rank: 2,
+    model_key: 'gpt-4o',
+    model_display: 'GPT-4o',
+    provider: 'openai',
+    adapter: 'tool_loop',
+    reward: 0.78,
+    reward_ci: [0.75, 0.81],
+    per_discipline: {
+      civil: 0.80,
+      electrical: 0.82,
+      ground: 0.73,
+      mechanical: 0.77,
+      structural: 0.78,
+    },
+    mean_cost_usd: 1.2,
+    mean_tokens: 38000,
+    mean_duration_seconds: 9.8,
+    delta_vs_previous: -0.01,
+  }),
+  makeEntry({
+    rank: 3,
+    model_key: 'gemini-2.5-pro',
+    model_display: 'Gemini 2.5 Pro',
+    provider: 'google',
+    adapter: 'direct',
+    reward: 0.74,
+    reward_ci: [0.71, 0.77],
+    per_discipline: {
+      civil: 0.76,
+      electrical: 0.72,
+      ground: 0.75,
+      mechanical: 0.73,
+      structural: 0.74,
+    },
+    mean_cost_usd: 0.9,
+    mean_tokens: 32000,
+    mean_duration_seconds: 8.2,
+    delta_vs_previous: 0.05,
+  }),
+  makeEntry({
+    rank: 4,
+    model_key: 'llama-3.3-70b',
+    model_display: 'Llama 3.3 70B',
+    provider: 'meta',
+    adapter: 'tool_loop',
+    reward: 0.66,
+    reward_ci: [0.62, 0.70],
+    per_discipline: {
+      civil: 0.64,
+      electrical: 0.68,
+      ground: 0.65,
+      mechanical: 0.66,
+      structural: 0.67,
+    },
+    mean_cost_usd: 0.8,
+    mean_tokens: 52000,
+    mean_duration_seconds: 14.1,
+    delta_vs_previous: null,
+  }),
+  makeEntry({
+    rank: 5,
+    model_key: 'haiku-4.5',
+    model_display: 'Claude Haiku 4.5',
+    provider: 'anthropic',
+    adapter: 'tool_loop',
+    reward: 0.62,
+    reward_ci: [0.58, 0.66],
+    per_discipline: {
+      civil: 0.63,
+      electrical: 0.60,
+      ground: 0.62,
+      mechanical: 0.64,
+      structural: 0.61,
+    },
+    mean_cost_usd: 0.2,
+    mean_tokens: 28000,
+    mean_duration_seconds: 5.1,
+    delta_vs_previous: 0.03,
+  }),
+];
+
+export const PROVIDERS_IN_FIXTURES = ['anthropic', 'openai', 'google', 'meta'] as const;
+export const DOMAINS = ['civil', 'electrical', 'ground', 'mechanical', 'structural'] as const;

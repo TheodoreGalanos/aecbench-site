@@ -17,6 +17,7 @@ export interface PreviewModel {
   };
   tokensMillions: number;
   costUsd: number;
+  /** Change vs previous run — positive means improvement (reward went up). */
   deltaLastRun: number;
   costPerTask: number;
 }

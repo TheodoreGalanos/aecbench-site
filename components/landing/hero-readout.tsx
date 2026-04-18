@@ -17,9 +17,9 @@ export function HeroReadout() {
       </div>
       <div className="text-[#666]">› loading tasks … <span className="text-[#6fd08a]">547 ok</span></div>
       <div className="text-[#666]">› eval <span className="text-accent-amber">claude-sonnet-4</span></div>
-      <div>&nbsp;&nbsp;reward <span className="text-accent-amber">0.72</span> · tok <span className="text-accent-amber">12.4k</span></div>
+      <div className="pl-3">reward <span className="text-accent-amber">0.72</span> · tok <span className="text-accent-amber">12.4k</span></div>
       <div className="text-[#666]">› eval <span className="text-accent-amber">gpt-4.1</span></div>
-      <div>&nbsp;&nbsp;reward <span className="text-accent-amber">0.68</span> · tok <span className="text-accent-amber">9.1k</span></div>
+      <div className="pl-3">reward <span className="text-accent-amber">0.68</span> · tok <span className="text-accent-amber">9.1k</span></div>
       <div className="mt-1 text-[#666]">› stream → /leaderboard_</div>
     </aside>
   );

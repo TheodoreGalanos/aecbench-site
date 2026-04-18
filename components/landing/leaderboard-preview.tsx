@@ -1,7 +1,5 @@
 // ABOUTME: Compact leaderboard preview styled as a bench run terminal output.
 // ABOUTME: Shows rank, model, per-discipline bars, reward, delta, tokens, cost per task.
-'use client';
-
 import Link from 'next/link';
 import { previewModels, type PreviewModel } from './data';
 import { runStatus } from './run-status';
@@ -16,7 +14,7 @@ function Bars({ model, topTier }: { model: PreviewModel; topTier: boolean }) {
   return (
     <div
       className="flex h-5 items-end gap-[3px]"
-      aria-label={`discipline breakdown: civil ${d.civil}, electrical ${d.electrical}, ground ${d.ground}, mechanical ${d.mechanical}, structural ${d.structural}`}
+      aria-label={`discipline breakdown: civil ${Math.round(d.civil * 100)}%, electrical ${Math.round(d.electrical * 100)}%, ground ${Math.round(d.ground * 100)}%, mechanical ${Math.round(d.mechanical * 100)}%, structural ${Math.round(d.structural * 100)}%`}
     >
       {values.map((v, i) => (
         <div key={i} className="relative min-w-[5px] flex-1 rounded-sm bg-[#1a1a1a]">

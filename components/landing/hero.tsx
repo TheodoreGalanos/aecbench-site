@@ -1,31 +1,47 @@
 // ABOUTME: Hero section for the landing page.
-// ABOUTME: Displays headline, subtitle, and two CTA buttons.
+// ABOUTME: Blueprint grid background, scanline overlay, terminal readout, commanded buttons.
 import Link from 'next/link';
+import { BlueprintBg } from './blueprint-bg';
+import { SectionAnno } from './section-anno';
+import { SheetCorners } from './sheet-corners';
+import { HeroReadout } from './hero-readout';
 
 export function Hero() {
   return (
-    <section className="flex flex-col items-center px-6 py-24 text-center md:py-32">
-      <h1 className="max-w-4xl text-4xl font-bold tracking-tight text-landing-text md:text-6xl">
-        How Capable Is AI at Real Engineering?
-      </h1>
-      <p className="mt-6 max-w-2xl text-lg text-landing-muted md:text-xl">
-        aec-bench measures AI performance across 500+ tasks in architecture,
-        engineering and construction — from cable sizing to seismic design.
-      </p>
-      <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-        <Link
-          href="/leaderboard"
-          className="rounded-lg bg-accent-amber px-6 py-3 font-semibold text-landing-bg transition-opacity hover:opacity-90"
-        >
-          Explore Results
-        </Link>
-        <Link
-          href="/docs"
-          className="rounded-lg border border-landing-border px-6 py-3 font-semibold text-landing-text transition-colors hover:border-accent-amber"
-        >
-          Read the Docs
-        </Link>
+    <BlueprintBg className="scanlines overflow-hidden">
+      <SheetCorners figNumber={1} figName="HERO" />
+      <HeroReadout />
+      <div className="mx-auto flex max-w-3xl flex-col items-start px-6 py-24 md:py-32">
+        <SectionAnno number={1} name="Hero" />
+        <h1 className="mt-4 text-4xl font-bold tracking-tight text-landing-text md:text-6xl">
+          How capable is AI at real engineering?
+          <span
+            aria-hidden="true"
+            className="ml-1 inline-block h-[0.9em] w-[0.45em] translate-y-[0.05em] bg-accent-amber motion-safe:animate-pulse"
+            style={{ boxShadow: '0 0 12px rgba(232,168,56,0.45)' }}
+          />
+        </h1>
+        <p className="mt-6 max-w-2xl font-mono text-sm leading-relaxed text-landing-muted md:text-base">
+          <span className="text-accent-amber">aec-bench</span> measures AI performance across{' '}
+          <span className="text-accent-amber">500+</span> tasks in architecture, engineering and
+          construction — cable sizing, seismic design, hydraulic modelling, HVAC, geotech. Real
+          problems, real standards, automated scoring.
+        </p>
+        <div className="mt-10 flex flex-wrap items-center gap-3">
+          <Link
+            href="/leaderboard"
+            className="inline-flex items-center gap-2 rounded border border-accent-amber bg-accent-amber px-4 py-3 font-mono text-sm font-semibold text-landing-bg transition-shadow hover:shadow-[0_0_0_3px_rgba(232,168,56,0.2)]"
+          >
+            <span aria-hidden="true">$</span>explore_results
+          </Link>
+          <Link
+            href="/docs"
+            className="inline-flex items-center gap-2 rounded border border-landing-border px-4 py-3 font-mono text-sm font-semibold text-landing-text transition-colors hover:border-accent-amber"
+          >
+            <span aria-hidden="true" className="text-accent-teal">&gt;</span>read_the_docs
+          </Link>
+        </div>
       </div>
-    </section>
+    </BlueprintBg>
   );
 }

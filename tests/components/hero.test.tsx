@@ -1,5 +1,5 @@
-// ABOUTME: Tests for the Hero landing page section.
-// ABOUTME: Verifies headline, subtitle, and CTA buttons render correctly.
+// ABOUTME: Tests the restyled hero section — headline, command buttons, readout presence.
+// ABOUTME: Copy assertions use partial match because key terms are wrapped in styled spans.
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { Hero } from '@/components/landing/hero';
@@ -8,24 +8,25 @@ describe('Hero', () => {
   it('renders the headline', () => {
     render(<Hero />);
     expect(
-      screen.getByRole('heading', { level: 1 }),
-    ).toHaveTextContent(/how capable is ai at real engineering/i);
+      screen.getByRole('heading', { name: /how capable is ai at real engineering/i }),
+    ).toBeInTheDocument();
   });
 
-  it('renders the subtitle', () => {
+  it('renders both CTA links with command-style labels', () => {
     render(<Hero />);
-    expect(screen.getByText(/500\+ tasks/i)).toBeInTheDocument();
+    const explore = screen.getByRole('link', { name: /explore_results/i });
+    const docs = screen.getByRole('link', { name: /read_the_docs/i });
+    expect(explore).toHaveAttribute('href', '/leaderboard');
+    expect(docs).toHaveAttribute('href', '/docs');
   });
 
-  it('renders the Explore Results CTA linking to leaderboard', () => {
+  it('mentions 500+ tasks in the subtitle', () => {
     render(<Hero />);
-    const link = screen.getByRole('link', { name: /explore results/i });
-    expect(link).toHaveAttribute('href', '/leaderboard');
+    expect(screen.getByText(/500\+/)).toBeInTheDocument();
   });
 
-  it('renders the Read the Docs CTA linking to docs', () => {
+  it('renders the hero readout widget (screen-reader visible)', () => {
     render(<Hero />);
-    const link = screen.getByRole('link', { name: /read the docs/i });
-    expect(link).toHaveAttribute('href', '/docs');
+    expect(screen.getByRole('complementary', { name: /bench run/i })).toBeInTheDocument();
   });
 });

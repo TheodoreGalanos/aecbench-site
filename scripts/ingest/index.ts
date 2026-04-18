@@ -49,15 +49,22 @@ export async function runIngest(opts: RunOptions): Promise<LeaderboardArtefact> 
   }
 
   // Group + build entries
+  // Build a lookup from experiment_id to mock flag so each entry can carry is_mock.
+  const experimentMock = new Map<string, boolean>(
+    validated.map((v) => [v.id, v.submission.mock === true]),
+  );
   const groups = groupTrials(allTrials, registry);
-  const entries = [...groups.values()].map((group) =>
-    buildEntry({
+  const entries = [...groups.values()].map((group) => {
+    const experimentIds = new Set(group.trials.map((t) => t.experiment_id));
+    const is_mock = [...experimentIds].some((id) => experimentMock.get(id) === true);
+    return buildEntry({
       group,
       manifest,
       activeKey,
       submissionCount: submissionCounts.get(`${group.entry.display}/${group.adapter}`) ?? 1,
-    }),
-  );
+      is_mock,
+    });
+  });
 
   // Rank + delta
   const ranked = rankEntries(entries);

@@ -45,7 +45,7 @@ export function TooltipCard({
       style={style}
     >
       <div className="mb-2 text-accent-amber font-bold">
-        {entry.model_display} · <span className="text-[#888]">{entry.adapter}</span>
+        <span>{entry.model_display}</span> · <span className="text-[#888]">{entry.adapter}</span>
       </div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-[#a0a0a0]">
         <dt>reward</dt>

@@ -28,3 +28,6 @@ docs/superpowers/
 
 # superpowers brainstorm artefacts (visual companion mockups)
 .superpowers/
+
+# ingest build output
+/public/data/

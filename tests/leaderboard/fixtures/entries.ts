@@ -28,7 +28,7 @@ const BASE: LeaderboardEntry = {
   last_submission: '2026-04-18T10:00:00Z',
   submission_count: 1,
   delta_vs_previous: 0.02,
-  // is_mock: true,  // TEMPORARILY COMMENTED OUT — contract doesn't have this field yet; T7 will add it and un-comment
+  is_mock: true,
 };
 
 export function makeEntry(overrides: Partial<LeaderboardEntry> = {}): LeaderboardEntry {

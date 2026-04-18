@@ -132,6 +132,7 @@ export const LeaderboardEntrySchema = z.object({
   last_submission: z.string().min(1),
   submission_count: z.number().int().positive(),
   delta_vs_previous: z.number().nullable(),
+  is_mock: z.boolean(),
 });
 export type LeaderboardEntry = z.infer<typeof LeaderboardEntrySchema>;
 

@@ -7,6 +7,7 @@ import {
   DatasetManifestSchema,
   SubmissionSchema,
   ModelEntrySchema,
+  LeaderboardEntrySchema,
 } from '@/lib/aec-bench/contracts';
 
 const validTrial = {
@@ -130,5 +131,23 @@ describe('ModelEntrySchema', () => {
       provider: 'acme',
     };
     expect(() => ModelEntrySchema.parse(bad)).toThrow();
+  });
+});
+
+describe('LeaderboardEntrySchema — is_mock field', () => {
+  it('requires is_mock to be a boolean', () => {
+    const minimal = {
+      rank: 1, model_key: 'm', model_display: 'M', provider: 'anthropic',
+      adapter: 'rlm', reward: 0.5, reward_ci: null,
+      per_discipline: { civil: 0.5, electrical: 0.5, ground: 0.5, mechanical: 0.5, structural: 0.5 },
+      trials: 10, complete_trials: 10, repetitions: 1,
+      mean_cost_usd: null, total_cost_usd: null, mean_tokens: null, mean_duration_seconds: null,
+      dataset: 'aec-bench@0.4.1', last_submission: '2026-04-18T00:00:00Z',
+      submission_count: 1, delta_vs_previous: null, is_mock: false,
+    };
+    expect(() => LeaderboardEntrySchema.parse(minimal)).not.toThrow();
+    const { is_mock, ...withoutMock } = minimal;
+    expect(() => LeaderboardEntrySchema.parse(withoutMock)).toThrow();
+    expect(() => LeaderboardEntrySchema.parse({ ...minimal, is_mock: 'yes' })).toThrow();
   });
 });

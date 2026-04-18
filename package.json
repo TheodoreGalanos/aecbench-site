@@ -15,7 +15,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:registry": "tsx -e \"import('./scripts/ingest/pricing-parity.ts').then(async (m) => { import('./scripts/ingest/registry.ts').then(async (r) => { m.checkParity(await m.loadSnapshot(), await r.loadRegistry()); }); });\""
+    "test:registry": "tsx -e \"import('./scripts/ingest/pricing-parity.ts').then(async (m) => { import('./scripts/ingest/registry.ts').then(async (r) => { m.checkParity(await m.loadSnapshot(), await r.loadRegistry()); }); });\"",
+    "test:bundle": "tsx scripts/check-bundle-size.ts"
   },
   "keywords": [],
   "author": "",

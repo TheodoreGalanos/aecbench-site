@@ -25,7 +25,7 @@ export const LibraryCatalogueEntrySchema = z.object({
   inputs: z.array(CatalogueIOSchema),
   outputs: z.array(CatalogueIOSchema),
   status: z.enum(['built', 'proposed']),
-  difficulty_tiers: z.array(z.enum(['easy', 'medium', 'hard'])).nullable(),
+  difficulty_tiers: z.array(z.enum(['easy', 'medium', 'hard'])).nullable().optional(),
   complexity: z.enum(['low', 'medium', 'high']).nullable().optional(),
   tool_mode: z.string().nullable().optional(),
   archetype_count: z.number().int().nullable().optional(),

@@ -1,4 +1,4 @@
-// ABOUTME: Dev sync — copies sibling aec-bench/artefacts/library-catalogue.json into public/data.
+// ABOUTME: Dev sync — copies sibling aec-bench/artefacts/library-catalogue.json into data/.
 // ABOUTME: Validates against the v1 schema before writing; invoked via `pnpm sync:catalogue`.
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';

@@ -1,5 +1,5 @@
-// ABOUTME: Zod contract mirroring the aec-bench library-catalogue v1 export shape.
-// ABOUTME: Read helpers (getCatalogue, getCatalogueForDiscipline) live alongside in Task 4.
+// ABOUTME: Zod contract + read helpers for the aec-bench library-catalogue v1 export.
+// ABOUTME: Static import from data/library-catalogue.json; schema_version mismatch fails the build.
 import { z } from 'zod';
 import { DOMAINS } from '@/lib/aec-bench/contracts';
 

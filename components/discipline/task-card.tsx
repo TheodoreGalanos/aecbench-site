@@ -36,7 +36,7 @@ export function TaskCard({ entry }: TaskCardProps) {
           >
             {entry.status === 'built' ? 'BUILT' : 'PROPOSED'}
           </span>
-          <h4 className="truncate text-sm font-semibold text-landing-text">{entry.task_name}</h4>
+          <p className="truncate text-sm font-semibold text-landing-text">{entry.task_name}</p>
         </div>
         {chip && (
           <span className="shrink-0 font-mono text-[0.65rem] text-landing-muted">{chip}</span>

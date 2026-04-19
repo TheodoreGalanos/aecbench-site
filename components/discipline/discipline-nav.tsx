@@ -11,7 +11,7 @@ export interface DisciplineNavProps {
 export function DisciplineNav({ slug }: DisciplineNavProps) {
   const { prev, next } = neighbours(slug);
   return (
-    <nav className="mt-8 flex items-center justify-between font-mono text-sm">
+    <nav aria-label="Discipline navigation" className="mt-8 flex items-center justify-between font-mono text-sm">
       <Link
         href={`/leaderboard/${prev}`}
         className="text-landing-muted transition-colors hover:text-accent-amber"

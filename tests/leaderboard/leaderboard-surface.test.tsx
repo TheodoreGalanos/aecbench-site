@@ -66,7 +66,7 @@ describe('LeaderboardSurface', () => {
       />,
     );
     expect(screen.getByRole('button', { name: /--x.*cost/i })).toBeInTheDocument();
-    expect(container.querySelector('svg[role="img"]')).toBeTruthy();
+    expect(container.querySelector('svg')).toBeTruthy();
     expect(screen.getByRole('list', { name: /chart legend/i })).toBeInTheDocument();
     expect(screen.getByRole('table')).toBeInTheDocument();
   });

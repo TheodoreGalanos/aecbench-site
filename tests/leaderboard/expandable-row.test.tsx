@@ -52,14 +52,14 @@ describe('ExpandableRow', () => {
   it('calls onToggle when the row is clicked', () => {
     const onToggle = vi.fn();
     render(<table><tbody><ExpandableRow {...baseProps} onToggle={onToggle} /></tbody></table>);
-    fireEvent.click(screen.getByRole('button', { name: /Claude Opus 4\.7/ }));
+    fireEvent.click(screen.getByRole('row', { name: /Claude Opus 4\.7/ }));
     expect(onToggle).toHaveBeenCalled();
   });
 
   it('toggles on Enter and Space keydown', () => {
     const onToggle = vi.fn();
     render(<table><tbody><ExpandableRow {...baseProps} onToggle={onToggle} /></tbody></table>);
-    const row = screen.getByRole('button', { name: /Claude Opus 4\.7/ });
+    const row = screen.getByRole('row', { name: /Claude Opus 4\.7/ });
     fireEvent.keyDown(row, { key: 'Enter' });
     fireEvent.keyDown(row, { key: ' ' });
     expect(onToggle).toHaveBeenCalledTimes(2);

@@ -26,7 +26,7 @@ describe('LeaderboardTable', () => {
     render(<LeaderboardTable {...base} />);
     for (const e of FIXTURE_ENTRIES) {
       expect(
-        screen.getByRole('button', { name: new RegExp(e.model_display.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) }),
+        screen.getByRole('row', { name: new RegExp(e.model_display.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) }),
       ).toBeInTheDocument();
     }
   });

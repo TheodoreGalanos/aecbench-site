@@ -5,6 +5,6 @@ import { test, expect } from '@playwright/test';
 test('/leaderboard loads with heading and at least one row', async ({ page }) => {
   await page.goto('/leaderboard');
   await expect(page.getByRole('heading', { name: /leaderboard/i }).first()).toBeVisible();
-  const rows = page.getByRole('table').locator('tbody tr[role="button"]');
+  const rows = page.getByRole('table').locator('tbody tr[aria-label]');
   await expect(rows.first()).toBeVisible();
 });

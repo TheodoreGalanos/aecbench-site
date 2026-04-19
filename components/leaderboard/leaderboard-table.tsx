@@ -55,7 +55,7 @@ export function LeaderboardTable({
 }: LeaderboardTableProps) {
   return (
     <div className="overflow-hidden rounded-lg border border-landing-border bg-[#050505]">
-      <div className="flex items-center gap-2 border-b border-landing-border bg-landing-bg px-3 py-2 font-mono text-[0.7rem] text-[#666]">
+      <div className="flex items-center gap-2 border-b border-landing-border bg-landing-bg px-3 py-2 font-mono text-[0.7rem] text-[#888]">
         <div className="flex gap-1">
           <span className="h-2 w-2 rounded-full bg-landing-border" />
           <span className="h-2 w-2 rounded-full bg-landing-border" />
@@ -75,7 +75,7 @@ export function LeaderboardTable({
       <div className="overflow-x-auto">
         <table role="table" className="w-full font-mono text-xs">
           <thead>
-            <tr className="border-b border-landing-border text-[0.62rem] uppercase tracking-wider text-[#666]">
+            <tr className="border-b border-landing-border text-[0.62rem] uppercase tracking-wider text-[#888]">
               {HEADERS.map((h) => {
                 const ariaSort: 'none' | 'ascending' | 'descending' =
                   h.key && sort.column === h.key

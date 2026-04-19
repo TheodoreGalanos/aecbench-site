@@ -50,7 +50,7 @@ export function TooltipCard({
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-[#a0a0a0]">
         <dt>reward</dt>
         <dd className="text-[#c7c7c7]">
-          {formatReward(entry.reward)} <span className="text-[#666]">{formatCi(entry.reward_ci)}</span>
+          {formatReward(entry.reward)} <span className="text-[#888]">{formatCi(entry.reward_ci)}</span>
         </dd>
         <dt>CI</dt>
         <dd className="text-[#c7c7c7]">{formatCi(entry.reward_ci)}</dd>

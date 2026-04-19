@@ -109,7 +109,7 @@ export function LeaderboardSurface({
         />
       </div>
       {state.disciplines.length > 0 && (
-        <p className="mb-2 font-mono text-[0.65rem] text-[#666]">
+        <p className="mb-2 font-mono text-[0.65rem] text-[#888]">
           ⓘ cost / tokens / latency are overall across all disciplines — library does not yet track
           per-discipline costs
         </p>

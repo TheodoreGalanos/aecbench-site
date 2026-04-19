@@ -5,8 +5,8 @@ import { test, expect } from '@playwright/test';
 test.describe('/leaderboard', () => {
   test('renders dots and rows that match the artefact', async ({ page }) => {
     await page.goto('/leaderboard');
-    const rows = page.getByRole('table').locator('tbody tr[role="button"]');
-    const dots = page.locator('svg[role="img"] [data-testid^="dot-"]');
+    const rows = page.getByRole('table').locator('tbody tr[aria-label]');
+    const dots = page.locator('svg[role="group"] [data-testid^="dot-"]');
     const rowCount = await rows.count();
     const dotCount = await dots.count();
     expect(rowCount).toBeGreaterThan(0);
@@ -39,7 +39,7 @@ test.describe('/leaderboard', () => {
   test('harness filter shrinks the dataset', async ({ page }) => {
     await page.goto('/leaderboard');
     // Wait for hydration — ensure table rows are present before counting
-    const rows = page.getByRole('table').locator('tbody tr[role="button"]');
+    const rows = page.getByRole('table').locator('tbody tr[aria-label]');
     await expect(rows.first()).toBeVisible();
     const rowsBefore = await rows.count();
     // The --harness chip button has aria-label "--harness all" (no filters active)
@@ -55,7 +55,7 @@ test.describe('/leaderboard', () => {
 
   test('row expand reveals per-discipline panel', async ({ page }) => {
     await page.goto('/leaderboard');
-    const firstRow = page.getByRole('table').locator('tbody tr[role="button"]').first();
+    const firstRow = page.getByRole('table').locator('tbody tr[aria-label]').first();
     await firstRow.click();
     // Expanded panel heading is "per-discipline reward"
     await expect(page.getByText(/per-discipline reward/i)).toBeVisible();

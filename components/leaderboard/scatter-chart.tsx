@@ -145,7 +145,7 @@ export function ScatterChart({
         viewBox={`0 0 ${VB_W} ${VB_H}`}
         preserveAspectRatio="xMidYMid meet"
         className="w-full h-auto"
-        role="img"
+        role="group"
         aria-label={`Scatter chart of ${yAxisLabel} versus ${axisMetric.label}`}
       >
         {/* y gridlines */}

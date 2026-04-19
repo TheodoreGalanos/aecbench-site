@@ -67,9 +67,7 @@ export function ExpandableRow({
   return (
     <>
       <tr
-        role="button"
         tabIndex={0}
-        aria-expanded={isExpanded}
         aria-label={rowName}
         onClick={onToggle}
         onKeyDown={(e) => {
@@ -93,9 +91,9 @@ export function ExpandableRow({
             <div>
               <div className="font-sans font-semibold text-landing-text">{entry.model_display}</div>
               <div className="text-[0.7rem] text-[#888]">
-                {entry.provider} · <span className="text-[#666]">{entry.adapter}</span>
+                {entry.provider} · <span className="text-[#888]">{entry.adapter}</span>
                 {entry.is_mock && (
-                  <span className="ml-2 text-[#666]" aria-label="mock entry">[mock]</span>
+                  <span className="ml-2 text-[#888]" aria-label="mock entry">[mock]</span>
                 )}
               </div>
             </div>
@@ -131,7 +129,7 @@ export function ExpandableRow({
                   <div className="grid grid-cols-5 gap-2">
                     {(['civil', 'electrical', 'ground', 'mechanical', 'structural'] as const).map((d) => (
                       <div key={d} className="flex flex-col items-center">
-                        <div className="text-[#666]">{d.slice(0, 3)}</div>
+                        <div className="text-[#888]">{d.slice(0, 3)}</div>
                         <div className="font-bold text-accent-amber">
                           {entry.per_discipline[d]?.toFixed(2) ?? '—'}
                         </div>

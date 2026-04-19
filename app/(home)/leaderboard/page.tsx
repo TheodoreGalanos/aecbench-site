@@ -16,7 +16,7 @@ export default function LeaderboardPage() {
   const runStatus = getRunStatus();
 
   return (
-    <main>
+    <div className="bg-landing-bg">
       <Suspense fallback={<Loading />}>
         <LeaderboardSurface
           entries={entries}
@@ -26,6 +26,6 @@ export default function LeaderboardPage() {
           subheading="All models and adapters across the active dataset"
         />
       </Suspense>
-    </main>
+    </div>
   );
 }

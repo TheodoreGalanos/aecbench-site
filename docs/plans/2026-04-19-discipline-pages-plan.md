@@ -4,7 +4,7 @@
 
 **Goal:** Ship five thin RSC wrappers at `/leaderboard/{civil,electrical,ground,mechanical,structural}` around the existing `LeaderboardSurface`, each augmented with a server-rendered catalogue trailing slot that groups the library's templates + seeds by category, plus a landing refactor that consumes live catalogue counts.
 
-**Architecture:** Bottom-up in six layers. (1) Test fixtures for the new library-catalogue shape. (2) Pure-logic modules: `lib/disciplines.ts` (metadata + neighbours) and `lib/aec-bench/library-catalogue.ts` (zod contract + `getCatalogueForDiscipline` grouping). (3) A `scripts/sync/library-catalogue.ts` dev sync script that pulls `artefacts/library-catalogue.json` from the sibling `aec-bench/` checkout, plus a `.gitignore` exception that commits the resulting file as a production artefact. (4) Four server components under `components/discipline/` — `CatalogueSummary`, `TaskCard`, `CategorySection` (native `<details>`), `DisciplineNav` — assembled by `DisciplineTrailingSlot`. (5) A single dynamic route `app/(home)/leaderboard/[discipline]/page.tsx` with `generateStaticParams`, `generateMetadata`, and `notFound()` fallback. (6) Landing refactor: import `DISCIPLINE_META` from `lib/disciplines`, replace hardcoded `taskCount` with `{N built / +M proposed}`, live coverage figure. E2E + axe + bundle budget follow the `/leaderboard` precedent.
+**Architecture:** Bottom-up in six layers. (1) Test fixtures for the new library-catalogue shape. (2) Pure-logic modules: `lib/disciplines.ts` (metadata + neighbours) and `lib/aec-bench/library-catalogue.ts` (zod contract + `getCatalogueForDiscipline` grouping). (3) A `scripts/sync/library-catalogue.ts` dev sync script that pulls `artefacts/library-catalogue.json` from the sibling `aec-bench/` checkout and writes to `data/library-catalogue.json` — the file lives alongside `data/models.yml` and `data/pricing-snapshot.json` as a committed input (NOT under `public/data/`, which `pnpm ingest` wipes on each run). (4) Four server components under `components/discipline/` — `CatalogueSummary`, `TaskCard`, `CategorySection` (native `<details>`), `DisciplineNav` — assembled by `DisciplineTrailingSlot`. (5) A single dynamic route `app/(home)/leaderboard/[discipline]/page.tsx` with `generateStaticParams`, `generateMetadata`, and `notFound()` fallback. (6) Landing refactor: import `DISCIPLINE_META` from `lib/disciplines`, replace hardcoded `taskCount` with `{N built / +M proposed}`, live coverage figure. E2E + axe + bundle budget follow the `/leaderboard` precedent.
 
 **Tech Stack:** TypeScript, React 19, Next.js 15 App Router RSC, Tailwind CSS 4, zod (already a dep), vitest + @testing-library/react for unit/component tests, Playwright + @axe-core/playwright for E2E + a11y, `tsx` for node scripts. Zero new runtime dependencies.
 
@@ -25,8 +25,8 @@ pnpm install
 
 # First catalogue sync (sibling aec-bench must have artefacts/library-catalogue.json).
 # We'll build the proper sync script in Task 5; this manual copy gets tests green in the meantime.
-mkdir -p public/data
-cp ../../../aec-bench/artefacts/library-catalogue.json public/data/library-catalogue.json
+# Lives under data/ alongside models.yml and pricing-snapshot.json — NOT public/data/ (which pnpm ingest wipes).
+cp ../../../aec-bench/artefacts/library-catalogue.json data/library-catalogue.json
 
 pnpm ingest
 pnpm test
@@ -593,7 +593,7 @@ Expected: FAIL — `getCatalogueForDiscipline` is not an export.
 Append to `lib/aec-bench/library-catalogue.ts` (keep existing schema code above, add below the type exports):
 
 ```ts
-import artefact from '@/public/data/library-catalogue.json' assert { type: 'json' };
+import artefact from '@/data/library-catalogue.json' assert { type: 'json' };
 import type { Domain } from '@/lib/aec-bench/contracts';
 
 let cached: LibraryCatalogue | null = null;
@@ -742,7 +742,7 @@ describe('syncCatalogue', () => {
 
   it('copies a valid catalogue from AEC_BENCH_ROOT to the target', () => {
     const source = join(tmp, 'aec-bench', 'artefacts', 'library-catalogue.json');
-    const target = join(tmp, 'site', 'public', 'data', 'library-catalogue.json');
+    const target = join(tmp, 'site', 'data', 'library-catalogue.json');
     mkdirSync(join(tmp, 'aec-bench', 'artefacts'), { recursive: true });
     writeFileSync(source, JSON.stringify(makeCatalogue(), null, 2));
 
@@ -755,7 +755,7 @@ describe('syncCatalogue', () => {
 
   it('throws an actionable error when source is missing', () => {
     const missing = join(tmp, 'nonexistent');
-    const target = join(tmp, 'public', 'data', 'library-catalogue.json');
+    const target = join(tmp, 'data', 'library-catalogue.json');
     expect(() => syncCatalogue({ aecBenchRoot: missing, target })).toThrow(
       /Library catalogue not found/,
     );
@@ -763,7 +763,7 @@ describe('syncCatalogue', () => {
 
   it('throws when source exists but fails schema validation', () => {
     const source = join(tmp, 'aec-bench', 'artefacts', 'library-catalogue.json');
-    const target = join(tmp, 'site', 'public', 'data', 'library-catalogue.json');
+    const target = join(tmp, 'site', 'data', 'library-catalogue.json');
     mkdirSync(join(tmp, 'aec-bench', 'artefacts'), { recursive: true });
     writeFileSync(source, JSON.stringify({ schema_version: 99 }));
 
@@ -774,7 +774,7 @@ describe('syncCatalogue', () => {
 
   it('creates the target directory if missing', () => {
     const source = join(tmp, 'aec-bench', 'artefacts', 'library-catalogue.json');
-    const target = join(tmp, 'site', 'public', 'data', 'library-catalogue.json');
+    const target = join(tmp, 'site', 'data', 'library-catalogue.json');
     mkdirSync(join(tmp, 'aec-bench', 'artefacts'), { recursive: true });
     writeFileSync(source, JSON.stringify(makeCatalogue(), null, 2));
 
@@ -847,7 +847,7 @@ const isMain =
   process.argv[1]?.endsWith('library-catalogue.ts');
 if (isMain) {
   const aecBenchRoot = process.env.AEC_BENCH_ROOT ?? join(process.cwd(), '..', 'aec-bench');
-  const target = join(process.cwd(), 'public', 'data', 'library-catalogue.json');
+  const target = join(process.cwd(), 'data', 'library-catalogue.json');
   try {
     syncCatalogue({ aecBenchRoot, target });
   } catch (e) {
@@ -874,18 +874,17 @@ git commit -m "feat(sync): library-catalogue sync script with schema validation"
 
 ---
 
-## Task 6: Wire sync into pnpm + carve gitignore exception + commit catalogue
+## Task 6: Wire sync script into pnpm + commit catalogue as a tracked input
 
 **Files:**
-- Modify: `package.json` (add `sync:catalogue` script; prepend to `ingest`)
-- Modify: `.gitignore` (exception for `public/data/library-catalogue.json`)
-- Add: `public/data/library-catalogue.json` (committed artefact — first version)
+- Modify: `package.json` (add `sync:catalogue` script — standalone, NOT chained into `ingest`)
+- Add: `data/library-catalogue.json` (committed input, alongside `data/models.yml` and `data/pricing-snapshot.json`)
 
-This is the production delivery path (option C). After this task, Vercel can build without a sibling checkout.
+Because the catalogue lives in `data/` (which is not gitignored), there is no `.gitignore` change to make. The file is a plain committed input: Vercel builds from the committed artefact. `sync:catalogue` is a dev-only refresh tool; it is deliberately NOT chained into `pnpm ingest` so Vercel builds don't fail when there's no sibling `aec-bench/` checkout.
 
 - [ ] **Step 1: Add the script to package.json**
 
-Modify the `scripts` block in `package.json`:
+Modify the `scripts` block in `package.json` — add one line (`sync:catalogue`) and leave `ingest` unchanged:
 
 ```json
 {
@@ -894,7 +893,7 @@ Modify the `scripts` block in `package.json`:
     "build": "next build",
     "start": "next start",
     "prebuild": "pnpm ingest",
-    "ingest": "pnpm sync:catalogue && tsx scripts/ingest/cli.ts",
+    "ingest": "tsx scripts/ingest/cli.ts",
     "sync:catalogue": "tsx scripts/sync/library-catalogue.ts",
     "ingest:snapshot": "tsx scripts/ingest/promote-snapshot.ts",
     "mock:generate": "tsx scripts/mock/cli.ts",
@@ -907,58 +906,43 @@ Modify the `scripts` block in `package.json`:
 }
 ```
 
-Note: `ingest` now runs `sync:catalogue` first, so `pnpm dev`, `pnpm prebuild`, and direct `pnpm ingest` all refresh the catalogue.
-
 - [ ] **Step 2: Verify sync runs cleanly against the sibling**
 
+When running from inside a worktree, the default `../aec-bench` resolves relative to `.worktrees/discipline-pages/`, which is wrong. Set the env var explicitly to the absolute path:
+
 ```bash
-pnpm sync:catalogue
+AEC_BENCH_ROOT=/Users/theodoros.galanos/LocalProjects/aec-bench pnpm sync:catalogue
 ```
 
 Expected output:
 ```
-[sync:catalogue] /…/aec-bench/artefacts/library-catalogue.json → /…/aecbench-site/public/data/library-catalogue.json
+[sync:catalogue] /…/aec-bench/artefacts/library-catalogue.json → /…/aecbench-site/.worktrees/discipline-pages/data/library-catalogue.json
               library v0.1.0 @ 1a2b3c4 · generated 2026-04-19T…
 ```
 
 If this fails, stop and fix the source (the sibling's catalogue must exist first).
 
-- [ ] **Step 3: Carve gitignore exception**
-
-Modify `.gitignore`. Find the line:
-
-```
-/public/data/
-```
-
-Replace with:
-
-```
-/public/data/
-!/public/data/library-catalogue.json
-```
-
-- [ ] **Step 4: Verify git now sees the catalogue**
+- [ ] **Step 3: Verify git sees the new tracked file**
 
 ```bash
-git status public/data/
+git status data/
 ```
 
-Expected: shows `public/data/library-catalogue.json` as an untracked file (or modified, if a previous hand-copy is tracked).
+Expected: shows `data/library-catalogue.json` as an untracked file (or modified, if an earlier copy was tracked).
 
-- [ ] **Step 5: Run full test suite to make sure the committed catalogue parses via `getCatalogue()`**
+- [ ] **Step 4: Run full test suite to make sure the committed catalogue parses via `getCatalogue()`**
 
 ```bash
 pnpm test tests/discipline/
 ```
 
-Expected: PASS. (The contract test never reads the real file, but `getCatalogue` is invoked indirectly when the read test runs — the cache is cleared per-file by Vitest's module isolation.)
+Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
-git add package.json .gitignore public/data/library-catalogue.json
-git commit -m "chore(catalogue): commit library-catalogue + wire pnpm sync:catalogue"
+git add package.json data/library-catalogue.json
+git commit -m "chore(catalogue): commit library-catalogue + pnpm sync:catalogue script"
 ```
 
 ---

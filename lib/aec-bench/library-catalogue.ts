@@ -59,3 +59,92 @@ export const LibraryCatalogueSchema = z.object({
   seeds: z.array(LibraryCatalogueEntrySchema),
 });
 export type LibraryCatalogue = z.infer<typeof LibraryCatalogueSchema>;
+
+import artefact from '@/data/library-catalogue.json';
+import type { Domain } from '@/lib/aec-bench/contracts';
+
+let cached: LibraryCatalogue | null = null;
+
+function prettifyCategory(slug: string): string {
+  return slug
+    .split('-')
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
+
+export function getCatalogue(): LibraryCatalogue {
+  if (cached) return cached;
+  const parsed = LibraryCatalogueSchema.safeParse(artefact as unknown);
+  if (!parsed.success) {
+    const raw = artefact as { schema_version?: unknown };
+    const msg =
+      typeof raw.schema_version === 'number' && raw.schema_version !== 1
+        ? `Library catalogue schema_version ${raw.schema_version} unsupported (site supports v1). Re-run 'pnpm sync:catalogue' or upgrade the site.`
+        : `Library catalogue failed validation: ${parsed.error.message}`;
+    throw new Error(msg);
+  }
+  cached = parsed.data;
+  return cached;
+}
+
+export interface DisciplineCatalogueSlice {
+  templates: LibraryCatalogueEntry[];
+  seeds: LibraryCatalogueEntry[];
+  categories: Array<{
+    key: string;
+    label: string;
+    built: LibraryCatalogueEntry[];
+    proposed: LibraryCatalogueEntry[];
+  }>;
+  totals: {
+    tasks: number;
+    built: number;
+    proposed: number;
+    categories: number;
+    standards: number;
+  };
+}
+
+export function getCatalogueForDiscipline(
+  domain: Domain,
+  catalogue: LibraryCatalogue = getCatalogue(),
+): DisciplineCatalogueSlice {
+  const templates = catalogue.templates.filter((t) => t.discipline === domain);
+  const seeds = catalogue.seeds.filter((s) => s.discipline === domain);
+
+  const byCategory = new Map<string, { label: string; built: LibraryCatalogueEntry[]; proposed: LibraryCatalogueEntry[] }>();
+  for (const entry of [...templates, ...seeds]) {
+    const key = entry.category;
+    if (!byCategory.has(key)) {
+      byCategory.set(key, {
+        label: entry.category_label ?? prettifyCategory(key),
+        built: [],
+        proposed: [],
+      });
+    }
+    const bucket = byCategory.get(key)!;
+    if (entry.status === 'built') bucket.built.push(entry);
+    else bucket.proposed.push(entry);
+  }
+
+  const categories = Array.from(byCategory.entries())
+    .map(([key, v]) => ({ key, label: v.label, built: v.built, proposed: v.proposed }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+
+  const standards = new Set<string>();
+  for (const e of [...templates, ...seeds]) for (const s of e.standards) standards.add(s);
+
+  return {
+    templates,
+    seeds,
+    categories,
+    totals: {
+      tasks: templates.length + seeds.length,
+      built: templates.length,
+      proposed: seeds.length,
+      categories: categories.length,
+      standards: standards.size,
+    },
+  };
+}

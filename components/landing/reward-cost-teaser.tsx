@@ -50,7 +50,7 @@ function MiniScatter() {
         const x = 45 + m.costPerTask * 3500;
         const y = 120 - m.overallScore * 140;
         return (
-          <g key={m.model}>
+          <g key={`${m.model}-${m.adapter}`}>
             <title>{`${m.model} — reward ${m.overallScore.toFixed(2)}, $${m.costPerTask.toFixed(3)}/task`}</title>
             <circle cx={x} cy={y} r="4.5" fill={providerColour[m.provider]} stroke="#0a0a0a" strokeWidth="1.5" />
           </g>

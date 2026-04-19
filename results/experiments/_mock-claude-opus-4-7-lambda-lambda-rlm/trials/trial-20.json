@@ -1,0 +1,36 @@
+{
+  "trial_id": "trial-20",
+  "experiment_id": "_mock-claude-opus-4-7-lambda-lambda-rlm",
+  "dataset_id": "aec-bench@0.4.1",
+  "timestamp": "2026-04-10T12:20:00.000Z",
+  "task": {
+    "task_id": "mechanical/heat-load",
+    "task_revision": "mock-rev"
+  },
+  "agent": {
+    "adapter": "lambda-rlm",
+    "model": "claude-opus-4-7-lambda",
+    "adapter_revision": "1.0.0",
+    "configuration": {}
+  },
+  "evaluation": {
+    "reward": 0.71,
+    "validity": {
+      "output_parseable": true,
+      "schema_valid": true,
+      "verifier_completed": true
+    }
+  },
+  "timing": {
+    "total_seconds": 21.33,
+    "agent_seconds": 19.88
+  },
+  "cost": {
+    "tokens_in": 52595,
+    "tokens_out": 10471,
+    "cache_read_tokens": null,
+    "cache_write_tokens": null,
+    "estimated_cost_usd": 1.5743
+  },
+  "completeness": "complete"
+}

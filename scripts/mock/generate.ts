@@ -28,6 +28,7 @@ const MOCK_MODELS: MockModel[] = [
   { library: 'gemini-2.5-pro', display: 'gemini-2.5-pro', adapter: 'tool_loop', alpha: 5, beta: 5, pricePerMtokIn: 1.25, pricePerMtokOut: 5 },
   { library: 'llama-4-maverick', display: 'llama-4-maverick', adapter: 'direct', alpha: 4, beta: 6, pricePerMtokIn: 0.3, pricePerMtokOut: 0.6 },
   { library: 'gpt-4.1-mini', display: 'gpt-4.1-mini', adapter: 'tool_loop', alpha: 4, beta: 6, pricePerMtokIn: 0.4, pricePerMtokOut: 1.6 },
+  { library: 'claude-opus-4-7-lambda', display: 'claude-opus-4-7-lambda', adapter: 'lambda-rlm', alpha: 8, beta: 2, pricePerMtokIn: 15, pricePerMtokOut: 75 },
 ];
 
 const TASK_SEED_IDS = [

@@ -51,6 +51,38 @@ function makeTrial(trial_id: string, task_id: string, reward: number, ts: string
   };
 }
 
+describe('aggregator — is_mock per entry', () => {
+  it('sets is_mock=true when any contributing submission is mock', () => {
+    const trials = [
+      makeTrial('a', 'civil/a', 0.8, '2026-04-10T12:00:00Z'),
+      makeTrial('b', 'electrical/b', 0.6, '2026-04-11T12:00:00Z'),
+    ];
+    const result = buildEntry({
+      group: { key: 'claude-sonnet-4/tool_loop', entry, adapter: 'tool_loop', trials },
+      manifest,
+      activeKey: 'aec-bench@0.4.1',
+      submissionCount: 1,
+      is_mock: true,
+    });
+    expect(result.is_mock).toBe(true);
+  });
+
+  it('sets is_mock=false when all contributing submissions are real', () => {
+    const trials = [
+      makeTrial('a', 'civil/a', 0.8, '2026-04-10T12:00:00Z'),
+      makeTrial('b', 'electrical/b', 0.6, '2026-04-11T12:00:00Z'),
+    ];
+    const result = buildEntry({
+      group: { key: 'claude-sonnet-4/tool_loop', entry, adapter: 'tool_loop', trials },
+      manifest,
+      activeKey: 'aec-bench@0.4.1',
+      submissionCount: 1,
+      is_mock: false,
+    });
+    expect(result.is_mock).toBe(false);
+  });
+});
+
 describe('buildEntry', () => {
   it('assembles a LeaderboardEntry from trials + context', () => {
     const trials = [
@@ -62,6 +94,7 @@ describe('buildEntry', () => {
       manifest,
       activeKey: 'aec-bench@0.4.1',
       submissionCount: 1,
+      is_mock: false,
     });
 
     expect(result.model_key).toBe('claude-sonnet-4/tool_loop');

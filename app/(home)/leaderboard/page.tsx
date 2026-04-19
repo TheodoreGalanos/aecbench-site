@@ -1,20 +1,31 @@
-// ABOUTME: Placeholder leaderboard page — full implementation in Phase 3.
-// ABOUTME: Shows a coming soon message with link back to landing page preview.
+// ABOUTME: RSC wrapper for /leaderboard — reads ingested artefact and passes to client surface.
+// ABOUTME: Zero runtime data fetching; artefact is static at build time.
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
+import { LeaderboardSurface } from '@/components/leaderboard/leaderboard-surface';
+import { getAllEntries, getRunStatus, isMock } from '@/lib/aec-bench/read';
+import Loading from './loading';
 
 export const metadata: Metadata = {
-  title: 'Leaderboard',
-  description: 'AI model performance across AEC engineering disciplines.',
+  title: 'Leaderboard — AEC-Bench',
+  description: 'Interactive Pareto view of models × adapters on AEC-Bench tasks.',
 };
 
 export default function LeaderboardPage() {
+  const entries = getAllEntries();
+  const runStatus = getRunStatus();
+
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
-      <h1 className="text-3xl font-bold">Leaderboard</h1>
-      <p className="mt-4 max-w-md text-fd-muted-foreground">
-        The full interactive leaderboard with charts and filtering is coming
-        soon. Check the landing page for a preview of current standings.
-      </p>
+    <div className="bg-landing-bg">
+      <Suspense fallback={<Loading />}>
+        <LeaderboardSurface
+          entries={entries}
+          isMock={isMock()}
+          runStatus={runStatus}
+          heading="Leaderboard"
+          subheading="All models and adapters across the active dataset"
+        />
+      </Suspense>
     </div>
   );
 }

@@ -181,10 +181,11 @@ export interface BuildEntryContext {
   manifest: DatasetManifest;
   activeKey: string;
   submissionCount: number;
+  is_mock: boolean;
 }
 
 export function buildEntry(ctx: BuildEntryContext): LeaderboardEntry {
-  const { group, manifest, activeKey, submissionCount } = ctx;
+  const { group, manifest, activeKey, submissionCount, is_mock } = ctx;
   const reward = computeReward(group.trials);
   const perDiscipline = computePerDiscipline(group.trials, manifest);
   const costTiming = computeCostAndTiming(group.trials);
@@ -218,5 +219,6 @@ export function buildEntry(ctx: BuildEntryContext): LeaderboardEntry {
     last_submission: lastSubmission,
     submission_count: submissionCount,
     delta_vs_previous: null,
+    is_mock,
   };
 }

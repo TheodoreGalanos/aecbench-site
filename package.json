@@ -15,7 +15,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:registry": "tsx -e \"import('./scripts/ingest/pricing-parity.ts').then(async (m) => { import('./scripts/ingest/registry.ts').then(async (r) => { m.checkParity(await m.loadSnapshot(), await r.loadRegistry()); }); });\""
+    "test:registry": "tsx -e \"import('./scripts/ingest/pricing-parity.ts').then(async (m) => { import('./scripts/ingest/registry.ts').then(async (r) => { m.checkParity(await m.loadSnapshot(), await r.loadRegistry()); }); });\"",
+    "test:bundle": "tsx scripts/check-bundle-size.ts"
   },
   "keywords": [],
   "author": "",
@@ -36,6 +37,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.2",
     "@playwright/test": "^1.59.1",
     "@tailwindcss/postcss": "^4.2.2",
     "@testing-library/jest-dom": "^6.9.1",

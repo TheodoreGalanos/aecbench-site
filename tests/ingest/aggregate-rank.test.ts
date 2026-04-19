@@ -26,6 +26,7 @@ function makeEntry(over: Partial<LeaderboardEntry>): LeaderboardEntry {
     last_submission: '2026-04-10T12:00:00Z',
     submission_count: 1,
     delta_vs_previous: null,
+    is_mock: false,
     ...over,
   };
 }

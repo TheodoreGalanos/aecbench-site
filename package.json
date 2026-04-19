@@ -10,6 +10,7 @@
     "start": "next start",
     "prebuild": "pnpm ingest",
     "ingest": "tsx scripts/ingest/cli.ts",
+    "sync:catalogue": "tsx scripts/sync/library-catalogue.ts",
     "ingest:snapshot": "tsx scripts/ingest/promote-snapshot.ts",
     "mock:generate": "tsx scripts/mock/cli.ts",
     "test": "vitest run",

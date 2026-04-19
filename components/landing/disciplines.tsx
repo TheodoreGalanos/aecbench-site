@@ -26,9 +26,10 @@ const GLYPHS: Record<Domain, ComponentType<{ className?: string }>> = {
 
 export interface DisciplinesProps {
   counts: Record<Domain, { templates: number; seeds: number }>;
+  totalTasks: number;
 }
 
-export function Disciplines({ counts }: DisciplinesProps) {
+export function Disciplines({ counts, totalTasks }: DisciplinesProps) {
   return (
     <BlueprintBg>
       <SheetCorners figNumber={4} figName="DISCIPLINES" />
@@ -39,7 +40,7 @@ export function Disciplines({ counts }: DisciplinesProps) {
             Five engineering disciplines
           </h2>
           <p className="mb-8 mt-1 font-mono text-xs text-landing-muted">
-            coverage <span className="text-accent-amber">547/547</span> tasks · verified against
+            coverage <span className="text-accent-amber">{totalTasks}/{totalTasks}</span> tasks · verified against
             AS/NZS standards
           </p>
 

@@ -11,13 +11,14 @@ import { getCatalogue } from '@/lib/aec-bench/library-catalogue';
 export default function HomePage() {
   const catalogue = getCatalogue();
   const counts = catalogue.counts.by_discipline;
+  const totalTasks = catalogue.counts.total_templates + catalogue.counts.total_seeds;
 
   return (
     <main className="bg-gradient-to-b from-landing-bg to-landing-bg-end">
       <Hero />
       <LeaderboardPreview />
       <RewardCostTeaser />
-      <Disciplines counts={counts} />
+      <Disciplines counts={counts} totalTasks={totalTasks} />
       <HowItWorks />
       <CallToAction />
     </main>

@@ -47,9 +47,11 @@ describe('CategorySection', () => {
   });
 
   it('renders built cards before proposed cards', () => {
-    render(<CategorySection category={category} />);
-    const allTitles = screen.getAllByRole('heading', { level: 4 }).map((h) => h.textContent);
-    expect(allTitles.indexOf('Built One')).toBeLessThan(allTitles.indexOf('Proposed One'));
-    expect(allTitles.indexOf('Built Two')).toBeLessThan(allTitles.indexOf('Proposed One'));
+    const { container } = render(<CategorySection category={category} />);
+    // TaskCard titles are now <p> elements; extract text directly
+    const titleElements = Array.from(container.querySelectorAll('article > header > div > p'));
+    const titles = titleElements.map((el) => el.textContent || '');
+    expect(titles.indexOf('Built One')).toBeLessThan(titles.indexOf('Proposed One'));
+    expect(titles.indexOf('Built Two')).toBeLessThan(titles.indexOf('Proposed One'));
   });
 });

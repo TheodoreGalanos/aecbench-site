@@ -1,32 +1,46 @@
 ---
 title: Introduction
-description: aec-bench is an open-source platform for benchmarking AI agents on Architecture, Engineering and Construction (AEC) tasks.
+description: aec-bench is an open-source platform for benchmarking AI agents on Architecture, Engineering and Construction tasks.
 ---
 
 ## Why aec-bench?
 
-Large language models are increasingly used in engineering workflows — from drafting calculations to reviewing designs. But how do we measure their actual capability on domain-specific tasks?
+AEC work mixes deterministic calculation, document interpretation, tool use, and engineering judgement. General model benchmarks do not tell you whether an agent can follow an engineering brief, use the right formula, inspect source material, run a verifier, and leave an auditable trace.
 
 aec-bench provides:
 
-- **500+ seed tasks** across five engineering disciplines (civil, electrical, ground, mechanical, structural)
-- **Multiple agent harnesses** for different execution strategies (tool loop, RLM, lambda-RLM, direct)
-- **Automated scoring** with domain-specific reward signals
-- **Reproducible benchmarking** with versioned datasets and standardised evaluation
+- **144 built templates** and **324 proposed seed tasks** across civil, electrical, ground, mechanical, and structural engineering
+- **Agent harnesses** for direct answers, tool loops, RLM, and lambda-RLM style workflows
+- **Automated scoring** through task-local verifiers and structured reward contracts
+- **Versioned datasets** so comparable runs are anchored to immutable task snapshots
+- **Prime Lab export** for local eval, hosted eval, adapter eval, and hosted training
+- **Evolution and swarm workflows** for improving agent workspaces against real benchmark failures
 
 ## Disciplines
 
-aec-bench covers five core engineering disciplines:
+| Discipline | Example coverage |
+|------------|------------------|
+| Civil | Hydrology, hydraulics, drainage, roads, coastal, wind and load derivations |
+| Electrical | Cable sizing, PV, grounding, arc flash, thermal rating, short-circuit |
+| Ground | Bearing capacity, settlement, CPT/SPT interpretation, slope and retaining-wall checks |
+| Mechanical | HVAC, pumps, fire services, process calculations, acoustics, wastewater |
+| Structural | Marine, concrete, structural fire, load combinations, movement and connection checks |
 
-| Discipline | Example tasks |
-|------------|--------------|
-| Civil | Road geometry, drainage design, hydraulic calculations, earthworks |
-| Electrical | Cable sizing, fault current analysis, lighting design, power systems |
-| Ground | Foundation design, slope stability, retaining wall analysis |
-| Mechanical | HVAC sizing, fire protection, piping design, acoustic analysis |
-| Structural | Steel/concrete member design, seismic analysis, connection design |
+## Mental model
+
+The core loop is:
+
+1. Define or generate tasks.
+2. Freeze a dataset when you need comparability.
+3. Run an agent harness against the selected tasks.
+4. Verify outputs and write trial records.
+5. Evaluate, report, and inspect traces.
+
+Advanced workflows build on that loop rather than replacing it.
 
 ## Next Steps
 
-- [Quickstart](/docs/start/quickstart) — Run your first benchmark in 5 minutes
-- [Installation](/docs/start/installation) — Detailed installation and configuration guide
+- [Quickstart](/docs/start/quickstart) — Generate and run a first task
+- [Templates](/docs/core/templates) — Understand the built-in template catalogue
+- [Agent Harnesses](/docs/agents/harnesses) — Choose an execution strategy
+- [Prime Lab](/docs/advanced/prime-lab) — Export tasks for hosted eval and training

@@ -1,0 +1,170 @@
+---
+title: Prime Lab
+description: Prime Lab integration exports aec-bench tasks as verifiers environments for local eval, hosted eval, adapter eval, and hosted training.
+---
+
+Prime Lab support is optional. It lets aec-bench package selected tasks as Prime/verifiers environments while preserving the aec-bench task verifier as the reward authority.
+
+## Export lanes
+
+aec-bench classifies tasks into conservative Prime lanes:
+
+| AEC-Bench task shape | Prime environment shape | Status |
+|----------------------|-------------------------|--------|
+| Deterministic formula and calculation tasks | `SingleTurnEnv` style package with deterministic rubric | Supported |
+| Workspace tasks that need files or commands | `StatefulToolEnv` style package with workspace tools | Supported |
+| RLM and lambda-RLM tasks | Stateful workspace export carrying policy guardrails | Supported for eval; deeper policy export is future work |
+| Multi-environment training suites | Multiple generated environments or dataset slices | Planned config layer |
+
+The key invariant is that the original task verifier still decides reward. Prime changes the evaluation substrate, not the task's definition of correctness.
+
+## Readiness check
+
+Install the optional integration and check local readiness:
+
+```bash
+uv sync --extra prime --dev
+uv run aec-bench prime doctor
+uv run aec-bench prime doctor --check-inference
+```
+
+`doctor` checks the optional dependency and Prime CLI availability. `--check-inference` also checks model-list connectivity.
+
+## Export
+
+Export one task or a dataset slice as a generated environment package:
+
+```bash
+uv run aec-bench prime export \
+  --name aec-voltage-drop \
+  --task electrical/voltage-drop
+```
+
+```bash
+uv run aec-bench prime export \
+  --name aec-electrical-v1 \
+  --dataset electrical-v1@1.0.0 \
+  --harness-mode auto
+```
+
+Generated packages default to `prime-rl/environments/`. They are local build artefacts and should be regenerated from source tasks rather than edited by hand.
+
+## Smoke test
+
+Use smoke before pushing or training:
+
+```bash
+uv run aec-bench prime smoke \
+  --name aec-voltage-drop \
+  --task electrical/voltage-drop
+```
+
+Add `--model` to run a one-example `prime eval run`; omit it to keep the smoke local and package-load focused.
+
+## Push
+
+Push a generated environment to Prime Hub:
+
+```bash
+uv run aec-bench prime push \
+  --name aec-electrical-v1 \
+  --dataset electrical-v1@1.0.0 \
+  --visibility PRIVATE \
+  --owner your-owner
+```
+
+Private visibility is the safe default while validating reward behaviour and task selection.
+
+## Hosted eval
+
+Run a hosted eval against an existing Hub environment:
+
+```bash
+uv run aec-bench prime eval \
+  --remote-env your-owner/aec-electrical-v1 \
+  --hosted \
+  --model "Qwen/Qwen3.5-4B" \
+  --split eval \
+  --difficulty medium \
+  --harness stateful \
+  --env-num-examples 10 \
+  --seed 20260509 \
+  --num-examples 5 \
+  --rollouts-per-example 3 \
+  --max-tokens 4096 \
+  --eval-name aec-electrical-base-medium
+```
+
+`--split`, `--difficulty`, `--harness`, `--env-num-examples`, and `--seed` are forwarded to the generated environment's `load_environment(...)` function through Prime env args.
+
+Use repeated `--difficulty` values for mixed slices:
+
+```bash
+uv run aec-bench prime eval \
+  --remote-env your-owner/aec-electrical-v1 \
+  --hosted \
+  --model "Qwen/Qwen3.5-4B" \
+  --difficulty easy \
+  --difficulty medium
+```
+
+Use `--env-arg KEY=VALUE` for additional `load_environment(...)` arguments that are not first-class CLI flags yet.
+
+## Adapter eval
+
+Prime evaluates base models and hosted-training adapters through the same boundary. In aec-bench, pass the base model as `--model` and the adapter id as `--adapter-id`:
+
+```bash
+uv run aec-bench prime eval \
+  --remote-env your-owner/aec-electrical-v1 \
+  --hosted \
+  --model "Qwen/Qwen3.5-4B" \
+  --adapter-id uv124zgh7ttg3in94f7jzmv2 \
+  --split eval \
+  --difficulty medium \
+  --harness stateful \
+  --env-num-examples 10 \
+  --seed 20260509 \
+  --num-examples 5 \
+  --rollouts-per-example 3 \
+  --max-tokens 4096 \
+  --eval-name aec-electrical-adapter-medium
+```
+
+aec-bench composes the Prime model string as `<base-model>:<adapter-id>`. Keep the environment slug, split, difficulty, harness, seed, number of examples, rollout count, and token budget fixed when comparing base and adapter runs.
+
+## Hosted training
+
+Write a conservative training config:
+
+```bash
+uv run aec-bench prime train-config \
+  --environment your-owner/aec-electrical-v1 \
+  --output train.toml \
+  --model "Qwen/Qwen3.5-0.8B" \
+  --split train \
+  --difficulty easy \
+  --harness stateful \
+  --num-examples 50 \
+  --max-steps 20
+```
+
+Launch training through Prime:
+
+```bash
+uv run aec-bench prime train train.toml --yes
+```
+
+Before scaling a training run, run a one-example hosted eval and inspect reward, stop conditions, and tool-call metrics. Small evals are smoke tests, not benchmark claims.
+
+## What to inspect
+
+For stateful AEC-Bench exports, inspect more than mean reward:
+
+- Whether the rollout calls `submit_answer`
+- Whether file and command tools are actually used when expected
+- Runtime errors versus verifier disagreement
+- Per-example reward rows, so one task does not hide the aggregate
+- Token budget and max-turn behaviour for RLM-style tasks
+
+The Prime path should remain explicit: select the task slice, export it, smoke it, run a small hosted eval, then scale.

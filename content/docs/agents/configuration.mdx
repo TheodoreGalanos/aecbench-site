@@ -5,20 +5,22 @@ description: Agent configuration covers provider credentials, per-experiment age
 
 ## Providers
 
-aec-bench auto-detects the provider from the model name prefix:
+aec-bench supports Anthropic, Bedrock, Azure OpenAI, and OpenAI provider configurations. Some harnesses infer routing from the model string; script-style agents can also build sandbox env vars from an explicit provider name.
 
-| Prefix | Provider | Required env vars |
-|--------|----------|-------------------|
-| `claude-` | Anthropic | `ANTHROPIC_API_KEY` |
-| `gpt-`, `gpt4`, `o1-`, `o3-`, `o4-` | Azure OpenAI | `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT` |
-
-Anything unrecognised falls back to Anthropic.
+| Provider | Required env vars |
+|----------|-------------------|
+| `anthropic` | `ANTHROPIC_API_KEY` |
+| `bedrock` | `AWS_BEDROCK_ENDPOINT`, `AWS_BEARER_TOKEN` or `AWS_BEARER_TOKEN_BEDROCK`, `AWS_REGION` or `AWS_DEFAULT_REGION` |
+| `azure_openai` | `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT` |
+| `openai` | `OPENAI_API_KEY` |
 
 ```bash
 # .env
 ANTHROPIC_API_KEY=sk-ant-...
 AZURE_OPENAI_API_KEY=...
 AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
+OPENAI_API_KEY=sk-...
+AWS_REGION=us-west-2
 ```
 
 Keep credentials out of config files — agent definitions reference env vars directly.

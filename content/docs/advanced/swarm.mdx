@@ -1,0 +1,126 @@
+---
+title: Swarm
+description: Swarm runs multi-agent quality-diversity evolution over agent workspaces, sharing discoveries through an event-sourced archive.
+---
+
+`aec-bench swarm` runs several evolution agents in parallel. Each agent mutates its own workspace, while a shared quality-diversity archive preserves different high-performing strategies instead of collapsing everything into one hill-climb.
+
+## When to use it
+
+Use swarm when:
+
+- A single evolution run keeps converging on one local strategy.
+- You want diversity across cost, verification depth, tool use, exploration, deliberation, and reward.
+- You have enough budget for parallel evaluation.
+- You can review archive entries rather than blindly promoting the single top score.
+
+Use [Evolution](/docs/advanced/evolution) for a simpler one-workspace loop.
+
+## Setup
+
+Start with a normal evolution workspace:
+
+```bash
+uv run aec-bench evolve init workspaces/my-swarm \
+  --name "My Swarm Experiment" \
+  --adapter rlm
+```
+
+Then create a `swarm.yaml`:
+
+```yaml
+task:
+  workspace: ./workspaces/my-swarm
+  task_path: tasks/electrical/voltage-drop
+
+agents:
+  count: 4
+  default_model: au.anthropic.claude-sonnet-4-6
+
+budget:
+  max_cost_usd: 20.0
+  eval_budget_usd: 5.0
+  wind_down_threshold: 0.8
+  final_threshold: 0.95
+
+evaluation:
+  timeout: 300
+  backend: local
+
+evolution:
+  batch_size: 1
+  improvement_threshold: 0.01
+
+heartbeat:
+  pivot_after: 5
+```
+
+## Run and inspect
+
+```bash
+uv run aec-bench swarm run swarm.yaml
+uv run aec-bench swarm status <run-id> --state-dir workspaces/my-swarm/_swarm_runs
+uv run aec-bench swarm history --state-dir workspaces/my-swarm/_swarm_runs
+uv run aec-bench swarm resume <run-id> --state-dir workspaces/my-swarm/_swarm_runs
+uv run aec-bench swarm stop <run-id>
+```
+
+Swarm state is written under the workspace's `_swarm_runs/` directory:
+
+```text
+_swarm_runs/
+├── events.jsonl
+├── archive.json
+├── graveyard.json
+└── lineage.json
+```
+
+The event log is the source of truth. Snapshot files can be reconstructed from it.
+
+## How coordination works
+
+Each agent runs an independent loop:
+
+1. Solve the task with its current workspace.
+2. Classify the trace and compute reward.
+3. Analyse repeated failures and behavioural descriptors.
+4. Propose a prompt or skill mutation.
+5. Gate the candidate.
+6. Report score, cost, descriptors, and lineage back to the manager.
+
+The manager updates a shared archive and gives agents archive context before subsequent cycles. That context can include top performers, coverage gaps, relevant failures, and pivot instructions.
+
+## Behaviour descriptors
+
+The quality-diversity archive indexes candidates by behaviour, not just reward:
+
+| Descriptor | What it captures |
+|------------|------------------|
+| `token_cost` | Total tokens consumed |
+| `verification_depth` | Fraction of work spent verifying |
+| `tool_density` | Tool calls per turn |
+| `exploration_ratio` | Fraction of work spent exploring |
+| `deliberation_ratio` | Fraction of work spent reasoning |
+| `reward` | Task score |
+
+Two workspaces can have the same reward and still be worth keeping if they solve the task with different behaviours.
+
+## Budget behaviour
+
+The budget pool is shared across agents. At the wind-down threshold, agents are told to make remaining evaluations count. Near the final threshold, the manager stops starting new evals and lets in-flight evals complete.
+
+Start small:
+
+| Scenario | Agents | Budget |
+|----------|--------|--------|
+| Config smoke | 2 | USD 5 |
+| Moderate exploration | 4 | USD 20 |
+| Longer frontier search | 4+ | USD 50+ |
+
+Costs depend heavily on adapter, model, task length, and verification behaviour.
+
+## Pivot heartbeat
+
+If an agent records too many non-improving evaluations, the manager injects a pivot instruction. The point is to avoid spending the remaining budget on tiny variants of a stuck strategy.
+
+Use pivoting as a guardrail, not as proof of quality. Archive entries still need normal inspection and evaluation before being treated as benchmark-relevant improvements.

@@ -1,73 +1,96 @@
 ---
 title: Installation
-description: Installation covers the Python, Docker, and provider credential requirements needed to run aec-bench locally.
+description: Installation covers the Python, uv, optional Prime, backend, and provider credential requirements needed to run aec-bench locally.
 ---
 
 ## System Requirements
 
-- **Python:** 3.11 or later
-- **OS:** macOS, Linux, or Windows (WSL recommended)
-- **Memory:** 4 GB RAM minimum (8 GB recommended for large datasets)
+- **Python:** 3.13 or later
+- **Package manager:** `uv`
+- **OS:** macOS, Linux, or Windows through WSL
+- **Memory:** 4 GB RAM minimum, 8 GB recommended for larger generated suites
 
-## Installation Methods
+Docker, Modal, Harbor, and Prime are optional. You only need them when you choose those execution or training paths.
 
-### pip
+## From Source
 
-```bash
-pip install aec-bench
-```
-
-### uv (recommended)
-
-```bash
-uv add aec-bench
-```
-
-### From source
+The source checkout is the most reliable install path while the library is changing quickly:
 
 ```bash
 git clone https://github.com/aurecon/aec-bench.git
 cd aec-bench
-uv sync
+uv sync --dev
+uv run aec-bench --version
 ```
 
-## Provider Configuration
+The console entry point is `aec-bench`. In a source checkout, run it through `uv run` so Python, dependencies, and local package code stay aligned.
 
-aec-bench supports multiple LLM providers. Set the appropriate environment variable for your provider:
+## Optional Extras
 
-| Provider | Environment Variable |
-|----------|---------------------|
+Prime Lab support is optional:
+
+```bash
+uv sync --extra prime --dev
+uv run aec-bench prime doctor
+```
+
+Provider integrations for direct Python agent calls may require the `pydantic-ai` extra:
+
+```bash
+uv sync --extra pydantic-ai --dev
+```
+
+## Provider Credentials
+
+Set credentials for the provider used by your model or endpoint alias:
+
+| Provider | Environment variables |
+|----------|-----------------------|
 | Anthropic | `ANTHROPIC_API_KEY` |
 | OpenAI | `OPENAI_API_KEY` |
-| Google | `GOOGLE_API_KEY` |
+| Azure OpenAI | `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT` |
+| AWS Bedrock | `AWS_BEARER_TOKEN_BEDROCK`, `AWS_REGION` or `AWS_DEFAULT_REGION` |
+| Prime hosted eval/training | authenticated `prime` CLI session |
 
-## Configuration File
-
-aec-bench uses a `aec-bench.toml` file for configuration. Create one in your working directory:
-
-```toml
-[provider]
-name = "anthropic"           # anthropic, openai, google
-model = "claude-sonnet-4-20250514"
-
-[harness]
-strategy = "tool_loop"       # tool_loop, rlm, lambda_rlm, direct
-max_steps = 10
-timeout = 300                # seconds per task
-
-[evaluation]
-dataset = "core"             # dataset version to evaluate against
-parallel = 4                 # concurrent task evaluations
-```
+aec-bench loads `.env` from the project root at CLI startup. Shell variables take precedence over `.env`.
 
 ## Verify Installation
 
+Use CLI help and a non-provider command first:
+
 ```bash
-aec-bench --version
-aec-bench doctor             # check configuration and connectivity
+uv run aec-bench --help
+uv run aec-bench generate list-templates --discipline ground
+uv run aec-bench library export --stdout --pretty
 ```
+
+Then run a provider-backed command once credentials are present:
+
+```bash
+uv run aec-bench run-local tasks/electrical/voltage-drop \
+  --model gpt-4.1-mini \
+  --adapter direct
+```
+
+## Project Layout
+
+The source checkout uses a `src/` Python layout:
+
+```text
+src/aec_bench/          # Library source
+tasks/                  # Benchmark task seeds and generated instances
+seeds/                  # Expert-created seed files
+agents/                 # Ready-to-use agent implementations
+artefacts/              # Local generated artefacts and catalogue exports
+docs/                   # Architecture and library guides
+workspaces/             # Evolution workspaces
+```
+
+Generated artefacts, local runs, Prime packages, and evolution swarm state are intentionally local outputs. Commit curated tasks, templates, source, tests, and docs rather than transient run artefacts.
 
 ## Next Steps
 
-- [Architecture](/docs/core/architecture) — Understand how aec-bench works under the hood
-- [Agent Harnesses](/docs/agents/harnesses) — Learn about different execution strategies
+- [Quickstart](/docs/start/quickstart) — Generate and run a first task
+- [Templates](/docs/core/templates) — Understand the built-in template catalogue
+- [CLI Reference](/docs/reference/cli) — See the current command surface
+- [Prime Lab](/docs/advanced/prime-lab) — Export tasks for Prime eval and training

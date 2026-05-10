@@ -54,6 +54,7 @@ These are usually set by the harness automatically; you'd override them only for
 | `MODAL_TOKEN_ID`, `MODAL_TOKEN_SECRET` | Modal | Set via `modal token set` |
 | `HARBOR_ENDPOINT` | Harbor | Service URL |
 | `HARBOR_TOKEN` | Harbor | Auth token |
+| Prime CLI auth | Prime hosted eval/training | Managed by the `prime` CLI |
 
 Backend configs reference these with `$VAR` expansion so secrets never land in YAML.
 
@@ -110,6 +111,8 @@ project_root/
 │                   ├── reward.json
 │                   └── details.json
 │
+├── prime-rl/                   # generated Prime environments and eval outputs
+│
 ├── seeds/                      # seed task fixtures
 │
 └── workspaces/                 # evolution workspaces (git-versioned)
@@ -146,3 +149,5 @@ When the same setting can come from multiple places, aec-bench resolves in this 
 5. **Built-in defaults**
 
 Environment variables bypass this ladder — they're either credentials (required by the provider SDK at call time) or agent-runtime overrides (read by the container's entry script).
+
+Generated Prime packages and swarm run state are local artefacts. Regenerate them from source tasks, datasets, and workspaces rather than treating them as canonical source.

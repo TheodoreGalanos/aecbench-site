@@ -274,3 +274,59 @@ Dataset manifests are **generated** by `aec-bench dataset create`, not hand-writ
 ```
 
 See [Datasets](/docs/advanced/datasets) for the content hashing and versioning policy.
+
+## `swarm.yaml`
+
+Swarm config extends the evolution workspace model with parallel agents, shared budget, and quality-diversity archive settings:
+
+```yaml
+task:
+  workspace: ./workspaces/my-swarm
+  task_path: tasks/electrical/voltage-drop
+
+agents:
+  count: 4
+  default_model: au.anthropic.claude-sonnet-4-6
+
+budget:
+  max_cost_usd: 20.0
+  eval_budget_usd: 5.0
+  wind_down_threshold: 0.8
+  final_threshold: 0.95
+
+evaluation:
+  timeout: 300
+  backend: local
+
+evolution:
+  batch_size: 1
+  improvement_threshold: 0.01
+
+heartbeat:
+  pivot_after: 5
+```
+
+See [Swarm](/docs/advanced/swarm) for the runtime model and event log.
+
+## Prime environment args
+
+Prime export commands take selection flags directly. Hosted eval and training commands can forward environment arguments into `load_environment(...)`:
+
+```bash
+uv run aec-bench prime eval \
+  --remote-env owner/aec-suite \
+  --hosted \
+  --model "Qwen/Qwen3.5-4B" \
+  --split eval \
+  --difficulty medium \
+  --harness stateful \
+  --env-num-examples 10 \
+  --seed 20260509 \
+  --env-arg max_turns=20
+```
+
+Values passed through `--env-arg KEY=VALUE` are parsed as JSON where possible, so numbers and booleans keep their types.
+
+## `configs/endpoints.toml`
+
+In Prime Lab workspaces, endpoint aliases live in `configs/endpoints.toml` and are referenced by Prime commands and generated experiment configs. Keep provider credentials in environment variables or the provider's own auth store, not in this file.

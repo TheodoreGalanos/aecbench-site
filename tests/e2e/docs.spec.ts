@@ -16,7 +16,7 @@ test.describe('Documentation', () => {
 
   test('renders quickstart page with code blocks', async ({ page }) => {
     await page.goto('/docs/start/quickstart');
-    await expect(page.getByText('pip install aec-bench')).toBeVisible();
+    await expect(page.getByText('uv run aec-bench generate list-templates')).toBeVisible();
   });
 
   test('renders installation page with provider table', async ({ page }) => {

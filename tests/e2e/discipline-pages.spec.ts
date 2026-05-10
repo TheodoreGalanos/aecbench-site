@@ -61,9 +61,9 @@ test.describe('discipline pages — smoke', () => {
   test('invalid slug returns 404', async ({ page }) => {
     // In Next.js dev with turbopack, notFound() triggers the 404 boundary
     // but the HTTP status may be 200 (streaming RSC behaviour). Assert on
-    // page content instead: no discipline heading should be present.
+    // page content instead.
     await page.goto('/leaderboard/quantum');
-    const heading = page.getByRole('heading', { level: 1 });
-    await expect(heading).toHaveCount(0);
+    await expect(page.getByRole('heading', { level: 1, name: '404' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /civil|electrical|ground|mechanical|structural/i })).toHaveCount(0);
   });
 });

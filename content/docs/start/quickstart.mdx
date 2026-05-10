@@ -1,63 +1,94 @@
 ---
 title: Quickstart
-description: The quickstart is a five-minute walkthrough that installs aec-bench and runs your first evaluation end-to-end.
+description: The quickstart is a short path from a fresh checkout to generating a task, running a local trial, and evaluating the imported ledger.
 ---
+
+This walkthrough uses the source checkout because aec-bench is moving quickly and the CLI surface is the source of truth.
 
 ## Prerequisites
 
-- Python 3.11+
-- An API key for at least one LLM provider (Anthropic, OpenAI, or Google)
+- Python 3.13 or later
+- [uv](https://docs.astral.sh/uv/) for dependency management
+- An LLM provider key for the model you run, unless you only generate and validate tasks
 
 ## Install
 
 ```bash
-pip install aec-bench
+git clone https://github.com/aurecon/aec-bench.git
+cd aec-bench
+uv sync --dev
+uv run aec-bench --help
 ```
 
-Or with [uv](https://docs.astral.sh/uv/):
+If you are consuming a published package, the same commands work without `uv run` after installing the `aec-bench` console script.
+
+## Generate
+
+List the built-in templates and generate one deterministic task instance:
 
 ```bash
-uv add aec-bench
+uv run aec-bench generate list-templates --discipline electrical
+
+uv run aec-bench generate task voltage-drop \
+  --instances 1 \
+  --difficulty easy \
+  --seed 42 \
+  --output tasks/generated
 ```
 
-## Configure
+Generated instances are normal task directories: instruction, task config, verifier files, and provenance linking the instance back to its template and seed.
 
-Create an `aec-bench.toml` configuration file:
+## Validate
 
-```toml
-[provider]
-name = "anthropic"
-model = "claude-sonnet-4-20250514"
-
-[harness]
-strategy = "tool_loop"
-max_steps = 10
-```
-
-Set your API key as an environment variable:
+Before treating a task as benchmark material, validate its structure and verifier:
 
 ```bash
-export ANTHROPIC_API_KEY="your-key-here"
+uv run aec-bench task validate \
+  tasks/generated/electrical/cable-sizing/voltage-drop/sydney-suburban-residential-lighting-00
+```
+
+For template work, validate the source template rather than only the generated instance:
+
+```bash
+uv run aec-bench generate validate-template \
+  src/aec_bench/templates/builtin/electrical/voltage_drop
 ```
 
 ## Run
 
-Evaluate your agent against the core dataset:
+Run one task locally with a real model. The local runner copies the task into a temporary workspace, executes the selected harness, verifies the result, and imports the trial unless you opt out.
 
 ```bash
-aec-bench run --dataset core
+export ANTHROPIC_API_KEY="..."
+
+uv run aec-bench run-local \
+  tasks/generated/electrical/cable-sizing/voltage-drop/sydney-suburban-residential-lighting-00 \
+  --model claude-sonnet-4-20250514 \
+  --adapter direct
 ```
 
-This will:
-1. Load tasks from the core dataset
-2. Execute each task using your configured agent harness
-3. Score results using automated reward signals
-4. Output a summary to the terminal and save detailed traces
+Use `--adapter rlm` for a recursive-language-model harness, or `--keep-workspace` when debugging the temporary workspace after a run.
 
-## View Results
+## Evaluate
+
+Imported trials can be evaluated from the ledger by experiment id:
 
 ```bash
-aec-bench results --latest
+uv run aec-bench evaluate --experiment exp-001
+uv run aec-bench evaluate --experiment exp-001 --report report.html
 ```
 
-See the [full installation guide](/docs/start/installation) for advanced configuration options.
+For a repeatable benchmark slice, freeze tasks into a dataset, generate an experiment config, then run that config:
+
+```bash
+uv run aec-bench dataset create \
+  --name electrical-v1 \
+  --version 1.0.0 \
+  --domain electrical
+
+uv run aec-bench dataset config electrical-v1@1.0.0 \
+  --model claude-sonnet-4-20250514 \
+  --output experiment.yaml
+
+uv run aec-bench run --config experiment.yaml
+```

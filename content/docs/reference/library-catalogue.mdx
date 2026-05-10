@@ -1,0 +1,108 @@
+---
+title: Library Catalogue
+description: The library catalogue is the versioned JSON export that lets the website display current public templates and proposed seed tasks from the aec-bench library.
+---
+
+The catalogue is the public data bridge between the Python library and this site. It contains built templates and proposed seed tasks without exposing local run artefacts or internal task directories.
+
+## Export
+
+From the aec-bench library checkout:
+
+```bash
+uv run aec-bench library export --pretty
+```
+
+The default output is:
+
+```text
+artefacts/library-catalogue.json
+```
+
+Use stdout for CI or inspection:
+
+```bash
+uv run aec-bench library export --stdout --pretty
+```
+
+The current synced catalogue contains 144 built templates and 324 proposed seeds:
+
+| Discipline | Built templates | Proposed seeds |
+|------------|-----------------|----------------|
+| Civil | 56 | 31 |
+| Electrical | 13 | 131 |
+| Ground | 10 | 3 |
+| Mechanical | 50 | 92 |
+| Structural | 15 | 67 |
+
+## Schema
+
+The v1 export has top-level metadata, counts, templates, and seeds:
+
+```json
+{
+  "schema_version": 1,
+  "generated_at": "2026-05-10T09:43:34.691856Z",
+  "library_version": "0.1.0",
+  "library_commit": "c434653b",
+  "counts": {
+    "total_templates": 144,
+    "total_seeds": 324,
+    "by_discipline": {
+      "civil": { "templates": 56, "seeds": 31 }
+    }
+  },
+  "templates": [],
+  "seeds": []
+}
+```
+
+Each entry includes:
+
+| Field | Meaning |
+|-------|---------|
+| `task_id` | Stable slug used by docs and discipline pages |
+| `discipline` | One of civil, electrical, ground, mechanical, structural |
+| `category` | Machine-readable category slug |
+| `task_name` | Display title |
+| `description` and `long_description` | Short and expanded public descriptions |
+| `standards` | Named standards or method references when available |
+| `inputs` and `outputs` | Public IO contract, units, and tolerances where known |
+| `status` | `built` for templates, `proposed` for seed tasks |
+| `difficulty_tiers` | Supported easy, medium, hard presets for built templates |
+| `tool_mode` | Whether generated tasks expose tools |
+| `archetype_count` | Number of sampling archetypes for built templates |
+
+## Site sync
+
+From the site checkout:
+
+```bash
+pnpm sync:catalogue
+```
+
+The script reads `../aec-bench/artefacts/library-catalogue.json` by default, validates it with the site Zod schema, and writes:
+
+```text
+data/library-catalogue.json
+```
+
+Override the library checkout path when needed:
+
+```bash
+AEC_BENCH_ROOT=/path/to/aec-bench pnpm sync:catalogue
+```
+
+## Public scope
+
+The catalogue is for public library documentation. It should describe:
+
+- Built-in templates and proposed seed tasks
+- Engineering discipline, category, standards, inputs, outputs, and difficulty
+- Reproducible generation and benchmark metadata
+
+It should not include local run outputs, private customer material, scratch workspaces, or task families that are intentionally kept outside the public benchmark surface.
+
+## Versioning
+
+`schema_version` protects the site build. If the library changes the catalogue shape, update the site schema and docs in the same change. If only counts or entries change, regenerate and sync the JSON artefact.

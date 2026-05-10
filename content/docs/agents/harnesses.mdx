@@ -116,7 +116,9 @@ RLM fits report generation, iterative data analysis, or any task where the agent
 
 ## Lambda-RLM
 
-A deterministic pipeline rather than a free-form loop. Lambda-RLM breaks work into five phases and executes them in order:
+A deterministic pipeline rather than a free-form loop. Lambda-RLM is for structured document and report workflows where the output shape is known before the run starts.
+
+The high-level phases are:
 
 1. **Plan** — build an extraction schedule from the report template
 2. **Extract** — pull required facts from source documents
@@ -138,7 +140,16 @@ max_retries = 2
 token_budget = 500_000
 ```
 
-Use Lambda-RLM when the output has a **known structure** — SOWs, compliance reports, templated proposals. The planner optimises for cost (fewer extractions, better context packing) at the expense of flexibility.
+Current Lambda-RLM runs can use:
+
+- **Report templates** with guided sections, composed sections, fields, fragments, and required-output metadata
+- **Planning passes** that seed the compose scratchpad before section generation
+- **Block-task routing** so different section types can use different handlers
+- **Structure enforcement** that validates generated blocks against required fields and retries targeted gaps
+- **Grounding reports** that check whether generated content is supported by declared source material
+- **Best-of-K synthesis** where multiple candidate blocks are generated and a rubric/tournament selects the final block
+
+Use Lambda-RLM when the output has a **known structure**: compliance reports, structured design notes, scopes, or other templated technical documents. The planner optimises for bounded extraction and repeatable composition at the expense of free-form flexibility.
 
 ## Tools
 

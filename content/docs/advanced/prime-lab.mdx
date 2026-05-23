@@ -1,6 +1,6 @@
 ---
 title: Prime Lab
-description: Prime Lab integration exports aec-bench tasks as verifiers environments for local eval, hosted eval, adapter eval, and hosted training.
+description: Prime Lab integration exports aec-bench tasks as verifiers environments for local eval, hosted eval, adapter eval, hosted training, and rollout import.
 ---
 
 Prime Lab support is optional. It lets aec-bench package selected tasks as Prime/verifiers environments while preserving the aec-bench task verifier as the reward authority.
@@ -48,6 +48,8 @@ uv run aec-bench prime export \
 ```
 
 Generated packages default to `prime-rl/environments/`. They are local build artefacts and should be regenerated from source tasks rather than edited by hand.
+
+Generated environments accept `split`, `difficulty`, `num_examples`, `seed`, and `harness` through `load_environment(...)`. For exported environments, `difficulty` filters first, `split` then chooses a deterministic training or eval slice, and `seed` only shuffles within that slice. That keeps `train` and `eval` from overlapping when a dataset is large enough to split. Very small slices stay intact so smoke tests do not export an empty environment.
 
 ## Smoke test
 
@@ -112,7 +114,16 @@ Use `--env-arg KEY=VALUE` for additional `load_environment(...)` arguments that 
 
 ## Adapter eval
 
-Prime evaluates base models and hosted-training adapters through the same boundary. In aec-bench, pass the base model as `--model` and the adapter id as `--adapter-id`:
+Prime evaluates base models and hosted-training adapters through the same environment boundary. The adapter used for inference must be a deployed Prime inference adapter, not a raw training checkpoint id.
+
+List available adapter deployments:
+
+```bash
+uv run aec-bench prime adapters
+uv run aec-bench --json prime adapters
+```
+
+If you already know the deployed adapter id, pass the base model as `--model` and the deployed adapter id as `--adapter-id`:
 
 ```bash
 uv run aec-bench prime eval \
@@ -131,7 +142,27 @@ uv run aec-bench prime eval \
   --eval-name aec-electrical-adapter-medium
 ```
 
-aec-bench composes the Prime model string as `<base-model>:<adapter-id>`. Keep the environment slug, split, difficulty, harness, seed, number of examples, rollout count, and token budget fixed when comparing base and adapter runs.
+aec-bench composes the Prime model string as `<base-model>:<adapter-id>`. To avoid mixing checkpoint ids and deployment ids, resolve the adapter directly from a hosted training run:
+
+```bash
+uv run aec-bench prime eval \
+  --remote-env your-owner/aec-electrical-v1 \
+  --hosted \
+  --model "Qwen/Qwen3.5-4B" \
+  --adapter-from-run <training-run-id> \
+  --adapter-step latest \
+  --split eval \
+  --difficulty medium \
+  --harness stateful \
+  --env-num-examples 10 \
+  --seed 20260509 \
+  --num-examples 5 \
+  --rollouts-per-example 3 \
+  --max-tokens 4096 \
+  --eval-name aec-electrical-adapter-medium
+```
+
+For base-versus-adapter comparisons, keep the environment slug, split, difficulty, harness, seed, number of examples, rollout count, and token budget fixed. Change only the model adapter.
 
 ## Hosted training
 
@@ -157,6 +188,33 @@ uv run aec-bench prime train train.toml --yes
 
 Before scaling a training run, run a one-example hosted eval and inspect reward, stop conditions, and tool-call metrics. Small evals are smoke tests, not benchmark claims.
 
+After training finishes, use `aec-bench prime adapters` to find the deployed inference adapter before running adapter evals. Training checkpoint ids and deployed inference adapter ids are different Prime records.
+
+## Import hosted rollouts
+
+Prime hosted evals keep sample-level rollout payloads: prompt, completion messages, tool calls, reward, timing, token usage, stop condition, and environment metrics. Import those samples into the normal aec-bench ledger when you want the same trace and behavioural tooling used for local or Harbor-backed runs:
+
+```bash
+uv run aec-bench import-prime-eval <prime-eval-id> \
+  --experiment prime-eval-medium-stateful
+```
+
+The importer writes one `TrialRecord` per Prime sample plus local artefacts under the ledger: `conversation.jsonl`, the raw `prime_sample.json`, and `output.md` when the rollout called `submit_answer` with submitted content. It does not replace Prime's hosted result; it materialises the result locally so the rest of aec-bench can inspect it.
+
+After import, use the existing report commands:
+
+```bash
+uv run aec-bench report traces \
+  --experiment-id prime-eval-medium-stateful
+
+uv run aec-bench report behavioral \
+  --experiment-id prime-eval-medium-stateful \
+  --classifier claude-sonnet-4-20250514 \
+  --output prime-eval-behaviour.json
+```
+
+Use the same import-and-report path for base and adapter evals. For comparison reports, keep the experiment ids distinct and compare aggregate reward, stop conditions, tool-call counts, `submit_answer` calls, and behavioural classifications side by side.
+
 ## What to inspect
 
 For stateful AEC-Bench exports, inspect more than mean reward:
@@ -167,4 +225,4 @@ For stateful AEC-Bench exports, inspect more than mean reward:
 - Per-example reward rows, so one task does not hide the aggregate
 - Token budget and max-turn behaviour for RLM-style tasks
 
-The Prime path should remain explicit: select the task slice, export it, smoke it, run a small hosted eval, then scale.
+The Prime path should remain explicit: select the task slice, export it, smoke it, run a small hosted eval, import the hosted rollouts, inspect behaviour, then scale.

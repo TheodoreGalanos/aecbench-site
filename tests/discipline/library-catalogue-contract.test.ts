@@ -25,6 +25,11 @@ describe('LibraryCatalogueSchema', () => {
     delete missing.counts.by_discipline.structural;
     expect(() => LibraryCatalogueSchema.parse(missing)).toThrow();
   });
+
+  it('accepts a null library commit before the public repo has an initial commit', () => {
+    const parsed = LibraryCatalogueSchema.parse(makeCatalogue({ library_commit: null }));
+    expect(parsed.library_commit).toBeNull();
+  });
 });
 
 describe('LibraryCatalogueEntrySchema', () => {

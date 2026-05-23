@@ -16,9 +16,9 @@ A benchmark run goes through six stages:
 |-------|-------------|------------|
 | **Define** | A `task.toml` describes the problem, `instruction.md` provides the prompt, and a verifier script defines how to score | `contracts/task_definition` |
 | **Resolve** | Paths are resolved, tools discovered, and the task is packaged into a `ResolvedTaskInstance` | `tasks/instance` |
-| **Stage** | A Docker container is built from the task's `Dockerfile` with fixtures and tools staged inside | `harness/local_environment` |
-| **Execute** | An agent adapter runs the task — calling tools, writing output, recording a trajectory | `adapters/*` |
-| **Score** | The task's `verifier.py` runs against the agent's output, producing a reward (0.0–1.0) and per-field details | `evaluation/pipeline` |
+| **Stage** | A workspace or sandbox is prepared, with declared files, fixtures, and tools staged for the selected backend | `harness/local_environment` |
+| **Execute** | An agent harness runs the task — calling tools, writing output, recording a trajectory | `adapters/*` |
+| **Score** | The task's verifier, usually `tests/verify.py`, runs against the agent's output, producing a reward (0.0–1.0) and per-field details | `evaluation/pipeline` |
 | **Aggregate** | Trial records are appended to the ledger, scores aggregated, and reports generated | `ledger`, `communication` |
 
 ## Core Domains
@@ -57,24 +57,24 @@ tasks/
 
 See [Tasks](/docs/core/tasks) for the full reference.
 
-### Adapters
+### Agent harnesses
 
-Provider-neutral agent execution strategies. Four built-in harnesses, each implementing the same `Adapter` protocol:
+Provider-neutral agent execution strategies. Four built-in harnesses share the same internal execution protocol:
 
-| Adapter | How it works | Best for |
+| Harness | How it works | Best for |
 |---------|-------------|----------|
 | **Direct** | Single LLM call, no tools | Classification, extraction |
 | **Tool Loop** | Multi-turn with tool calls (max N turns) | General tasks with tool use |
 | **RLM** | Sandboxed REPL with structured sub-calls | Complex calculations, iterative work |
 | **Lambda-RLM** | Pre-planned steps with bounded execution | Structured reports, known workflows |
 
-All adapters produce the same output: an `AdapterResult` containing the agent's output, a full execution trajectory, and token usage.
+All agent harnesses produce the same output envelope: the agent's answer, a full execution trajectory, and token usage.
 
-See [Harnesses](/docs/agents/harnesses) for details on each strategy.
+See [Agent Harnesses](/docs/agents/harnesses) for details on each strategy.
 
 ### Generation
 
-Parameterised templates that produce unlimited task instances. A template defines parameters (soil type, load magnitude, cable length), archetypes (sandy soil, clay), and difficulty presets. The generator samples parameters and renders concrete tasks.
+Parameterised templates that produce reproducible task instances. A template defines parameters (soil type, load magnitude, cable length), archetypes (sandy soil, clay), and difficulty presets. The generator samples parameters and renders concrete tasks.
 
 ```
 Template (Jinja2 + ParamSpec)
@@ -86,15 +86,15 @@ Template (Jinja2 + ParamSpec)
 
 See [Templates](/docs/core/templates) for the template engine reference.
 
-### Harness
+### Execution harness
 
-Orchestrates trial execution. Handles container lifecycle, tool staging, adapter dispatch, and trajectory recording. Runs trials on pluggable compute backends:
+Orchestrates trial execution. Handles container lifecycle, tool staging, agent-harness dispatch, and trajectory recording. Runs trials on pluggable compute backends:
 
 - **Local** — in-process execution on your machine
 - **Modal** — serverless cloud execution
 - **Docker**, **e2b**, **Daytona** — alternative sandbox targets
 
-For production deployment across a shared fleet, aec-bench dispatches jobs through **Harbor** — a separate orchestration service that schedules trials across backends. See [Deployment](/docs/advanced/deployment).
+For production deployment across a shared fleet, aec-bench dispatches jobs through **Harbor** — a separate orchestration service that schedules trials across backends. Harbor is not an agent harness; it decides where trial jobs run. See [Deployment](/docs/advanced/deployment).
 
 ### Evaluation
 
@@ -103,11 +103,15 @@ Multi-stage scoring pipeline:
 1. **Verifier** — task-specific script that checks agent output against expected results
 2. **Reward** — normalised score (0.0–1.0) with per-field breakdown
 3. **Confidence** — statistical metadata (Cohen's kappa, Wilson CI)
-4. **Behavioural classification** — categorise agent behaviour using bond taxonomy (Effective, Verbose, Defective, X-type)
+4. **Behavioural classification** — categorise agent turns using the bond taxonomy: execution, verification, deliberation, and exploration
 
 ### Communication
 
 Reporting and visualisation: HTML reports, leaderboard tables, trace viewers, and structured exports (JSON, JSONL).
+
+### Feedback
+
+Structured expert review, calibration, adjudication, and benchmark improvement. Feedback captures human judgments as provenanced data, feeds task and verifier fixes back into the benchmark, and keeps holdout-sensitive observations out of public or training-visible surfaces.
 
 ## Design Principles
 
@@ -125,5 +129,5 @@ aec-bench follows a strict priority order when design decisions conflict:
 
 - **Trial records are immutable** — once written to the ledger, a trial record is never modified
 - **Tasks are self-contained** — everything needed to run and score a task lives in its directory
-- **Adapters are provider-neutral** — the same task can be run with any LLM provider
-- **Evaluation is deterministic** — the same output always produces the same score
+- **Agent harnesses are provider-neutral** — the same task can be run with any LLM provider
+- **Verifier scoring is deterministic** — the same output and verifier revision produce the same mechanical score

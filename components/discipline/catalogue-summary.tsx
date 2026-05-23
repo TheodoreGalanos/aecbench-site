@@ -9,7 +9,7 @@ export interface CatalogueSummaryProps {
     standards: number;
   };
   libraryVersion: string;
-  libraryCommit: string;
+  libraryCommit: string | null;
   generatedAt: string;
 }
 
@@ -20,7 +20,7 @@ export function CatalogueSummary({
   generatedAt,
 }: CatalogueSummaryProps) {
   const date = generatedAt.slice(0, 10);
-  const commit = libraryCommit.slice(0, 7);
+  const commit = libraryCommit ? libraryCommit.slice(0, 7) : 'uncommitted';
 
   return (
     <header className="mb-4">

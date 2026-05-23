@@ -5,7 +5,7 @@ description: Contracts are the Pydantic models that define the shape of data cro
 
 import { ContractsFlow } from '@/components/docs/contracts-flow';
 
-The four core contracts — `TaskDefinition`, `AgentOutput`, `EvaluationResult`, `TrialRecord` — connect in sequence:
+The central run path connects `TaskDefinition`, `AgentOutput`, `EvaluationResult`, and `TrialRecord`:
 
 <ContractsFlow />
 
@@ -34,6 +34,8 @@ extensions = []
 build_timeout_sec = 600.0
 cpus = 1
 memory_mb = 2048
+storage_mb = 5120
+allow_internet = true
 ```
 
 The `instruction.md` alongside it contains the actual prompt:
@@ -60,7 +62,7 @@ allowable voltage drop limit.
 Every task has three key pieces:
 
 - **Instruction** — the self-contained prompt sent to the agent
-- **Environment** — a Docker container with tools, fixtures, and resource limits
+- **Environment** — a declared runtime environment with tools, fixtures, and resource limits
 - **Verifier** — a Python script that computes ground truth and scores the agent's output
 
 ### Lifecycle and visibility
@@ -76,7 +78,7 @@ Tasks have two independent axes that control when and where they appear:
 
 ## AgentOutput — what came back
 
-When an adapter finishes executing, it returns an `AgentOutput` — a minimal envelope that says what the agent produced and where to find it:
+When an agent harness finishes executing, it returns an `AgentOutput` — a minimal envelope that says what the agent produced and where to find it:
 
 ```python
 class AgentOutput(StrictModel):
@@ -86,7 +88,7 @@ class AgentOutput(StrictModel):
     error_message: str | None   # what went wrong (if anything)
 ```
 
-The adapter reports status and location; parsing the output file is the evaluation pipeline's job.
+The harness reports status and location; parsing the output file is the evaluation pipeline's job.
 
 ## EvaluationResult — how it scored
 
@@ -134,14 +136,15 @@ A `TrialRecord` captures everything about one agent run — enough provenance to
 class TrialRecord(StrictModel):
     trial_id: NonEmptyStr
     experiment_id: NonEmptyStr
+    dataset_id: str | None
     timestamp: datetime
 
     # What was tested
     task: TaskReference              # task_id + content hash
-    agent: AgentReference            # adapter, model, configuration
+    agent: AgentReference            # harness, model, configuration
 
     # How it ran
-    environment: EnvironmentSnapshot # Docker image, compute backend
+    environment: EnvironmentSnapshot # runtime image, compute backend
     inputs: InputRecord              # instruction, system prompt, files
 
     # What happened
@@ -151,12 +154,33 @@ class TrialRecord(StrictModel):
     # Metadata
     timing: TimingRecord             # wall-clock times per phase
     cost: CostRecord | None          # tokens + estimated USD
+    adaptation: AdaptationProvenance | None
     completeness: Completeness       # complete | partial
 ```
 
 Trial records are **immutable and append-only**. Once written to the ledger, they are never modified. This is the core reproducibility guarantee.
 
-A `complete` trial must include full provenance — adapter version hashes, tool versions, and input file hashes. Partial records are allowed during execution but cannot be promoted to the official ledger.
+A `complete` trial must include full provenance — harness revision, tool versions, and input file hashes. Partial records are allowed during execution but cannot be promoted to the official ledger.
+
+### Trajectory entries
+
+A `TrajectoryEntry` records one event within an agent run. These entries are written to `trajectory.jsonl` so evaluators and trace viewers can inspect how a result was produced, not just the final answer.
+
+```python
+class TrajectoryEntry(StrictModel):
+    step: int
+    role: str                 # assistant | tool_call | tool_result | system | user
+    content: str | None
+    tool_name: str | None
+    command: str | None
+    arguments: dict | None
+    stdout: str | None
+    stderr: str | None
+    exit_code: int | None
+    duration_ms: int | None
+    media: list[str] | None
+    timestamp: str | None
+```
 
 ### Cost tracking
 
@@ -175,32 +199,32 @@ This feeds into the leaderboard's cost-efficiency analysis — how much does it 
 
 ## ExperimentManifest — what to run
 
-An experiment defines which tasks to run, with which agents, how many times:
+An experiment defines which tasks to run, with which agent harnesses, how many times:
 
-```toml title="experiment.toml"
-experiment_id = "claude-vs-gpt-electrical"
-name = "Claude vs GPT on electrical tasks"
-repetitions = 3
+```yaml title="experiment.yaml"
+experiment_id: claude-vs-gpt-electrical
+name: Claude vs GPT on electrical tasks
+repetitions: 3
 
-[tasks]
-dataset = "electrical-v1@1.0.0"
-difficulties = ["easy", "medium"]
+tasks:
+  dataset: electrical-v1@1.0.0
+  difficulties:
+    - easy
+    - medium
 
-[[agents]]
-name = "claude-sonnet"
-adapter = "tool_loop"
-model = "$ANTHROPIC_MODEL"
+agents:
+  - name: claude-sonnet
+    harness: tool_loop
+    model: $ANTHROPIC_MODEL
+  - name: gpt-4.1
+    harness: tool_loop
+    model: gpt-4.1
 
-[[agents]]
-name = "gpt-4.1"
-adapter = "tool_loop"
-model = "gpt-4.1"
-
-[compute]
-backend = "local"
+compute:
+  backend: modal
 ```
 
-The `TaskSelector` supports filtering by dataset, domain, difficulty, and glob patterns. The `model` field supports `$ENV_VAR` references so you can keep API keys and model names out of config files.
+The `TaskSelector` supports filtering by dataset, domains, difficulties, and glob patterns. The `model` field supports `$ENV_VAR` references so model names can stay deployment-specific.
 
 ## Design rules
 

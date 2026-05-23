@@ -7,16 +7,16 @@ import { TemplateGenerationFlow } from '@/components/docs/template-generation-fl
 
 ## How templates work
 
-A template is a reusable engineering problem family. It samples realistic parameters, renders an instruction, computes ground truth, and scaffolds complete task instances that can be validated, frozen into datasets, and run through the same harnesses as hand-authored tasks.
+A template is a reusable engineering problem family. It samples realistic parameters, renders an instruction, computes ground truth, and scaffolds complete task instances that can be validated, frozen into datasets, and run through the same benchmark pipeline as hand-authored tasks.
 
 <TemplateGenerationFlow />
 
-The current library catalogue contains **144 built templates** across five disciplines, plus proposed seed tasks that have not yet been converted into deterministic templates.
+The current library catalogue contains **184 built templates** across five disciplines, plus proposed seed tasks that have not yet been converted into deterministic templates.
 
 | Discipline | Built templates | Proposed seeds | Typical coverage |
 |------------|-----------------|----------------|------------------|
-| Civil | 56 | 31 | Hydrology, hydraulics, transport geometry, coastal, drainage, wind and load derivations |
-| Electrical | 13 | 131 | Cable sizing, PV, grounding, arc flash, busbar, thermal rating, short-circuit |
+| Civil | 57 | 30 | Hydrology, hydraulics, transport geometry, coastal, drainage, wind and load derivations |
+| Electrical | 52 | 92 | Cable sizing, PV, grounding, arc flash, busbar, thermal rating, short-circuit |
 | Ground | 10 | 3 | Bearing capacity, settlement, CPT/SPT interpretation, slope and retaining-wall checks |
 | Mechanical | 50 | 92 | HVAC, pumps, fire services, process calculations, acoustics, vibration, wastewater |
 | Structural | 15 | 67 | Marine, concrete, structural fire, load combinations, movement and connection checks |
@@ -56,17 +56,43 @@ category = "cable-sizing"
 standards = ["AS/NZS 3008.1.1"]
 tool_mode = "with-tool"
 
-[params.cable_length_m]
+[params.cable_size_mm2]
+type = "enum"
+unit = "mm²"
+description = "Cable conductor cross-sectional area"
+values = ["1.5", "2.5", "4", "6", "10", "16", "25", "35", "50", "70", "95", "120", "150", "185", "240"]
+
+[params.length_m]
 type = "float"
 unit = "m"
-description = "Cable route length"
-min = 10
-max = 250
+description = "Cable route length (one way)"
+min = 1
+max = 500
 
-[params.installation_method]
+[params.load_current_a]
+type = "float"
+unit = "A"
+description = "Design load current"
+min = 0.5
+max = 500
+
+[params.power_factor]
+type = "float"
+description = "Load power factor"
+min = 0.5
+max = 1.0
+default = 0.8
+
+[params.conductor_material]
 type = "enum"
-description = "Installation condition"
-values = ["buried", "conduit", "tray"]
+description = "Conductor material"
+values = ["copper", "aluminium"]
+derivable_from = "archetype"
+
+[params.circuit_type]
+type = "enum"
+description = "Circuit type"
+values = ["single_phase", "three_phase"]
 ```
 
 Supported parameter types include `float`, `int`, and `enum`. Templates can also use archetype-derived values so generated cases remain realistic rather than random-but-implausible.
@@ -78,9 +104,9 @@ Archetypes bundle values that should move together:
 ```toml title="params.toml"
 [archetypes.sydney_suburban_lighting]
 description = "Suburban lighting circuit with moderate route length"
-load_kw = { min = 1.5, max = 4.0 }
-cable_length_m = { min = 35, max = 120 }
-power_factor = { min = 0.85, max = 0.95 }
+site_contexts = ["sydney-suburban", "melbourne-suburban"]
+length_m = { min = 5, max = 30 }
+load_current_a = { min = 1, max = 10 }
 ```
 
 This matters in AEC tasks because input independence often creates nonsense. A geotechnical soil, hydraulic duty point, cable route, or structural load case usually has correlated values.
@@ -93,12 +119,14 @@ Difficulty controls which archetypes can be sampled and how much information is 
 [difficulty.easy]
 description = "All calculation inputs are visible"
 visibility = "all_given"
+archetypes = ["residential_lighting", "residential_power"]
 
 [difficulty.hard]
 description = "Some inputs must be inferred from the scenario"
 visibility = "partial"
-hidden_params = ["power_factor"]
-replacement_text = "Use the stated project context to select a suitable power factor."
+archetypes = ["commercial_submain", "industrial_feeder"]
+hidden_params = ["conductor_material"]
+replacement_text = "Use the stated project context to select a suitable conductor material."
 ```
 
 The built-in convention is:
@@ -118,11 +146,14 @@ Instructions are Jinja2 templates:
 
 | Parameter | Value | Unit |
 |-----------|-------|------|
-| Load | {{ load_kw }} | kW |
-| Length | {{ cable_length_m }} | m |
-{% if power_factor is defined %}
+| Cable size | {{ cable_size_mm2 }} | mm² |
+| Cable route length | {{ length_m }} | m |
+| Design load current | {{ load_current_a }} | A |
 | Power factor | {{ power_factor }} | - |
+{% if conductor_material is defined %}
+| Conductor material | {{ conductor_material }} | - |
 {% endif %}
+| Circuit type | {{ circuit_type }} | - |
 
 ## Required
 
@@ -136,17 +167,26 @@ Difficulty visibility decides which variables are rendered into the prompt. The 
 The engine is intentionally small and deterministic:
 
 ```python title="engine.py"
-def compute(params: dict[str, object]) -> dict[str, float]:
-    current_a = ...
+def compute(
+    cable_size_mm2: str,
+    length_m: float,
+    load_current_a: float,
+    power_factor: float,
+    conductor_material: str = "copper",
+    circuit_type: str = "single_phase",
+) -> dict[str, float]:
+    vc_mv_per_a_m = ...
+    voltage_drop_v = ...
     voltage_drop_pct = ...
     return {
-        "current_a": current_a,
-        "voltage_drop_pct": voltage_drop_pct,
-        "compliance": 1.0 if voltage_drop_pct <= params["limit_pct"] else 0.0,
+        "vc_mv_per_a_m": vc_mv_per_a_m,
+        "voltage_drop_v": voltage_drop_v,
+        "voltage_drop_percent": voltage_drop_pct,
+        "compliant": 1.0 if voltage_drop_pct <= 5.0 else 0.0,
     }
 ```
 
-Good engines are pure functions over sampled parameters. They should not call model APIs, inspect the generated prompt, depend on local machine state, or hide task-specific policy outside the template contract.
+Good engines are pure functions over sampled parameters. They should not call model APIs, inspect the generated prompt, depend on local machine state, or rely on unstated intent or prose-only judgement.
 
 ## Generating instances
 
@@ -189,7 +229,7 @@ The built-in templates are strongest when the engineering contract is explicit:
 - Deterministic calculations with numeric or categorical inputs
 - Stable formulae, embedded lookup tables, or clearly bounded reductions of a design method
 - Outputs with concrete tolerances
-- Verifiers that can score mechanically without reading an agent's mind
+- Verifiers that can score mechanically without relying on unstated intent or prose-only judgement
 
 Tasks are deferred rather than templated when they depend on open-ended document review, hidden standards tables, iterative solvers without a reduced contract, or broad design judgement that has not been made explicit.
 
@@ -201,7 +241,7 @@ Start with the smallest useful deterministic contract:
 2. Add realistic archetypes so sampled values make sense together.
 3. Render a clear `instruction.md` with difficulty-aware visibility.
 4. Implement `compute()` in `engine.py`.
-5. Run `aec-bench generate validate-template`.
+5. Run `uv run aec-bench generate validate-template ./my-template`.
 6. Generate easy, medium, and hard instances and validate the generated task directories.
 
 Use templates for reproducible benchmark families. Use hand-authored tasks for bespoke workflows that are not yet reducible to a stable generation contract.

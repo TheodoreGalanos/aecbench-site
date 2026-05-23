@@ -1,6 +1,6 @@
 ---
 title: Evolution
-description: Evolution is a closed-loop system that mutates an agent workspace — system prompt and skill library — based on trial failures.
+description: Evolution is a closed-loop system that mutates an agent workspace, mainly its system prompt and skill library, based on trial failures.
 ---
 
 Evolution improves the workspace an agent reads. The base model does not change; prompts and skills change under version control, then each candidate workspace is evaluated against tasks.
@@ -29,7 +29,7 @@ Create a workspace:
 ```bash
 uv run aec-bench evolve init workspaces/voltage-drop-evo \
   --name voltage-drop-evo \
-  --adapter rlm
+  --harness rlm
 ```
 
 The workspace contains a manifest, system prompt, and skill directory. Treat it like source code: review diffs, keep changes scoped, and avoid contaminating benchmark task definitions with answer leakage.
@@ -47,7 +47,7 @@ models:
 
 solver:
   name: solver-v1
-  adapter: rlm
+  harness: rlm
   model: env:AWS_SONNET_MODEL_ID
 
 tasks:
@@ -78,15 +78,17 @@ uv run aec-bench evolve rollback workspaces/voltage-drop-evo evo-20260404-1220-2
 
 ## Mutations
 
-The evolver should emit structured workspace edits, not free-form rewriting:
+The evolver emits structured workspace edits, not free-form rewriting:
 
 ```python
-MutationAction = (
-    WriteSkill(name, content)
-    | ModifySkill(name, diff)
-    | DeleteSkill(name)
-    | ModifyPrompt(section, edit)
-)
+@dataclass(frozen=True)
+class MutationAction:
+    action_type: str                 # write_skill | modify_skill | delete_skill | modify_prompt
+    skill_name: str | None = None
+    skill_description: str | None = None
+    skill_discipline: str | None = None
+    skill_body: str | None = None
+    prompt_content: str | None = None
 ```
 
 Each mutation is validated before application. Applied versions can be evaluated, compared, archived, or rolled back.

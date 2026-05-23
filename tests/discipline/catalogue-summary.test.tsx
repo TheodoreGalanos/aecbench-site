@@ -32,4 +32,9 @@ describe('CatalogueSummary', () => {
     render(<CatalogueSummary {...baseProps} />);
     expect(screen.getByText(/2026-04-19/)).toBeInTheDocument();
   });
+
+  it('renders uncommitted when the source catalogue has no library commit yet', () => {
+    render(<CatalogueSummary {...baseProps} libraryCommit={null} />);
+    expect(screen.getByText(/uncommitted/)).toBeInTheDocument();
+  });
 });

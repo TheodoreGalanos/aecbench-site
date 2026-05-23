@@ -3,38 +3,41 @@ title: Tasks
 description: A task is a self-contained engineering problem — prompt, environment, and verifier — that an agent attempts and the system scores.
 ---
 
-aec-bench currently includes **247 tasks** across five engineering disciplines:
+aec-bench uses the word "task" at three levels:
 
-| Discipline | Tasks | Examples |
-|------------|------:|---------|
-| Electrical | 79 | Voltage drop, cable sizing, arc flash, lighting design |
-| Mechanical | 74 | HVAC sizing, fire protection, piping, acoustics |
-| Civil | 50 | Road geometry, drainage, hydraulics, earthworks |
-| Structural | 39 | Concrete beam design, seismic analysis, connections |
-| Ground | 5 | Bearing capacity, slope stability, settlement |
+| Layer | What it means | Typical file |
+|-------|---------------|--------------|
+| **Source task spec** | A proposed benchmark idea captured from the catalogue or source material | `source_task.json` |
+| **Template** | A parameterised task family that can produce many concrete scenarios | template metadata and renderers |
+| **Runnable task instance** | A concrete problem with a prompt, runtime, and verifier | `task.toml` + `instruction.md` |
+
+Public benchmark reports should count a specific dataset or release, not the whole repository tree. The repository contains catalogue seeds, templates, generated instances, and development task families; those are useful assets, but they are not one interchangeable benchmark count.
 
 ## Anatomy of a task
 
-Every task is a directory with four parts:
+A runnable task instance is a directory with required files and optional review aids:
 
 ```
 tasks/electrical/voltage-drop/
 ├── task.toml          # metadata and resource limits
 ├── instruction.md     # the prompt sent to the agent
 ├── environment/
-│   └── Dockerfile     # container the agent runs in
+│   └── Dockerfile     # runtime image for the task
 ├── solution/
 │   └── solve.py       # reference solution (not sent to agent)
 └── tests/
-    ├── verify.py      # scoring script
+    ├── test.sh        # verifier entry point
+    ├── verify.py      # scoring logic
     └── fixtures/      # golden pass/fail examples for verifier testing
         ├── golden_pass.md
         └── golden_fail.md
 ```
 
+The loader requires `task.toml`, `instruction.md`, an environment `Dockerfile`, and a verifier entry point. `solution/` and golden fixtures are strongly recommended for review, but they are not part of the agent prompt.
+
 ### The prompt
 
-`instruction.md` is the complete, self-contained prompt. The agent sees this and nothing else. No hidden context, no follow-up clarifications.
+`instruction.md` is the prompt sent to the agent. It must stand on its own and explicitly name any staged files, outputs, or constraints the agent is expected to use.
 
 ```markdown title="instruction.md (voltage drop task)"
 You are a senior electrical engineer specializing in building services.
@@ -64,7 +67,7 @@ Calculate the following:
 
 ### The configuration
 
-`task.toml` describes metadata and resource limits — not the problem itself. The schema follows the [Harbor framework](https://github.com/harbor-ai/harbor) task specification, so tasks are compatible with Harbor's orchestration and container runtime out of the box.
+`task.toml` describes metadata, timeouts, and runtime limits — not the problem itself. The loader combines this file with `instruction.md` and produces a `TaskDefinition` contract.
 
 ```toml title="task.toml"
 version = "1.0"
@@ -81,13 +84,17 @@ timeout_sec = 600.0
 timeout_sec = 120.0
 
 [environment]
+extensions = []
+build_timeout_sec = 600.0
 cpus = 1
 memory_mb = 2048
+storage_mb = 5120
+allow_internet = true
 ```
 
 ### The environment
 
-Each task provides a `Dockerfile` that defines the container the agent runs in. This is typically minimal — just the tools the task requires:
+Each runnable task provides a `Dockerfile` that defines its runtime image. This is usually minimal — just the tools the task requires:
 
 ```dockerfile title="environment/Dockerfile"
 FROM --platform=linux/amd64 ubuntu:24.04
@@ -100,11 +107,11 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /workspace
 ```
 
-Some tasks stage input files (spreadsheets, CAD data, code standards) into the container via `fixtures/` directories. The agent can read these files but doesn't know they're staged — they look like files on disk.
+Some tasks stage input files such as spreadsheets, drawings, code extracts, or reference data into the runtime via fixture directories. The agent reads them as normal files on disk.
 
 ### The verifier
 
-`verify.py` is the scoring script. It computes ground truth independently, reads the agent's output, and produces a reward (0.0–1.0) plus per-field details.
+The verifier computes ground truth independently, reads the agent's output, and writes a reward (0.0–1.0) plus per-field details. For Harbor-backed runs, `tests/test.sh` is the entry point; it usually calls `tests/verify.py`.
 
 Here's the core scoring logic from the voltage drop verifier:
 
@@ -130,7 +137,7 @@ def compute_ground_truth() -> dict[str, float]:
     }
 ```
 
-The verifier writes two files:
+The verifier writes two files under `/logs/verifier/`:
 - `reward.json` — the headline score: `{"reward": 0.67}`
 - `details.json` — per-field breakdown: `{"voltage_drop_v": 1.0, "voltage_drop_pct": 1.0, "compliance": 0.0}`
 
@@ -138,7 +145,7 @@ Each field is scored independently with configurable tolerances. Numerical field
 
 ### Golden fixtures
 
-Every verifier ships with test fixtures — a `golden_pass.md` that should score 1.0 and a `golden_fail.md` that should score less. These are used to test the verifier itself, not the agent.
+Most verifiers ship with test fixtures — a `golden_pass.md` that should score 1.0 and a `golden_fail.md` that should score less. These are used to test the verifier itself, not the agent.
 
 ```markdown title="fixtures/golden_pass.md (excerpt)"
 ## Step 2: Voltage Drop
@@ -153,27 +160,28 @@ Vd% = 3.0400 / 400 x 100 = 0.7600%
 
 Tasks move through four stages: `proposed` → `active` → `deprecated` → `retired`.
 
-- **Proposed** — draft task, under review. Not runnable.
-- **Active** — production benchmark. Included in datasets and reports.
-- **Deprecated** — superseded by a better version but still runnable for historical comparison.
-- **Retired** — permanently archived. Not runnable.
+- **Proposed** — draft task or source spec under review
+- **Active** — production benchmark task eligible for datasets and reports
+- **Deprecated** — superseded by a better version but still runnable for historical comparison
+- **Retired** — permanently archived and not runnable
 
 Separately, tasks can be **public** (appears in reports and leaderboard) or **holdout** (runs but results are hidden). Holdout tasks are used for anti-contamination testing — if a model scores suspiciously well on holdout tasks it hasn't seen, that's a red flag.
 
 ## Task categories
 
-Categories describe the type of cognitive work a task demands. They're a free-form string — the ones below are used in the current benchmark, but you can define your own when contributing tasks. Use the one that best describes the *primary* cognitive demand.
+Categories describe the type of work a task demands. They are free-form strings, not a closed enum. Use the category that best describes the *primary* demand, and keep more specific descriptors in `tags`.
 
 | Category | What the agent does |
 |----------|-------------------|
 | `reasoning` | Apply formulas and first principles to produce a numerical or boolean answer |
-| `audit` | Review an existing design for compliance with a code or standard |
-| `design` | Produce a design meeting given constraints (multiple valid solutions possible) |
-| `interpretation` | Extract structured information from raw technical data |
+| `report-generation` | Produce a structured engineering or proposal deliverable from source material |
+| `hydraulic-calculations` | Run civil hydraulic calculations against given inputs |
+| `load-analysis` | Resolve loads, assumptions, and checks for a structural scenario |
+| `short-circuit` | Calculate fault levels or related electrical protection values |
 
 ## Difficulty levels
 
-Each task is rated `easy`, `medium`, or `hard`. Ratings are calibrated by domain experts against what a professional engineer at each level would be expected to handle.
+Each task is rated `easy`, `medium`, or `hard`. Ratings should be calibrated by domain experts against what a professional engineer at each level would be expected to handle.
 
 | Difficulty | Characteristics | Calibrated against |
 |------------|----------------|-------------------|
@@ -181,12 +189,12 @@ Each task is rated `easy`, `medium`, or `hard`. Ratings are calibrated by domain
 | **Medium** | Multi-step, some judgment, may need standard lookups | Intermediate engineer |
 | **Hard** | Complex analysis, multiple variables, judgment critical | Senior engineer |
 
-## Seed tasks vs generated instances
+## Source specs, seeds, and generated instances
 
-There are two ways tasks enter the benchmark:
+There are three common ways work enters the benchmark:
 
-**Seed tasks** are hand-crafted by domain experts. Each one is a carefully designed problem with a custom verifier, reviewed for correctness and fairness. The 247 current tasks are all seeds.
+**Source task specs** capture proposed benchmark ideas before they are runnable. They usually live as `source_task.json` files and preserve the original discipline, category, standards, inputs, outputs, and source file.
 
-**Generated instances** come from parameterised templates. A template defines the problem structure with variable parameters, and the generator samples concrete values to create unlimited task instances. See [Templates](/docs/core/templates) for how this works.
+**Seed runnable instances** are hand-authored tasks with a prompt, runtime, and custom verifier. These are useful when the task needs expert judgement, a bespoke source document, or a narrow real-world scenario.
 
-Generated instances have a `source_task.json` linking them back to their template and sampled parameters. This preserves full provenance — you can always trace a generated instance back to the template that created it.
+**Generated instances** come from parameterised templates. A template defines the problem structure with variable parameters, and the generator samples concrete values to create reproducible task instances. Generated `task.toml` files include generation metadata such as template name, seed, archetype, and difficulty. See [Templates](/docs/core/templates) for how this works.

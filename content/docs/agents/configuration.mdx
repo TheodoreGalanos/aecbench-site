@@ -1,18 +1,19 @@
 ---
 title: Configuration
-description: Agent configuration covers provider credentials, per-experiment agent definitions, and registration of custom adapters.
+description: Agent configuration covers provider credentials, experiment agent entries, harness parameters, and custom internal adapter registration.
 ---
 
 ## Providers
 
-aec-bench supports Anthropic, Bedrock, Azure OpenAI, and OpenAI provider configurations. Some harnesses infer routing from the model string; script-style agents can also build sandbox env vars from an explicit provider name.
+Provider handling depends on the execution path. Agent harnesses backed by PydanticAI infer provider routing from the model string. Script-style agents can also build sandbox environment variables from an explicit provider name.
 
-| Provider | Required env vars |
-|----------|-------------------|
-| `anthropic` | `ANTHROPIC_API_KEY` |
-| `bedrock` | `AWS_BEDROCK_ENDPOINT`, `AWS_BEARER_TOKEN` or `AWS_BEARER_TOKEN_BEDROCK`, `AWS_REGION` or `AWS_DEFAULT_REGION` |
-| `azure_openai` | `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT` |
-| `openai` | `OPENAI_API_KEY` |
+| Runtime path | Required env vars |
+|--------------|-------------------|
+| Anthropic API | `ANTHROPIC_API_KEY` |
+| Azure OpenAI | `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT`; optional `AZURE_OPENAI_API_VERSION` |
+| Bedrock through PydanticAI | `AWS_REGION` or `AWS_DEFAULT_REGION`, plus AWS credentials available to the process |
+| Bedrock script-style provider | `AWS_BEDROCK_ENDPOINT`, `AWS_BEARER_TOKEN` or `AWS_BEARER_TOKEN_BEDROCK`, `AWS_REGION` or `AWS_DEFAULT_REGION` |
+| OpenAI script-style provider | `OPENAI_API_KEY` |
 
 ```bash
 # .env
@@ -23,54 +24,56 @@ OPENAI_API_KEY=sk-...
 AWS_REGION=us-west-2
 ```
 
-Keep credentials out of config files — agent definitions reference env vars directly.
+Keep credentials out of config files. Agent definitions should reference environment variables or rely on the provider SDK's normal credential chain.
 
 ## Agent definitions
 
-An agent entry in an experiment manifest picks the adapter, model, and configuration:
+An agent entry in an experiment manifest picks the public harness name, model, and optional parameters:
 
 ```yaml
 # experiment.yaml
 agents:
   - name: claude-sonnet-tool-loop
-    adapter: tool_loop
+    harness: tool_loop
     model: claude-sonnet-4-20250514
-    configuration:
+    parameters:
       max_turns: 12
 
   - name: gpt4-direct
-    adapter: direct
+    harness: direct
     model: gpt-4.1
-    configuration:
+    parameters:
       max_tokens: 8192
 ```
+
+The manifest parser also accepts the older `adapter` field, but public docs use `harness`. Supplying both is an error.
 
 The `model` field supports `$ENV_VAR` references so pinned model IDs stay out of config:
 
 ```yaml
 agents:
   - name: pinned
-    adapter: tool_loop
+    harness: tool_loop
     model: $ANTHROPIC_MODEL     # resolved at run time
 ```
 
-## Adapter-specific config
+## Harness parameters
 
-Each adapter takes different knobs. The `configuration` block in an agent entry is passed through as `request.configuration`.
+Each harness takes different knobs. In experiment manifests, `parameters` are passed to the execution layer and become `request.configuration` for the internal adapter.
 
-**Direct** — one knob:
+**Direct**: simple generation settings such as output token budget:
 
 ```toml
 max_tokens = 16384
 ```
 
-**Tool Loop** — turn limit:
+**Tool Loop**: bounded turn count:
 
 ```toml
 max_turns = 8
 ```
 
-**RLM** — grouped into guardrails and execution:
+**RLM**: workspace-level `rlm.toml`, grouped into guardrails and execution:
 
 ```toml
 # rlm.toml
@@ -81,41 +84,47 @@ max_subcall_depth = 3
 max_budget_usd = 5.00
 
 [execution]
-scaffolding = "standard"
+scaffolding = true
 context_limit = 1_000_000
 compaction_threshold_pct = 0.85
 max_parallel_workers = 4
 ```
 
-**Lambda-RLM** — planner and review phases:
+**Lambda-RLM**: workspace-level `lambda-rlm.toml`, with template, planner, review, guardrails, and execution settings:
 
 ```toml
 # lambda-rlm.toml
+[template]
+tier = "dependency_tree"
+definition = "report_template.toml"
+
 [planner]
 context_window_chars = 200_000
 max_branching_factor = 4
 
 [review]
 enabled = true
-max_retries = 2
-target_accuracy = 0.95
+max_retries_per_source = 1
+max_supplements_per_section = 1
 
-[budget]
+[guardrails]
 token_budget = 500_000
+
+[execution]
+max_parallel_workers = 4
 ```
 
-RLM and Lambda-RLM configs live alongside the agent entry or in a shared directory referenced by name.
+RLM and Lambda-RLM configuration files live in the staged task workspace. The experiment manifest selects the harness and model; the workspace TOML controls the harness-specific runtime behaviour.
 
-## Custom adapters
+## Custom Internal Adapters
 
-Any class matching the `Adapter` protocol can be registered. The protocol is three methods:
+Public documentation calls these agent harnesses, but the Python execution protocol is still named `Adapter`. Any class matching that protocol can be registered:
 
 ```python
-from pathlib import Path
-from aec_bench.contracts import AdapterRequest, AdapterResult
+from aec_bench.adapters.base import AdapterRequest, AdapterResult
 
 class MyAdapter:
-    def __init__(self, model_name: str, workspace: Path, **kwargs):
+    def __init__(self, model_name: str, workspace: str, **kwargs):
         self.model_name = model_name
         self.workspace = workspace
 
@@ -133,7 +142,7 @@ class MyAdapter:
 Register against a `LocalAdapterRegistry` with a builder function:
 
 ```python
-from aec_bench.adapters import LocalAdapterRegistry
+from aec_bench.adapters.local_registry import LocalAdapterRegistry
 
 registry = LocalAdapterRegistry()
 registry.register(
@@ -142,21 +151,21 @@ registry.register(
 )
 ```
 
-Once registered, the adapter is addressable from any experiment config:
+Once registered, the adapter kind is addressable from an experiment config through the public `harness` field:
 
 ```yaml
 agents:
   - name: my-experimental-agent
-    adapter: my_adapter
+    harness: my_adapter
     model: claude-sonnet-4
 ```
 
 ### What a good adapter does
 
-- **Respects the whitelist** — only call tools present in `request.tools`
-- **Writes to `request.output_path`** — producing that file is the adapter's job
-- **Records a transcript** — one entry per turn, including tool calls and results
-- **Reports token usage** — populate `usage_input_tokens` / `usage_output_tokens` so the ledger can track cost
-- **Classifies failures** — set `failure_kind` so downstream reports can group errors
+- **Respects the whitelist**: only call tools present in `request.tools`.
+- **Writes to `request.output_path`**: producing that file is the adapter's job.
+- **Records a transcript**: capture model turns, tool calls, and tool results.
+- **Reports token usage**: populate `usage_input_tokens` and `usage_output_tokens` when available.
+- **Classifies failures**: set `failure_kind` so downstream reports can group errors.
 
-The contract is thin, but getting these right is what lets the same task compare cleanly across many adapters.
+The contract is deliberately thin. Keeping it thin is what lets the same task compare cleanly across many harnesses.

@@ -10,7 +10,7 @@ description: Installation covers the Python, uv, optional Prime, backend, and pr
 - **OS:** macOS, Linux, or Windows through WSL
 - **Memory:** 4 GB RAM minimum, 8 GB recommended for larger generated suites
 
-Docker, Modal, Harbor, and Prime are optional. You only need them when you choose those execution or training paths.
+Docker, Modal, Prime, and hosted Harbor execution are optional. You only need those services when you choose the matching execution or training path.
 
 ## From Source
 
@@ -52,7 +52,7 @@ Set credentials for the provider used by your model or endpoint alias:
 | AWS Bedrock | `AWS_BEARER_TOKEN_BEDROCK`, `AWS_REGION` or `AWS_DEFAULT_REGION` |
 | Prime hosted eval/training | authenticated `prime` CLI session |
 
-aec-bench loads `.env` from the project root at CLI startup. Shell variables take precedence over `.env`.
+When you run the CLI from a project checkout, aec-bench loads `.env` at startup. Existing shell variables take precedence.
 
 ## Verify Installation
 
@@ -69,7 +69,7 @@ Then run a provider-backed command once credentials are present:
 ```bash
 uv run aec-bench run-local tasks/electrical/voltage-drop \
   --model gpt-4.1-mini \
-  --adapter direct
+  --harness direct
 ```
 
 ## Project Layout

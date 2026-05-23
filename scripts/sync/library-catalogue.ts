@@ -34,7 +34,7 @@ export function syncCatalogue(opts: SyncCatalogueOptions): void {
   mkdirSync(dirname(target), { recursive: true });
   writeFileSync(target, JSON.stringify(parsed.data, null, 2) + '\n');
 
-  const shortCommit = parsed.data.library_commit.slice(0, 7);
+  const shortCommit = parsed.data.library_commit?.slice(0, 7) ?? 'uncommitted';
   // eslint-disable-next-line no-console
   console.log(
     `[sync:catalogue] ${source} → ${target}\n` +

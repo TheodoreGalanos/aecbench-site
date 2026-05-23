@@ -39,10 +39,12 @@ describe('library documentation coverage', () => {
     const catalogue = JSON.parse(readFileSync(join(ROOT, 'data', 'library-catalogue.json'), 'utf-8'));
     const templates = readDoc('core/templates.mdx');
 
-    expect(catalogue.counts.total_templates).toBe(144);
+    expect(catalogue.counts.total_templates).toBe(184);
+    expect(catalogue.counts.total_seeds).toBe(284);
+    expect(catalogue.counts.by_discipline.electrical.templates).toBe(52);
     expect(catalogue.counts.by_discipline.mechanical.templates).toBe(50);
     expect(catalogue.counts.by_discipline.structural.templates).toBe(15);
-    expect(templates).toContain('144 built templates');
+    expect(templates).toContain('184 built templates');
     expect(templates).toContain('Mechanical');
     expect(templates).toContain('Structural');
   });

@@ -3,49 +3,55 @@ title: Backends
 description: A compute backend executes a single trial inside a container or sandbox on a target compute platform.
 ---
 
-Backends are pluggable via the `ComputeBackend` protocol. The same trial produces the same trial record regardless of which backend runs it.
+Backends are pluggable via the `ComputeBackend` protocol. They execute a single prepared trial and return collected artifacts to the harness boundary.
 
 This page covers the compute layer. For the orchestration layer that dispatches jobs to external services, see [Deployment](/docs/advanced/deployment).
 
 ## The backend protocol
 
-Every backend implements the same five-method interface:
+Every direct backend implements the same five-method interface:
 
 ```python
 class ComputeBackend(Protocol):
-    def build_environment(self, task_dir: Path) -> ImageRef: ...
-    def launch_trial(self, image_ref: ImageRef, workspace_dir: Path) -> TrialHandle: ...
-    def execute_trial(self, handle: TrialHandle, request: BackendExecutionRequest) -> BackendExecutionResult: ...
-    def collect_outputs(self, handle: TrialHandle) -> CollectedArtifacts: ...
-    def teardown(self, handle: TrialHandle) -> None: ...
+    def build_environment(self, *, task_dir: Path) -> str: ...
+    def launch_trial(self, *, image_ref: str, workspace_dir: Path) -> TrialHandle: ...
+    def execute_trial(
+        self,
+        *,
+        handle: TrialHandle,
+        request: BackendExecutionRequest,
+    ) -> BackendExecutionResult: ...
+    def collect_outputs(self, *, handle: TrialHandle) -> CollectedArtifacts: ...
+    def teardown(self, *, handle: TrialHandle) -> None: ...
 ```
 
-The orchestrator drives the sequence — build the task's container image, launch a runtime for one trial, execute the agent and verifier inside, collect artifacts, tear down. A `TrialHandle` is an opaque identifier: a Docker container ID, a Modal sandbox reference, whatever the backend needs.
+The orchestrator drives the sequence: build the task environment, launch a runtime for one trial, execute the agent and verifier inside, collect artifacts, and tear down. A `TrialHandle` is an opaque identifier: a Docker container ID, a Modal sandbox reference, or whatever the backend needs.
 
 ## Available backends
 
-Different backends suit different workflows. The CLI's `--backend` flag selects among them:
+Different backends suit different workflows. `aec-bench run --backend` currently accepts `modal`, `docker`, `e2b`, and `daytona`. Local execution is exposed through `aec-bench run-local` and through evolution/swarm development paths.
 
 | Backend | Where trials run | Suited for |
 |---------|------------------|------------|
-| **`local`** | In-process on the host | Adapter iteration, fast feedback |
 | **`modal`** | Modal serverless containers | Scaling out without infra |
 | **`docker`** | Local Docker daemon | Reproducible runs on your machine |
 | **`e2b`** | E2B sandboxes | Sandbox-per-trial isolation |
 | **`daytona`** | Daytona workspaces | Dev-environment-backed runs |
+| **local runtime** | In-process on the host | Harness iteration, verifier debugging |
 
-Maturity varies — `modal` and `local` are the paths most of the library is tested on. The others are supported at the protocol level but may need environment tuning for your workloads.
+Maturity varies. `modal` and local runtime paths are the best exercised. The others are supported at the protocol level but may need environment tuning for your workloads.
 
 ## Local
 
 In-process execution on your machine. The adapter runs in Python directly; the verifier runs as a subprocess against a local workspace directory. No containerisation.
 
-```yaml
-compute:
-  backend: local
+```bash
+uv run aec-bench run-local tasks/electrical/voltage-drop \
+  --model gpt-4.1-mini \
+  --harness direct
 ```
 
-Zero infrastructure setup. Good for adapter development, debugging verifier scripts, and short experiments where you'd rather see stack traces than log artefacts. Throughput is bounded by a single host.
+Zero infrastructure setup. Good for harness development, debugging verifier scripts, and short experiments where you would rather see stack traces than log artefacts. Throughput is bounded by a single host.
 
 ## Modal
 
@@ -59,7 +65,7 @@ compute:
     timeout_sec: 600
 ```
 
-Modal scales horizontally without any infrastructure work — hundreds of trials in parallel is a flag change, not a project. Cost is per-second, so short trials are cheap and long ones show up on the bill.
+Modal scales horizontally without infrastructure work. Cost is per-second, so short trials are cheap and long ones show up on the bill.
 
 ## Docker
 
@@ -70,14 +76,14 @@ compute:
   backend: docker
 ```
 
-Good middle ground between `local` (no isolation) and `modal` (cloud cost + latency). Throughput bounded by host resources.
+Good middle ground between local runtime (no isolation) and `modal` (cloud cost plus latency). Throughput is bounded by host resources.
 
 ## E2B and Daytona
 
 Both provide per-trial sandboxed environments hosted off-machine:
 
-- **E2B** — purpose-built sandboxes for agent workloads, quick to spin up per trial
-- **Daytona** — dev-environment-style workspaces, fit where trials need longer-lived state or heavier tooling
+- **E2B**: purpose-built sandboxes for agent workloads, quick to spin up per trial
+- **Daytona**: dev-environment-style workspaces, useful where trials need longer-lived state or heavier tooling
 
 Config follows the same pattern:
 
@@ -86,7 +92,7 @@ compute:
   backend: e2b        # or daytona
 ```
 
-Reach for these when Modal doesn't fit — different regions, different sandbox semantics, or existing infrastructure investments.
+Reach for these when Modal does not fit: different regions, different sandbox semantics, or existing infrastructure investments.
 
 ## Writing a custom backend
 
@@ -94,29 +100,38 @@ Adding a backend means implementing the five-method protocol:
 
 ```python
 from pathlib import Path
-from aec_bench.harness import ComputeBackend, ImageRef, TrialHandle
-from aec_bench.harness.backends import BackendExecutionRequest, BackendExecutionResult
+from aec_bench.harness.backend import (
+    BackendExecutionRequest,
+    BackendExecutionResult,
+    CollectedArtifacts,
+    TrialHandle,
+)
 
 class KubernetesBackend:
-    def build_environment(self, task_dir: Path) -> ImageRef:
+    def build_environment(self, *, task_dir: Path) -> str:
         # push image to registry, return ref
         ...
 
-    def launch_trial(self, image_ref, workspace_dir) -> TrialHandle:
+    def launch_trial(self, *, image_ref: str, workspace_dir: Path) -> TrialHandle:
         # create pod, return handle
         ...
 
-    def execute_trial(self, handle, request) -> BackendExecutionResult:
+    def execute_trial(
+        self,
+        *,
+        handle: TrialHandle,
+        request: BackendExecutionRequest,
+    ) -> BackendExecutionResult:
         # exec adapter + verifier in pod, return result
         ...
 
-    def collect_outputs(self, handle):
+    def collect_outputs(self, *, handle: TrialHandle) -> CollectedArtifacts:
         # pull logs and reward artifacts
         ...
 
-    def teardown(self, handle):
+    def teardown(self, *, handle: TrialHandle) -> None:
         # delete pod
         ...
 ```
 
-Once registered, the new backend is selectable from any experiment config. Trial semantics don't change — same adapter, same verifier, same trial record at the other end.
+Once registered, the new backend can be wired into the experiment runner. Trial semantics do not change: same harness, same verifier, same trial record at the other end.

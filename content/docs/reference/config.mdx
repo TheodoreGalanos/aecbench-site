@@ -28,6 +28,8 @@ backend = "modal"
 
 All paths are relative to the project root. Omitted keys fall back to the defaults above.
 
+The `aec-bench config` CLI manages the per-user JSON defaults for paths. Project TOML can also set `compute.backend`; that value is read by the project loader, not by `aec-bench config set`.
+
 ## `task.toml` — per task
 
 Every task directory has one. Full schema:
@@ -76,14 +78,14 @@ tasks:
 
 agents:
   - name: claude-tool-loop
-    adapter: tool_loop
+    harness: tool_loop
     model: claude-sonnet-4-20250514
     parameters:
       max_turns: 12
     system_prompt_file: prompts/electrical.md   # optional
 
   - name: gpt4-direct
-    adapter: direct
+    harness: direct
     model: gpt-4.1
     parameters:
       max_tokens: 8192
@@ -98,7 +100,7 @@ repetitions: 3
 disable_verification: false
 ```
 
-The `model` field supports `$ENV_VAR` expansion. The `tasks` selector filters by dataset, patterns, domain, and difficulty — all are optional, applied as set intersections.
+The `model` field supports `$ENV_VAR` expansion. The manifest parser accepts `harness` as the public synonym for the internal `adapter` field; generated YAML may still contain `adapter`. The `tasks` selector filters by dataset, patterns, domain, difficulty, and lifecycle as set intersections.
 
 ## Adapter configs
 
@@ -195,7 +197,7 @@ models:
 
 solver:
   name: solver-v1
-  adapter: rlm
+  harness: rlm
   model: env:AWS_SONNET_MODEL_ID
   client:
     kind: bedrock
@@ -258,7 +260,7 @@ Dataset manifests are **generated** by `aec-bench dataset create`, not hand-writ
   "tasks": [
     {
       "task_id": "electrical.voltage-drop.basic",
-      "task_path": "tasks/electrical/voltage-drop",
+      "task_path": "tasks/electrical/voltage-drop/basic",
       "content_hash": "sha256:...",
       "domain": "electrical",
       "difficulty": "easy",
@@ -326,6 +328,8 @@ uv run aec-bench prime eval \
 ```
 
 Values passed through `--env-arg KEY=VALUE` are parsed as JSON where possible, so numbers and booleans keep their types.
+
+Generated Prime environments apply task selection in this order: difficulty filter, deterministic split selection, optional seeded shuffle, then `num_examples`. Use `split=all` when you intentionally want the full exported slice.
 
 ## `configs/endpoints.toml`
 

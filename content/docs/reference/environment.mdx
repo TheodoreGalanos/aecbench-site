@@ -26,10 +26,11 @@ Which variables are required depends on which models appear in your agent config
 | `AZURE_OPENAI_API_KEY` | Azure-routed OpenAI | Required alongside endpoint |
 | `AZURE_OPENAI_ENDPOINT` | Azure-routed OpenAI | Full URL to the resource |
 | `OPENAI_API_KEY` | OpenAI direct | Fallback when Azure isn't configured |
-| `AWS_BEARER_TOKEN_BEDROCK` | AWS Bedrock | For `bedrock` client kind |
-| `AWS_REGION` / `AWS_DEFAULT_REGION` | AWS Bedrock | Region selector |
+| `AWS_REGION` / `AWS_DEFAULT_REGION` | Bedrock through SDKs | Region selector |
+| `AWS_BEARER_TOKEN` / `AWS_BEARER_TOKEN_BEDROCK` | Bedrock script-style provider | Used by script-style Bedrock agent runners |
+| `AWS_BEDROCK_ENDPOINT` | Bedrock script-style provider | Optional explicit Bedrock endpoint |
 
-Model routing is prefix-based — see [Providers](/docs/agents/configuration#providers).
+Model routing depends on the harness path. See [Providers](/docs/agents/configuration#providers).
 
 ## Agent runtime overrides
 
@@ -126,17 +127,19 @@ Every path is overridable in `aec-bench.toml`. Commands that consume artefacts (
 
 ## Global user config
 
-Per-user defaults live at `~/.config/aec-bench/config.json`:
+Per-user path defaults live at `~/.config/aec-bench/config.json`:
 
 ```json
 {
-  "default_backend": "modal",
-  "default_output_format": "text",
-  "default_tasks_root": "~/work/aec-bench/tasks"
+  "tasks_root": "tasks",
+  "ledger_root": "artefacts/ledger",
+  "feedback_root": "artefacts/feedback",
+  "jobs_root": "jobs",
+  "datasets_root": "artefacts/datasets"
 }
 ```
 
-Managed via `aec-bench config view|set|reset`. These are the fallbacks when a project-level setting isn't specified.
+Managed via `aec-bench config view|set|reset`. These are the fallbacks when a project-level setting is not specified. The project loader also has built-in defaults for source-only paths such as `templates_root` and `seeds_root`.
 
 ## Precedence
 
@@ -148,6 +151,6 @@ When the same setting can come from multiple places, aec-bench resolves in this 
 4. **Global user config** (`~/.config/aec-bench/config.json`)
 5. **Built-in defaults**
 
-Environment variables bypass this ladder — they're either credentials (required by the provider SDK at call time) or agent-runtime overrides (read by the container's entry script).
+Environment variables bypass this ladder. They are either credentials required by provider SDKs at call time or agent-runtime overrides read by a container entry script.
 
 Generated Prime packages and swarm run state are local artefacts. Regenerate them from source tasks, datasets, and workspaces rather than treating them as canonical source.

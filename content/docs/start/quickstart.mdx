@@ -20,7 +20,7 @@ uv sync --dev
 uv run aec-bench --help
 ```
 
-If you are consuming a published package, the same commands work without `uv run` after installing the `aec-bench` console script.
+If you install a packaged release later, run the `aec-bench` console script directly instead of prefixing CLI commands with `uv run`.
 
 ## Generate
 
@@ -64,18 +64,18 @@ export ANTHROPIC_API_KEY="..."
 uv run aec-bench run-local \
   tasks/generated/electrical/cable-sizing/voltage-drop/sydney-suburban-residential-lighting-00 \
   --model claude-sonnet-4-20250514 \
-  --adapter direct
+  --harness direct
 ```
 
-Use `--adapter rlm` for a recursive-language-model harness, or `--keep-workspace` when debugging the temporary workspace after a run.
+Use `--harness rlm` for a recursive-language-model harness, or `--keep-workspace` when debugging the temporary workspace after a run.
 
 ## Evaluate
 
-Imported trials can be evaluated from the ledger by experiment id:
+The local runner imports the trial under the `local` experiment id unless you opt out:
 
 ```bash
-uv run aec-bench evaluate --experiment exp-001
-uv run aec-bench evaluate --experiment exp-001 --report report.html
+uv run aec-bench evaluate --experiment local
+uv run aec-bench evaluate --experiment local --report report.html
 ```
 
 For a repeatable benchmark slice, freeze tasks into a dataset, generate an experiment config, then run that config:

@@ -10,7 +10,7 @@ export interface DisciplineTrailingSlotProps {
   slug: Domain;
   slice: DisciplineCatalogueSlice;
   libraryVersion: string;
-  libraryCommit: string;
+  libraryCommit: string | null;
   generatedAt: string;
 }
 

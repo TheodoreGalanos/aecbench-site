@@ -1,19 +1,19 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-05-10T09:43:34.691856Z",
+  "generated_at": "2026-05-22T23:37:33.603117Z",
   "library_version": "0.1.0",
-  "library_commit": "c434653b",
+  "library_commit": null,
   "counts": {
-    "total_templates": 144,
-    "total_seeds": 324,
+    "total_templates": 184,
+    "total_seeds": 284,
     "by_discipline": {
       "civil": {
-        "templates": 56,
-        "seeds": 31
+        "templates": 57,
+        "seeds": 30
       },
       "electrical": {
-        "templates": 13,
-        "seeds": 131
+        "templates": 52,
+        "seeds": 92
       },
       "ground": {
         "templates": 10,
@@ -3860,6 +3860,92 @@
       "archetype_count": 4
     },
     {
+      "task_id": "tidal-prism",
+      "discipline": "civil",
+      "category": "tidal-water-levels",
+      "category_label": null,
+      "task_name": "Tidal Prism",
+      "description": "Tidal prism and mean inlet velocity for a coastal basin",
+      "long_description": "Calculates the tidal prism exchanged by an estuary, lagoon, or basin using the reduced relation P = basin surface area x tidal range. It also estimates mean exchange flow and mean inlet velocity from the inlet flow area and exchange duration, giving a deterministic coastal hydraulics screening calculation.",
+      "standards": [
+        "USACE Coastal Engineering Manual"
+      ],
+      "tags": [
+        "civil",
+        "coastal",
+        "tidal-prism",
+        "inlet",
+        "hydraulics",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "basin_surface_area_m2",
+          "description": "Water surface area of the tidal basin",
+          "unit": "m2",
+          "type": "float"
+        },
+        {
+          "name": "tidal_range_m",
+          "description": "Representative tidal range over the exchange cycle",
+          "unit": "m",
+          "type": "float"
+        },
+        {
+          "name": "inlet_width_m",
+          "description": "Hydraulic width of the inlet throat",
+          "unit": "m",
+          "type": "float"
+        },
+        {
+          "name": "inlet_average_depth_m",
+          "description": "Average flow depth through the inlet throat",
+          "unit": "m",
+          "type": "float"
+        },
+        {
+          "name": "exchange_duration_h",
+          "description": "Duration of the flood or ebb exchange",
+          "unit": "h",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tidal_prism_m3",
+          "description": "Tidal prism volume exchanged over the tide",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "inlet_flow_area_m2",
+          "description": "Approximate inlet flow area",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "mean_tidal_flow_m3_s",
+          "description": "Mean tidal exchange flow rate",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "mean_tidal_velocity_m_s",
+          "description": "Mean velocity through the inlet throat",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 3
+    },
+    {
       "task_id": "cant-calculation",
       "discipline": "civil",
       "category": "track-geometry",
@@ -4795,6 +4881,123 @@
       "archetype_count": 5
     },
     {
+      "task_id": "access-controller-sizing",
+      "discipline": "electrical",
+      "category": "access-control",
+      "category_label": null,
+      "task_name": "Access Controller Sizing",
+      "description": "Size access controllers, power supplies, and backup battery capacity",
+      "long_description": "Calculates a reduced access control system sizing case from door count, controller capacity, per-door device currents, controller current, power supply capacity, and backup duration. The template reports controller count, current demand, supply count, and battery capacity.",
+      "standards": [
+        "SIA OSDP",
+        "UL 294"
+      ],
+      "tags": [
+        "electrical",
+        "security",
+        "access-control",
+        "power-supply",
+        "battery",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "door_count",
+          "description": "Number of controlled doors",
+          "unit": "count",
+          "type": "float"
+        },
+        {
+          "name": "doors_per_controller",
+          "description": "Controller door capacity",
+          "unit": "doors/controller",
+          "type": "float"
+        },
+        {
+          "name": "reader_current_ma_per_door",
+          "description": "Reader current per controlled door",
+          "unit": "mA",
+          "type": "float"
+        },
+        {
+          "name": "lock_current_ma_per_door",
+          "description": "Electric lock current per controlled door",
+          "unit": "mA",
+          "type": "float"
+        },
+        {
+          "name": "request_to_exit_current_ma_per_door",
+          "description": "Request-to-exit device current per controlled door",
+          "unit": "mA",
+          "type": "float"
+        },
+        {
+          "name": "controller_current_ma",
+          "description": "Current draw per access controller",
+          "unit": "mA",
+          "type": "float"
+        },
+        {
+          "name": "power_supply_capacity_a",
+          "description": "Usable current capacity per power supply",
+          "unit": "A",
+          "type": "float"
+        },
+        {
+          "name": "backup_duration_h",
+          "description": "Required backup battery duration",
+          "unit": "h",
+          "type": "float"
+        },
+        {
+          "name": "battery_derating_factor",
+          "description": "Battery derating factor applied to backup capacity",
+          "unit": "-",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "controllers_required",
+          "description": "Number of access controllers required",
+          "unit": null,
+          "tolerance": 0.01
+        },
+        {
+          "name": "door_device_load_a",
+          "description": "Total current for door devices",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "total_system_load_a",
+          "description": "Total access control system current",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "power_supplies_required",
+          "description": "Number of power supplies required",
+          "unit": null,
+          "tolerance": 0.01
+        },
+        {
+          "name": "battery_capacity_ah",
+          "description": "Required battery capacity",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
       "task_id": "incident-energy",
       "discipline": "electrical",
       "category": "arc-flash",
@@ -4972,6 +5175,93 @@
       ],
       "tool_mode": "with-tool",
       "archetype_count": 4
+    },
+    {
+      "task_id": "bess-sizing-basic",
+      "discipline": "electrical",
+      "category": "bess-design",
+      "category_label": null,
+      "task_name": "Bess Sizing Basic",
+      "description": "Calculate basic BESS power and energy capacity",
+      "long_description": "Calculates a reduced battery energy storage sizing case from a required discharge duty. The template sizes usable energy, nominal energy capacity, and beginning-of-life capacity using explicit SOC window, efficiency, and end-of-life retention factors.",
+      "standards": [
+        "IEC 62933",
+        "IEEE 2030.2.1"
+      ],
+      "tags": [
+        "electrical",
+        "bess",
+        "storage",
+        "energy",
+        "capacity",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "required_discharge_power_mw",
+          "description": "Required AC discharge power",
+          "unit": "MW",
+          "type": "float"
+        },
+        {
+          "name": "required_discharge_duration_h",
+          "description": "Required discharge duration",
+          "unit": "h",
+          "type": "float"
+        },
+        {
+          "name": "usable_soc_range_pct",
+          "description": "Usable state-of-charge range",
+          "unit": "%",
+          "type": "float"
+        },
+        {
+          "name": "round_trip_efficiency_pct",
+          "description": "Round-trip efficiency used in reduced sizing",
+          "unit": "%",
+          "type": "float"
+        },
+        {
+          "name": "end_of_life_capacity_retention_pct",
+          "description": "End-of-life capacity retention allowance",
+          "unit": "%",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "nominal_power_rating_mw",
+          "description": "Nominal power rating",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "usable_energy_mwh",
+          "description": "Required delivered usable energy",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "nominal_energy_capacity_mwh",
+          "description": "Nominal energy capacity before EOL retention allowance",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "beginning_of_life_capacity_mwh",
+          "description": "Beginning-of-life installed energy capacity",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
     },
     {
       "task_id": "busbar-forces",
@@ -5331,6 +5621,167 @@
       "archetype_count": 3
     },
     {
+      "task_id": "cctv-storage-calculation",
+      "discipline": "electrical",
+      "category": "cctv-design",
+      "category_label": null,
+      "task_name": "Cctv Storage Calculation",
+      "description": "CCTV video storage sizing from bitrate and retention",
+      "long_description": "Calculates surveillance video storage from camera count, average bitrate, recording hours, retention period, and storage overhead. The template converts Mbps to daily gigabytes per camera, then reports usable retained storage and raw storage including overhead.",
+      "standards": [
+        "IEC 62676-4"
+      ],
+      "tags": [
+        "electrical",
+        "cctv",
+        "storage",
+        "video",
+        "security",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "camera_count",
+          "description": "Number of cameras",
+          "unit": null,
+          "type": "float"
+        },
+        {
+          "name": "average_bitrate_mbps",
+          "description": "Average video bitrate per camera",
+          "unit": "Mbps",
+          "type": "float"
+        },
+        {
+          "name": "recording_hours_per_day",
+          "description": "Recording hours per day",
+          "unit": "h/day",
+          "type": "float"
+        },
+        {
+          "name": "retention_days",
+          "description": "Required retention period",
+          "unit": "days",
+          "type": "float"
+        },
+        {
+          "name": "storage_overhead_pct",
+          "description": "Storage overhead for RAID, filesystem, or spare capacity",
+          "unit": "%",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "daily_storage_per_camera_gb",
+          "description": "Daily storage per camera",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "usable_storage_required_tb",
+          "description": "Usable retained storage required",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "raw_storage_with_overhead_tb",
+          "description": "Raw storage after overhead allowance",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "ppm-calculation",
+      "discipline": "electrical",
+      "category": "cctv-design",
+      "category_label": null,
+      "task_name": "Ppm Calculation",
+      "description": "CCTV pixels-per-metre calculation from camera geometry",
+      "long_description": "Calculates CCTV pixel density at a target distance using horizontal camera resolution, sensor width, and lens focal length. The reduced pinhole-camera method estimates horizontal field of view, pixels per metre, and margin against a specified surveillance target density.",
+      "standards": [
+        "IEC 62676-4",
+        "EN 62676-4"
+      ],
+      "tags": [
+        "electrical",
+        "cctv",
+        "ppm",
+        "camera",
+        "security",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "horizontal_pixels",
+          "description": "Horizontal camera resolution",
+          "unit": "px",
+          "type": "float"
+        },
+        {
+          "name": "sensor_width_mm",
+          "description": "Camera sensor width",
+          "unit": "mm",
+          "type": "float"
+        },
+        {
+          "name": "lens_focal_length_mm",
+          "description": "Lens focal length",
+          "unit": "mm",
+          "type": "float"
+        },
+        {
+          "name": "target_distance_m",
+          "description": "Distance from camera to target plane",
+          "unit": "m",
+          "type": "float"
+        },
+        {
+          "name": "target_ppm",
+          "description": "Required pixel density target",
+          "unit": "px/m",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "horizontal_field_of_view_m",
+          "description": "Horizontal field of view at the target plane",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "pixels_per_meter",
+          "description": "Pixel density at target distance",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "target_ppm_margin_pct",
+          "description": "Margin relative to target pixel density",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 3
+    },
+    {
       "task_id": "cv-liquid-incompressible",
       "discipline": "electrical",
       "category": "control-valve-sizing",
@@ -5504,6 +5955,587 @@
       "archetype_count": 4
     },
     {
+      "task_id": "line-capacitance",
+      "discipline": "electrical",
+      "category": "electrical-parameters",
+      "category_label": null,
+      "task_name": "Line Capacitance",
+      "description": "Overhead line capacitance and charging reactive power",
+      "long_description": "Calculates per-phase overhead line capacitance from conductor radius and geometric mean phase spacing. The reduced transposed-line method also estimates three-phase charging Mvar per 100 km and surge impedance from an explicit inductance input.",
+      "standards": [
+        "IEC 60909"
+      ],
+      "tags": [
+        "electrical",
+        "line-capacitance",
+        "charging",
+        "surge-impedance",
+        "transmission-lines",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "conductor_radius_m",
+          "description": "Physical conductor radius",
+          "unit": "m",
+          "type": "float"
+        },
+        {
+          "name": "phase_spacing_ab_m",
+          "description": "Spacing between phase A and phase B",
+          "unit": "m",
+          "type": "float"
+        },
+        {
+          "name": "phase_spacing_bc_m",
+          "description": "Spacing between phase B and phase C",
+          "unit": "m",
+          "type": "float"
+        },
+        {
+          "name": "phase_spacing_ca_m",
+          "description": "Spacing between phase C and phase A",
+          "unit": "m",
+          "type": "float"
+        },
+        {
+          "name": "nominal_voltage_kv",
+          "description": "Line-to-line nominal voltage",
+          "unit": "kV",
+          "type": "float"
+        },
+        {
+          "name": "frequency_hz",
+          "description": "System frequency",
+          "unit": "Hz",
+          "type": "float"
+        },
+        {
+          "name": "inductance_mh_per_km",
+          "description": "Per-phase line inductance",
+          "unit": "mH/km",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "geometric_mean_distance_m",
+          "description": "Geometric mean distance between phases",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "capacitance_nf_per_km",
+          "description": "Per-phase capacitance per kilometre",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "charging_mvar_per_100km",
+          "description": "Three-phase charging reactive power per 100 km",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "surge_impedance_ohm",
+          "description": "Surge impedance from L and C",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "line-inductance",
+      "discipline": "electrical",
+      "category": "electrical-parameters",
+      "category_label": null,
+      "task_name": "Line Inductance",
+      "description": "Three-phase overhead line inductance from GMD and GMR",
+      "long_description": "Calculates per-phase line inductance for a reduced transposed three-phase overhead line model. The template computes geometric mean distance from phase spacings, equivalent GMR for simple bundled conductors, and inductance using L = 0.2 ln(GMD/GMR) mH/km.",
+      "standards": [
+        "IEC 60909",
+        "IEEE 738"
+      ],
+      "tags": [
+        "electrical",
+        "line-inductance",
+        "gmd",
+        "gmr",
+        "transmission-lines",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "conductor_gmr_m",
+          "description": "Geometric mean radius of one subconductor",
+          "unit": "m",
+          "type": "float"
+        },
+        {
+          "name": "phase_spacing_ab_m",
+          "description": "Spacing between phase A and phase B",
+          "unit": "m",
+          "type": "float"
+        },
+        {
+          "name": "phase_spacing_bc_m",
+          "description": "Spacing between phase B and phase C",
+          "unit": "m",
+          "type": "float"
+        },
+        {
+          "name": "phase_spacing_ca_m",
+          "description": "Spacing between phase C and phase A",
+          "unit": "m",
+          "type": "float"
+        },
+        {
+          "name": "bundle_count",
+          "description": "Number of subconductors in each phase bundle",
+          "unit": null,
+          "type": "enum"
+        },
+        {
+          "name": "bundle_spacing_m",
+          "description": "Spacing between subconductors in the bundle",
+          "unit": "m",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "geometric_mean_distance_m",
+          "description": "Geometric mean distance between phases",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "equivalent_gmr_mm",
+          "description": "Equivalent bundle GMR",
+          "unit": null,
+          "tolerance": 0.05
+        },
+        {
+          "name": "inductance_mh_per_km",
+          "description": "Per-phase inductance per kilometre",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 3
+    },
+    {
+      "task_id": "voltage-regulation",
+      "discipline": "electrical",
+      "category": "electrical-parameters",
+      "category_label": null,
+      "task_name": "Voltage Regulation",
+      "description": "Approximate three-phase transmission line voltage regulation",
+      "long_description": "Calculates voltage drop, voltage regulation, receiving-end voltage, and real power loss for a balanced three-phase line. The reduced method uses per-kilometre R and X, line length, real and reactive load, and sending-end voltage.",
+      "standards": [
+        "IEC 60909",
+        "AS 2067"
+      ],
+      "tags": [
+        "electrical",
+        "voltage-regulation",
+        "line-drop",
+        "transmission",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "line_resistance_ohm_per_km",
+          "description": "Positive-sequence line resistance",
+          "unit": "ohm/km",
+          "type": "float"
+        },
+        {
+          "name": "line_reactance_ohm_per_km",
+          "description": "Positive-sequence line reactance",
+          "unit": "ohm/km",
+          "type": "float"
+        },
+        {
+          "name": "line_length_km",
+          "description": "Line length",
+          "unit": "km",
+          "type": "float"
+        },
+        {
+          "name": "load_real_power_mw",
+          "description": "Three-phase real load",
+          "unit": "MW",
+          "type": "float"
+        },
+        {
+          "name": "load_reactive_power_mvar",
+          "description": "Three-phase reactive load",
+          "unit": "MVAr",
+          "type": "float"
+        },
+        {
+          "name": "sending_voltage_kv",
+          "description": "Sending-end line-to-line voltage",
+          "unit": "kV",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "voltage_drop_kv",
+          "description": "Approximate line voltage drop",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "voltage_regulation_pct",
+          "description": "Voltage drop as a percentage of sending voltage",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "receiving_end_voltage_kv",
+          "description": "Receiving-end line-to-line voltage",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "power_loss_mw",
+          "description": "Three-phase real power loss",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "leni-calculation",
+      "discipline": "electrical",
+      "category": "energy-performance",
+      "category_label": null,
+      "task_name": "Leni Calculation",
+      "description": "Calculate interior lighting LENI",
+      "long_description": "Calculates annual lighting energy, Lighting Energy Numeric Indicator, and percentage saving against a reference LENI for an interior lighting zone.",
+      "standards": [
+        "EN 15193-1"
+      ],
+      "tags": [
+        "electrical",
+        "lighting",
+        "interior-lighting",
+        "leni",
+        "energy",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "installed_lighting_power_w",
+          "description": "Installed lighting power in the zone",
+          "unit": "W",
+          "type": "float"
+        },
+        {
+          "name": "annual_operating_hours",
+          "description": "Annual lighting operating hours",
+          "unit": "h/year",
+          "type": "float"
+        },
+        {
+          "name": "control_factor",
+          "description": "Lighting control factor",
+          "unit": "-",
+          "type": "float"
+        },
+        {
+          "name": "daylight_factor",
+          "description": "Daylight availability factor",
+          "unit": "-",
+          "type": "float"
+        },
+        {
+          "name": "zone_area_m2",
+          "description": "Interior lighting zone area",
+          "unit": "m2",
+          "type": "float"
+        },
+        {
+          "name": "reference_leni_kwh_m2_year",
+          "description": "Reference LENI used for comparison",
+          "unit": "kWh/m2/year",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "annual_lighting_energy_kwh",
+          "description": "Annual lighting energy consumption",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "leni_kwh_m2_year",
+          "description": "Lighting Energy Numeric Indicator",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "reference_saving_pct",
+          "description": "Percentage saving against the reference LENI",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "road-aeci-calculation",
+      "discipline": "electrical",
+      "category": "energy-performance",
+      "category_label": null,
+      "task_name": "Road Aeci Calculation",
+      "description": "Calculate road lighting Annual Energy Consumption Index",
+      "long_description": "Calculates annual road lighting energy consumption and Annual Energy Consumption Index from system power, full-output hours, dimmed hours, dimming level, and illuminated area.",
+      "standards": [
+        "EN 13201-5",
+        "AS/NZS 1158.3.1"
+      ],
+      "tags": [
+        "electrical",
+        "lighting",
+        "road-lighting",
+        "aeci",
+        "energy",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "system_power_w",
+          "description": "Total road lighting system power at full output",
+          "unit": "W",
+          "type": "float"
+        },
+        {
+          "name": "full_output_hours_per_year",
+          "description": "Annual hours at full lighting output",
+          "unit": "h/year",
+          "type": "float"
+        },
+        {
+          "name": "dimmed_hours_per_year",
+          "description": "Annual hours at dimmed lighting output",
+          "unit": "h/year",
+          "type": "float"
+        },
+        {
+          "name": "dimming_level_pct",
+          "description": "Dimmed output level relative to full power",
+          "unit": "%",
+          "type": "float"
+        },
+        {
+          "name": "illuminated_area_m2",
+          "description": "Illuminated road or pathway area",
+          "unit": "m2",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "annual_energy_kwh",
+          "description": "Annual lighting energy consumption",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "aeci_kwh_per_m2_year",
+          "description": "Annual Energy Consumption Index",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "road-pdi-calculation",
+      "discipline": "electrical",
+      "category": "energy-performance",
+      "category_label": null,
+      "task_name": "Road Pdi Calculation",
+      "description": "Calculate road lighting Power Density Index",
+      "long_description": "Calculates Power Density Index and specific power density for a road lighting installation from total system power, maintained illuminance, and illuminated area.",
+      "standards": [
+        "EN 13201-5",
+        "AS/NZS 1158.3.1"
+      ],
+      "tags": [
+        "electrical",
+        "lighting",
+        "road-lighting",
+        "pdi",
+        "energy",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "total_system_power_w",
+          "description": "Total installed road lighting system power",
+          "unit": "W",
+          "type": "float"
+        },
+        {
+          "name": "maintained_illuminance_lux",
+          "description": "Maintained average illuminance over the lit area",
+          "unit": "lux",
+          "type": "float"
+        },
+        {
+          "name": "illuminated_area_m2",
+          "description": "Illuminated road or pathway area",
+          "unit": "m2",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "power_density_index_w_per_lux_m2",
+          "description": "Power Density Index in watts per lux per square metre",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "specific_power_density_w_per_m2",
+          "description": "Installed power divided by illuminated area",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "escalator-capacity",
+      "discipline": "electrical",
+      "category": "escalator-design",
+      "category_label": null,
+      "task_name": "Escalator Capacity",
+      "description": "Escalator theoretical and practical passenger capacity",
+      "long_description": "Calculates escalator passenger capacity from escalator speed, step pitch, step width, and practical loading factor. The reduced method converts speed to steps per second, assigns one or two persons per step from width, then reports theoretical and practical hourly capacity.",
+      "standards": [
+        "EN 115-1",
+        "AS 1735.10"
+      ],
+      "tags": [
+        "electrical",
+        "escalator",
+        "capacity",
+        "vertical-transportation",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "escalator_speed_m_s",
+          "description": "Escalator running speed",
+          "unit": "m/s",
+          "type": "float"
+        },
+        {
+          "name": "step_width_mm",
+          "description": "Nominal step width",
+          "unit": "mm",
+          "type": "float"
+        },
+        {
+          "name": "step_pitch_mm",
+          "description": "Step pitch along travel direction",
+          "unit": "mm",
+          "type": "float"
+        },
+        {
+          "name": "practical_loading_factor_pct",
+          "description": "Practical passenger loading factor",
+          "unit": "%",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "steps_per_second",
+          "description": "Steps passing the comb per second",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "persons_per_step",
+          "description": "Assumed persons per step from step width",
+          "unit": null,
+          "tolerance": 0.01
+        },
+        {
+          "name": "theoretical_capacity_persons_per_h",
+          "description": "Theoretical passenger capacity",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "practical_capacity_persons_per_h",
+          "description": "Practical passenger capacity",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
       "task_id": "grid-resistance",
       "discipline": "electrical",
       "category": "grounding-design",
@@ -5594,6 +6626,1124 @@
       ],
       "tool_mode": "with-tool",
       "archetype_count": 4
+    },
+    {
+      "task_id": "interior-uniformity",
+      "discipline": "electrical",
+      "category": "interior-lighting",
+      "category_label": null,
+      "task_name": "Interior Uniformity",
+      "description": "Calculate interior illuminance uniformity ratios",
+      "long_description": "Calculates task-area illuminance uniformity and adjacent-area illuminance ratios for interior workplace lighting checks.",
+      "standards": [
+        "EN 12464-1",
+        "AS/NZS 1680"
+      ],
+      "tags": [
+        "electrical",
+        "lighting",
+        "interior-lighting",
+        "uniformity",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "task_min_illuminance_lux",
+          "description": "Minimum illuminance within the task area",
+          "unit": "lux",
+          "type": "float"
+        },
+        {
+          "name": "task_average_illuminance_lux",
+          "description": "Average illuminance within the task area",
+          "unit": "lux",
+          "type": "float"
+        },
+        {
+          "name": "surround_average_illuminance_lux",
+          "description": "Average illuminance in the immediate surround area",
+          "unit": "lux",
+          "type": "float"
+        },
+        {
+          "name": "background_average_illuminance_lux",
+          "description": "Average illuminance in the background area",
+          "unit": "lux",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "task_uniformity_uo",
+          "description": "Task-area illuminance uniformity ratio",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "surround_to_task_ratio",
+          "description": "Immediate surround illuminance divided by task average illuminance",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "background_to_task_ratio",
+          "description": "Background illuminance divided by task average illuminance",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "bandwidth-calculation",
+      "discipline": "electrical",
+      "category": "its-communications",
+      "category_label": null,
+      "task_name": "Bandwidth Calculation",
+      "description": "ITS network bandwidth capacity from device inventory",
+      "long_description": "Calculates network bandwidth demand for an ITS device inventory by summing camera, controller, and sensor data rates. The reduced method applies a network overhead allowance and future capacity buffer to produce base, peak, and required bandwidth values.",
+      "standards": [
+        "IEEE 802.3",
+        "NTCIP"
+      ],
+      "tags": [
+        "electrical",
+        "its",
+        "communications",
+        "bandwidth",
+        "network",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "camera_count",
+          "description": "Number of cameras",
+          "unit": null,
+          "type": "float"
+        },
+        {
+          "name": "camera_data_rate_mbps",
+          "description": "Data rate per camera",
+          "unit": "Mbps",
+          "type": "float"
+        },
+        {
+          "name": "controller_count",
+          "description": "Number of controllers",
+          "unit": null,
+          "type": "float"
+        },
+        {
+          "name": "controller_data_rate_mbps",
+          "description": "Data rate per controller",
+          "unit": "Mbps",
+          "type": "float"
+        },
+        {
+          "name": "sensor_count",
+          "description": "Number of sensors",
+          "unit": null,
+          "type": "float"
+        },
+        {
+          "name": "sensor_data_rate_mbps",
+          "description": "Data rate per sensor",
+          "unit": "Mbps",
+          "type": "float"
+        },
+        {
+          "name": "network_overhead_pct",
+          "description": "Network protocol and peak overhead allowance",
+          "unit": "%",
+          "type": "float"
+        },
+        {
+          "name": "future_capacity_buffer_pct",
+          "description": "Future capacity buffer",
+          "unit": "%",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "base_bandwidth_mbps",
+          "description": "Device bandwidth before allowances",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "peak_demand_mbps",
+          "description": "Bandwidth after network overhead",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "required_bandwidth_mbps",
+          "description": "Bandwidth after overhead and future buffer",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "warning-time-calculation",
+      "discipline": "electrical",
+      "category": "level-crossings",
+      "category_label": null,
+      "task_name": "Warning Time Calculation",
+      "description": "Level crossing warning time and strike-in distance",
+      "long_description": "Calculates total level crossing warning time by summing minimum road-user warning time, clearance time, barrier lowering time, and system delay. The template converts maximum train speed to m/s and computes the required strike-in detection distance.",
+      "standards": [
+        "AS 7711",
+        "Network Rail standards"
+      ],
+      "tags": [
+        "electrical",
+        "rail",
+        "level-crossing",
+        "warning-time",
+        "signalling",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "maximum_train_speed_kmh",
+          "description": "Maximum train speed",
+          "unit": "km/h",
+          "type": "float"
+        },
+        {
+          "name": "minimum_warning_time_s",
+          "description": "Minimum road-user warning time",
+          "unit": "s",
+          "type": "float"
+        },
+        {
+          "name": "road_user_clearance_time_s",
+          "description": "Road user clearance time",
+          "unit": "s",
+          "type": "float"
+        },
+        {
+          "name": "barrier_lowering_time_s",
+          "description": "Barrier lowering or equipment operating time",
+          "unit": "s",
+          "type": "float"
+        },
+        {
+          "name": "system_delay_s",
+          "description": "Signal processing and system delay",
+          "unit": "s",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "maximum_train_speed_m_s",
+          "description": "Maximum train speed converted to m/s",
+          "unit": null,
+          "tolerance": 0.01
+        },
+        {
+          "name": "total_warning_time_s",
+          "description": "Total warning time used for strike-in",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "strike_in_distance_m",
+          "description": "Strike-in detection distance",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "minimum_warning_margin_s",
+          "description": "Additional time above the minimum warning time",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "lux-level-calculation",
+      "discipline": "electrical",
+      "category": "lighting-design",
+      "category_label": null,
+      "task_name": "Lux Level Calculation",
+      "description": "Calculate average room illuminance using the lumen method",
+      "long_description": "Calculates reduced room lighting performance using the lumen method. The template uses room area, luminaire count, luminous flux, utilisation factor, maintenance factor, total lighting power, and target illuminance to report average illuminance, uniformity, power density, and target margin.",
+      "standards": [
+        "AS/NZS 1680.1",
+        "AS/NZS 1680.2.2"
+      ],
+      "tags": [
+        "electrical",
+        "lighting",
+        "lumen-method",
+        "illuminance",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "room_length_m",
+          "description": "Room length",
+          "unit": "m",
+          "type": "float"
+        },
+        {
+          "name": "room_width_m",
+          "description": "Room width",
+          "unit": "m",
+          "type": "float"
+        },
+        {
+          "name": "luminaire_count",
+          "description": "Number of luminaires",
+          "unit": "count",
+          "type": "float"
+        },
+        {
+          "name": "luminaire_luminous_flux_lm",
+          "description": "Luminous flux per luminaire",
+          "unit": "lm",
+          "type": "float"
+        },
+        {
+          "name": "utilisation_factor",
+          "description": "Utilisation factor",
+          "unit": "-",
+          "type": "float"
+        },
+        {
+          "name": "maintenance_factor",
+          "description": "Maintenance factor",
+          "unit": "-",
+          "type": "float"
+        },
+        {
+          "name": "total_lighting_power_w",
+          "description": "Total installed lighting power",
+          "unit": "W",
+          "type": "float"
+        },
+        {
+          "name": "minimum_illuminance_lux",
+          "description": "Minimum calculated illuminance",
+          "unit": "lux",
+          "type": "float"
+        },
+        {
+          "name": "target_illuminance_lux",
+          "description": "Target average illuminance",
+          "unit": "lux",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "average_illuminance_lux",
+          "description": "Average maintained illuminance",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "uniformity_ratio_uo",
+          "description": "Minimum to average illuminance uniformity ratio",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "specific_luminaire_power_density_w_m2_100lux",
+          "description": "Lighting power density normalised to 100 lux",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "target_illuminance_margin_pct",
+          "description": "Percentage margin against target illuminance",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "pfc-sizing",
+      "discipline": "electrical",
+      "category": "load-flow",
+      "category_label": null,
+      "task_name": "Pfc Sizing",
+      "description": "Capacitor kVAr sizing for power factor correction",
+      "long_description": "Calculates the reactive power compensation needed to improve a load from an initial lagging power factor to a target power factor. The reduced method uses Qc = P x (tan phi_initial - tan phi_target), then reports the corrected apparent power and current reduction.",
+      "standards": [
+        "IEEE 3002.2",
+        "AS/NZS 2067"
+      ],
+      "tags": [
+        "electrical",
+        "power-factor",
+        "capacitor",
+        "reactive-power",
+        "load-flow",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "real_power_kw",
+          "description": "Real load power",
+          "unit": "kW",
+          "type": "float"
+        },
+        {
+          "name": "initial_power_factor",
+          "description": "Initial lagging power factor",
+          "unit": null,
+          "type": "float"
+        },
+        {
+          "name": "target_power_factor",
+          "description": "Target corrected power factor",
+          "unit": null,
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "initial_apparent_power_kva",
+          "description": "Initial apparent power",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "corrected_apparent_power_kva",
+          "description": "Apparent power after correction",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "required_reactive_power_kvar",
+          "description": "Required capacitor reactive power",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "current_reduction_pct",
+          "description": "Reduction in line current at unchanged voltage",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 3
+    },
+    {
+      "task_id": "radial-feeder-voltage-drop",
+      "discipline": "electrical",
+      "category": "load-flow",
+      "category_label": null,
+      "task_name": "Radial Feeder Voltage Drop",
+      "description": "Single-section radial distribution feeder voltage drop",
+      "long_description": "Calculates current, voltage drop, receiving voltage, and real losses for a balanced single-section radial feeder. The reduced method uses feeder R and X over the route length, load kW and kVAr, and source line-to-line voltage.",
+      "standards": [
+        "IEEE 3002.2",
+        "AS/NZS 3008.1"
+      ],
+      "tags": [
+        "electrical",
+        "radial-feeder",
+        "voltage-drop",
+        "distribution",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "feeder_resistance_ohm_per_km",
+          "description": "Feeder resistance per kilometre",
+          "unit": "ohm/km",
+          "type": "float"
+        },
+        {
+          "name": "feeder_reactance_ohm_per_km",
+          "description": "Feeder reactance per kilometre",
+          "unit": "ohm/km",
+          "type": "float"
+        },
+        {
+          "name": "feeder_length_km",
+          "description": "Feeder route length",
+          "unit": "km",
+          "type": "float"
+        },
+        {
+          "name": "load_real_power_kw",
+          "description": "Three-phase real load",
+          "unit": "kW",
+          "type": "float"
+        },
+        {
+          "name": "load_reactive_power_kvar",
+          "description": "Three-phase reactive load",
+          "unit": "kVAr",
+          "type": "float"
+        },
+        {
+          "name": "source_voltage_v",
+          "description": "Source line-to-line voltage",
+          "unit": "V",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "feeder_current_a",
+          "description": "Three-phase feeder current",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "voltage_drop_v",
+          "description": "Line-to-line feeder voltage drop",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "voltage_drop_pct",
+          "description": "Voltage drop percentage",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "receiving_end_voltage_v",
+          "description": "Receiving-end line-to-line voltage",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "feeder_loss_kw",
+          "description": "Three-phase real feeder loss",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "poe-power-budget",
+      "discipline": "electrical",
+      "category": "poe-network",
+      "category_label": null,
+      "task_name": "Poe Power Budget",
+      "description": "PoE switch power budget and headroom margin",
+      "long_description": "Calculates total Power over Ethernet demand from device count and per-device power draw, then compares it with the switch PoE budget. The deterministic check reports utilization, available headroom, required headroom allowance, and remaining headroom margin.",
+      "standards": [
+        "IEEE 802.3bt",
+        "IEEE 802.3at"
+      ],
+      "tags": [
+        "electrical",
+        "poe",
+        "network",
+        "power-budget",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "device_count",
+          "description": "Number of PoE powered devices",
+          "unit": null,
+          "type": "float"
+        },
+        {
+          "name": "power_draw_per_device_w",
+          "description": "Power draw per device",
+          "unit": "W",
+          "type": "float"
+        },
+        {
+          "name": "switch_poe_budget_w",
+          "description": "Available switch PoE budget",
+          "unit": "W",
+          "type": "float"
+        },
+        {
+          "name": "required_headroom_pct",
+          "description": "Required headroom as a percentage of connected PoE load",
+          "unit": "%",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "total_power_requirement_w",
+          "description": "Total PoE power requirement",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "utilization_pct",
+          "description": "PoE budget utilization",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "available_headroom_w",
+          "description": "Unused PoE budget",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "required_headroom_w",
+          "description": "Required headroom allowance",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "headroom_margin_w",
+          "description": "Margin after required headroom",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "battery-sizing",
+      "discipline": "electrical",
+      "category": "power-supply",
+      "category_label": null,
+      "task_name": "Battery Sizing",
+      "description": "Backup battery capacity and UPS apparent power sizing",
+      "long_description": "Calculates battery energy, required amp-hour capacity, UPS apparent power, and block count for a critical load autonomy requirement. The reduced method explicitly applies system voltage, depth of discharge, temperature derating, inverter efficiency, load power factor, and block voltage.",
+      "standards": [
+        "EN 50125",
+        "IEEE 485"
+      ],
+      "tags": [
+        "electrical",
+        "battery",
+        "ups",
+        "backup-power",
+        "autonomy",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "critical_load_w",
+          "description": "Critical load power",
+          "unit": "W",
+          "type": "float"
+        },
+        {
+          "name": "required_autonomy_h",
+          "description": "Required autonomy duration",
+          "unit": "h",
+          "type": "float"
+        },
+        {
+          "name": "system_voltage_v",
+          "description": "Nominal DC system voltage",
+          "unit": "V",
+          "type": "float"
+        },
+        {
+          "name": "depth_of_discharge_pct",
+          "description": "Allowed depth of discharge",
+          "unit": "%",
+          "type": "float"
+        },
+        {
+          "name": "temperature_derating_factor",
+          "description": "Capacity derating factor for temperature",
+          "unit": null,
+          "type": "float"
+        },
+        {
+          "name": "inverter_efficiency_pct",
+          "description": "Inverter or UPS efficiency",
+          "unit": "%",
+          "type": "float"
+        },
+        {
+          "name": "load_power_factor",
+          "description": "Load power factor for UPS VA sizing",
+          "unit": null,
+          "type": "float"
+        },
+        {
+          "name": "battery_block_voltage_v",
+          "description": "Nominal voltage of each battery block",
+          "unit": "V",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "required_energy_kwh",
+          "description": "Critical load energy over autonomy duration",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "required_battery_capacity_ah",
+          "description": "Required battery amp-hour capacity",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "ups_rating_va",
+          "description": "Required UPS apparent power rating",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "battery_block_count",
+          "description": "Minimum number of battery blocks in series",
+          "unit": null,
+          "tolerance": 0.01
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "power-load-calculation",
+      "discipline": "electrical",
+      "category": "power-supply",
+      "category_label": null,
+      "task_name": "Power Load Calculation",
+      "description": "Signalling equipment connected load and supply kVA",
+      "long_description": "Calculates total connected load for a repeated signalling equipment item, applies a diversity factor and future expansion allowance, then converts the resulting demand to recommended supply kVA using the supply power factor.",
+      "standards": [
+        "EN 50125",
+        "AS 7717"
+      ],
+      "tags": [
+        "electrical",
+        "signalling",
+        "power-load",
+        "supply-sizing",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "equipment_power_w",
+          "description": "Power rating per equipment item",
+          "unit": "W",
+          "type": "float"
+        },
+        {
+          "name": "equipment_quantity",
+          "description": "Number of equipment items",
+          "unit": null,
+          "type": "float"
+        },
+        {
+          "name": "diversity_factor",
+          "description": "Demand diversity factor",
+          "unit": null,
+          "type": "float"
+        },
+        {
+          "name": "future_expansion_pct",
+          "description": "Future expansion allowance",
+          "unit": "%",
+          "type": "float"
+        },
+        {
+          "name": "supply_power_factor",
+          "description": "Assumed supply power factor",
+          "unit": null,
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "total_connected_load_w",
+          "description": "Total connected load",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "maximum_demand_w",
+          "description": "Maximum demand after diversity",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "future_allowance_w",
+          "description": "Future expansion allowance",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "recommended_supply_size_kva",
+          "description": "Recommended apparent supply size",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "road-uniformity-check",
+      "discipline": "electrical",
+      "category": "road-lighting",
+      "category_label": null,
+      "task_name": "Road Uniformity Check",
+      "description": "Calculate road lighting uniformity ratios",
+      "long_description": "Calculates overall and longitudinal road lighting uniformity ratios and the margin against a target overall uniformity class requirement.",
+      "standards": [
+        "EN 13201-2",
+        "AS/NZS 1158.2"
+      ],
+      "tags": [
+        "electrical",
+        "lighting",
+        "road-lighting",
+        "uniformity",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "minimum_luminance_cd_m2",
+          "description": "Minimum calculated luminance on the road grid",
+          "unit": "cd/m2",
+          "type": "float"
+        },
+        {
+          "name": "average_luminance_cd_m2",
+          "description": "Average calculated luminance on the road grid",
+          "unit": "cd/m2",
+          "type": "float"
+        },
+        {
+          "name": "longitudinal_min_luminance_cd_m2",
+          "description": "Minimum luminance along the relevant lane line",
+          "unit": "cd/m2",
+          "type": "float"
+        },
+        {
+          "name": "longitudinal_max_luminance_cd_m2",
+          "description": "Maximum luminance along the relevant lane line",
+          "unit": "cd/m2",
+          "type": "float"
+        },
+        {
+          "name": "target_overall_uniformity",
+          "description": "Target overall uniformity ratio",
+          "unit": "-",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "overall_uniformity_uo",
+          "description": "Overall uniformity ratio",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "longitudinal_uniformity_ul",
+          "description": "Longitudinal uniformity ratio",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "overall_uniformity_margin_pct",
+          "description": "Percentage margin against target overall uniformity",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "car-dimensions-check",
+      "discipline": "electrical",
+      "category": "shaft-sizing",
+      "category_label": null,
+      "task_name": "Car Dimensions Check",
+      "description": "Calculate lift car dimension margins",
+      "long_description": "Calculates numeric margins for lift car internal width, internal depth, and clear door opening against explicit minimum requirements. The template also reports car floor area and rated load density for reduced vertical transportation checks.",
+      "standards": [
+        "ISO 4190-1",
+        "AS 1735.12",
+        "EN 81-70"
+      ],
+      "tags": [
+        "electrical",
+        "vertical-transportation",
+        "lift",
+        "accessibility",
+        "dimensions",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "car_internal_width_mm",
+          "description": "Lift car internal width",
+          "unit": "mm",
+          "type": "float"
+        },
+        {
+          "name": "car_internal_depth_mm",
+          "description": "Lift car internal depth",
+          "unit": "mm",
+          "type": "float"
+        },
+        {
+          "name": "door_clear_opening_mm",
+          "description": "Clear door opening width",
+          "unit": "mm",
+          "type": "float"
+        },
+        {
+          "name": "rated_load_kg",
+          "description": "Lift rated load",
+          "unit": "kg",
+          "type": "float"
+        },
+        {
+          "name": "minimum_width_mm",
+          "description": "Required minimum car width",
+          "unit": "mm",
+          "type": "float"
+        },
+        {
+          "name": "minimum_depth_mm",
+          "description": "Required minimum car depth",
+          "unit": "mm",
+          "type": "float"
+        },
+        {
+          "name": "minimum_door_opening_mm",
+          "description": "Required minimum clear door opening",
+          "unit": "mm",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "width_margin_mm",
+          "description": "Actual car width minus minimum width",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "depth_margin_mm",
+          "description": "Actual car depth minus minimum depth",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "door_opening_margin_mm",
+          "description": "Actual door opening minus minimum door opening",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "car_floor_area_m2",
+          "description": "Car floor area",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "rated_load_density_kg_m2",
+          "description": "Rated load divided by car floor area",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "shaft-dimensions",
+      "discipline": "electrical",
+      "category": "shaft-sizing",
+      "category_label": null,
+      "task_name": "Shaft Dimensions",
+      "description": "Calculate reduced lift shaft dimensions",
+      "long_description": "Calculates a reduced lift shaft envelope from car dimensions, clearances, counterweight allowance, rated speed, and car count. The template reports shaft width, shaft depth, pit depth, and headroom using explicit clearance formulas for vertical transportation planning.",
+      "standards": [
+        "ISO 4190-1",
+        "EN 81-20",
+        "AS 1735.1"
+      ],
+      "tags": [
+        "electrical",
+        "vertical-transportation",
+        "lift",
+        "shaft",
+        "dimensions",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "car_internal_width_mm",
+          "description": "Lift car internal width",
+          "unit": "mm",
+          "type": "float"
+        },
+        {
+          "name": "car_internal_depth_mm",
+          "description": "Lift car internal depth",
+          "unit": "mm",
+          "type": "float"
+        },
+        {
+          "name": "side_clearance_mm",
+          "description": "Clearance on each side of the car",
+          "unit": "mm",
+          "type": "float"
+        },
+        {
+          "name": "front_clearance_mm",
+          "description": "Front shaft clearance allowance",
+          "unit": "mm",
+          "type": "float"
+        },
+        {
+          "name": "rear_clearance_mm",
+          "description": "Rear shaft clearance allowance",
+          "unit": "mm",
+          "type": "float"
+        },
+        {
+          "name": "counterweight_width_mm",
+          "description": "Counterweight width allowance",
+          "unit": "mm",
+          "type": "float"
+        },
+        {
+          "name": "rated_speed_m_s",
+          "description": "Lift rated speed",
+          "unit": "m/s",
+          "type": "float"
+        },
+        {
+          "name": "car_count",
+          "description": "Number of cars in the shaft group",
+          "unit": "count",
+          "type": "float"
+        },
+        {
+          "name": "inter_car_clearance_mm",
+          "description": "Clearance between adjacent cars",
+          "unit": "mm",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shaft_width_mm",
+          "description": "Required shaft width",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "shaft_depth_mm",
+          "description": "Required shaft depth",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "pit_depth_mm",
+          "description": "Reduced pit depth allowance",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "headroom_mm",
+          "description": "Reduced headroom allowance",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
     },
     {
       "task_id": "three-phase-fault-current",
@@ -5710,6 +7860,472 @@
       ],
       "tool_mode": "with-tool",
       "archetype_count": 4
+    },
+    {
+      "task_id": "4-20ma-scaling",
+      "discipline": "electrical",
+      "category": "signal-processing",
+      "category_label": null,
+      "task_name": "4 20Ma Scaling",
+      "description": "Linear process variable scaling to a 4-20 mA signal",
+      "long_description": "Calculates the current signal for a process variable over a configured lower and upper range. The deterministic linear scaling reports percentage of span, 4-20 mA current, and reconstructed process value from the current signal for instrumentation checks.",
+      "standards": [
+        "ISA-5.1",
+        "IEC 60381"
+      ],
+      "tags": [
+        "electrical",
+        "instrumentation",
+        "4-20ma",
+        "signal-scaling",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "process_value",
+          "description": "Process variable value",
+          "unit": null,
+          "type": "float"
+        },
+        {
+          "name": "lower_range_value",
+          "description": "Lower range value",
+          "unit": null,
+          "type": "float"
+        },
+        {
+          "name": "upper_range_value",
+          "description": "Upper range value",
+          "unit": null,
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "span_pct",
+          "description": "Percentage of configured span",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "current_signal_ma",
+          "description": "Current signal",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "reconstructed_process_value",
+          "description": "Process variable reconstructed from current",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "overlap-calculation",
+      "discipline": "electrical",
+      "category": "signal-sighting",
+      "category_label": null,
+      "task_name": "Overlap Calculation",
+      "description": "Calculate rail signal overlap distance",
+      "long_description": "Calculates a reduced rail signalling overlap distance from approach speed, braking rate, track gradient, reaction time, danger point distance, and low-adhesion factor. The template reports full-speed overlap, braking-only timed overlap, and residual danger point clearance.",
+      "standards": [
+        "Network Rail NR/L2/SIG/10158",
+        "AS 7711"
+      ],
+      "tags": [
+        "electrical",
+        "rail",
+        "signalling",
+        "overlap",
+        "braking",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "maximum_approach_speed_kmh",
+          "description": "Maximum train approach speed",
+          "unit": "km/h",
+          "type": "float"
+        },
+        {
+          "name": "emergency_braking_rate_m_s2",
+          "description": "Emergency braking deceleration rate before adhesion and gradient adjustments",
+          "unit": "m/s2",
+          "type": "float"
+        },
+        {
+          "name": "track_gradient_pct",
+          "description": "Track gradient, positive for rising grade in the direction of travel",
+          "unit": "%",
+          "type": "float"
+        },
+        {
+          "name": "reaction_time_s",
+          "description": "Reaction or system allowance time",
+          "unit": "s",
+          "type": "float"
+        },
+        {
+          "name": "danger_point_distance_m",
+          "description": "Available distance from stop signal to danger point",
+          "unit": "m",
+          "type": "float"
+        },
+        {
+          "name": "low_adhesion_factor",
+          "description": "Multiplier applied to braking rate for low adhesion",
+          "unit": "-",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "approach_speed_m_s",
+          "description": "Approach speed converted to metres per second",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "gradient_adjusted_braking_rate_m_s2",
+          "description": "Effective braking rate after adhesion and gradient effects",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "reaction_distance_m",
+          "description": "Distance travelled during reaction time",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "full_speed_overlap_m",
+          "description": "Full-speed overlap including reaction and braking distance",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "timed_overlap_option_m",
+          "description": "Braking-only timed overlap distance",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "danger_point_clearance_m",
+          "description": "Residual distance to the danger point after full-speed overlap",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "signal-sighting-distance",
+      "discipline": "electrical",
+      "category": "signal-sighting",
+      "category_label": null,
+      "task_name": "Signal Sighting Distance",
+      "description": "Rail signal sighting distance from reaction and braking distance",
+      "long_description": "Calculates the minimum signal sighting distance required for a train driver to perceive, react, and brake to a stop. The reduced kinematic method combines reaction distance with braking distance adjusted for track gradient.",
+      "standards": [
+        "Network Rail NR/L2/SIG/10158",
+        "AS 7711"
+      ],
+      "tags": [
+        "electrical",
+        "rail",
+        "signal-sighting",
+        "braking-distance",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "maximum_line_speed_kmh",
+          "description": "Maximum line speed",
+          "unit": "km/h",
+          "type": "float"
+        },
+        {
+          "name": "service_braking_rate_m_s2",
+          "description": "Service braking rate",
+          "unit": "m/s2",
+          "type": "float"
+        },
+        {
+          "name": "driver_reaction_time_s",
+          "description": "Driver perception-reaction time",
+          "unit": "s",
+          "type": "float"
+        },
+        {
+          "name": "track_gradient_pct",
+          "description": "Track gradient, positive for upgrade and negative for downgrade",
+          "unit": "%",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "line_speed_m_s",
+          "description": "Line speed converted to m/s",
+          "unit": null,
+          "tolerance": 0.01
+        },
+        {
+          "name": "reaction_distance_m",
+          "description": "Distance travelled during driver reaction",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "grade_adjusted_braking_rate_m_s2",
+          "description": "Braking rate adjusted for track gradient",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "braking_distance_m",
+          "description": "Kinematic braking distance",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "required_sighting_distance_m",
+          "description": "Total required signal sighting distance",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "all-red-interval-calculation",
+      "discipline": "electrical",
+      "category": "signal-timing",
+      "category_label": null,
+      "task_name": "All Red Interval Calculation",
+      "description": "Traffic signal all-red clearance interval",
+      "long_description": "Calculates the all-red clearance interval for a vehicle to clear an intersection after yellow. The reduced method divides intersection width plus vehicle length by vehicle speed, rounds the operational interval to one decimal place, and caps it at six seconds.",
+      "standards": [
+        "MUTCD",
+        "AS 1742.14"
+      ],
+      "tags": [
+        "electrical",
+        "traffic-signals",
+        "all-red",
+        "clearance",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "intersection_width_m",
+          "description": "Distance across the conflict area",
+          "unit": "m",
+          "type": "float"
+        },
+        {
+          "name": "vehicle_length_m",
+          "description": "Design vehicle length",
+          "unit": "m",
+          "type": "float"
+        },
+        {
+          "name": "vehicle_speed_m_s",
+          "description": "Vehicle clearance speed",
+          "unit": "m/s",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "clearance_distance_m",
+          "description": "Total clearance distance",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "raw_all_red_interval_s",
+          "description": "Uncapped clearance interval",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "all_red_interval_s",
+          "description": "Rounded all-red interval capped at six seconds",
+          "unit": null,
+          "tolerance": 0.01
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "pedestrian-clearance-time",
+      "discipline": "electrical",
+      "category": "signal-timing",
+      "category_label": null,
+      "task_name": "Pedestrian Clearance Time",
+      "description": "Pedestrian flashing clearance interval from crossing length",
+      "long_description": "Calculates the pedestrian clearance interval for a signalised crossing from crosswalk length and assumed walking speed. The deterministic relation divides crossing distance by walking speed and reports both exact and whole-second rounded flashing clearance time.",
+      "standards": [
+        "MUTCD",
+        "AS 1742.14"
+      ],
+      "tags": [
+        "electrical",
+        "traffic-signals",
+        "pedestrian",
+        "clearance-time",
+        "signal-timing",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "crosswalk_length_m",
+          "description": "Crosswalk length",
+          "unit": "m",
+          "type": "float"
+        },
+        {
+          "name": "walking_speed_m_s",
+          "description": "Design pedestrian walking speed",
+          "unit": "m/s",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pedestrian_clearance_time_s",
+          "description": "Calculated pedestrian clearance time",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "pedestrian_clearance_rounded_s",
+          "description": "Clearance time rounded up to a whole second",
+          "unit": null,
+          "tolerance": 0.01
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 3
+    },
+    {
+      "task_id": "yellow-interval-calculation",
+      "discipline": "electrical",
+      "category": "signal-timing",
+      "category_label": null,
+      "task_name": "Yellow Interval Calculation",
+      "description": "Traffic-signal yellow interval using the metric ITE equation",
+      "long_description": "Calculates the yellow change interval for a traffic signal approach using the metric ITE kinematic equation. The template converts approach speed to m/s, applies perception-reaction time, deceleration rate, and road grade, then reports both raw and one-decimal rounded yellow interval.",
+      "standards": [
+        "ITE Yellow Interval Equation",
+        "MUTCD",
+        "AS 1742.14"
+      ],
+      "tags": [
+        "electrical",
+        "traffic-signals",
+        "yellow-interval",
+        "signal-timing",
+        "kinematics",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "approach_speed_kmh",
+          "description": "Approach speed",
+          "unit": "km/h",
+          "type": "float"
+        },
+        {
+          "name": "perception_reaction_time_s",
+          "description": "Driver perception-reaction time",
+          "unit": "s",
+          "type": "float"
+        },
+        {
+          "name": "deceleration_rate_m_s2",
+          "description": "Comfortable deceleration rate",
+          "unit": "m/s2",
+          "type": "float"
+        },
+        {
+          "name": "road_grade_pct",
+          "description": "Approach grade, positive for upgrade and negative for downgrade",
+          "unit": "%",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "approach_speed_m_s",
+          "description": "Approach speed converted to metres per second",
+          "unit": null,
+          "tolerance": 0.01
+        },
+        {
+          "name": "grade_adjusted_denominator",
+          "description": "Denominator in the metric ITE stopping term",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "yellow_interval_s",
+          "description": "Calculated yellow interval",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "yellow_interval_rounded_s",
+          "description": "Yellow interval rounded to one decimal place",
+          "unit": null,
+          "tolerance": 0.01
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 3
     },
     {
       "task_id": "dc-ac-ratio",
@@ -5905,6 +8521,598 @@
       "archetype_count": 4
     },
     {
+      "task_id": "voltage-drop-dc",
+      "discipline": "electrical",
+      "category": "solar-pv-design",
+      "category_label": null,
+      "task_name": "Voltage Drop Dc",
+      "description": "Calculate DC string cable voltage drop",
+      "long_description": "Calculates two-way DC cable voltage drop for a solar PV string using current, one-way length, cable cross-section, resistivity, and string voltage. The template also estimates annual resistive energy loss and voltage-drop margin.",
+      "standards": [
+        "AS/NZS 5033",
+        "AS/NZS 3008.1"
+      ],
+      "tags": [
+        "electrical",
+        "solar-pv",
+        "dc",
+        "voltage-drop",
+        "cable",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "string_current_a",
+          "description": "PV string current at maximum power",
+          "unit": "A",
+          "type": "float"
+        },
+        {
+          "name": "dc_cable_length_m",
+          "description": "One-way DC cable length from string to inverter",
+          "unit": "m",
+          "type": "float"
+        },
+        {
+          "name": "cable_cross_section_mm2",
+          "description": "Cable conductor cross-section",
+          "unit": "mm2",
+          "type": "float"
+        },
+        {
+          "name": "cable_resistivity_ohm_mm2_m",
+          "description": "Cable conductor resistivity",
+          "unit": "ohm.mm2/m",
+          "type": "float"
+        },
+        {
+          "name": "string_voltage_v",
+          "description": "PV string operating voltage",
+          "unit": "V",
+          "type": "float"
+        },
+        {
+          "name": "annual_operating_hours",
+          "description": "Equivalent annual operating hours at the modelled current",
+          "unit": "h/year",
+          "type": "float"
+        },
+        {
+          "name": "maximum_voltage_drop_pct",
+          "description": "Maximum permitted voltage drop percentage",
+          "unit": "%",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "voltage_drop_v",
+          "description": "Two-way DC cable voltage drop",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "voltage_drop_pct",
+          "description": "Voltage drop as a percentage of string voltage",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "annual_energy_loss_kwh",
+          "description": "Annual resistive energy loss",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "voltage_drop_margin_pct",
+          "description": "Margin against the maximum voltage drop criterion",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "sports-illuminance-uniformity",
+      "discipline": "electrical",
+      "category": "sports-lighting",
+      "category_label": null,
+      "task_name": "Sports Illuminance Uniformity",
+      "description": "Calculate sports field illuminance and uniformity",
+      "long_description": "Calculates reduced sports lighting performance using aggregate luminaire flux, utilisation factor, maintenance factor, and grid extrema. The template reports average horizontal illuminance, U1 and U2 uniformity ratios, and margins against target lighting class values.",
+      "standards": [
+        "EN 12193",
+        "AS 2560"
+      ],
+      "tags": [
+        "electrical",
+        "lighting",
+        "sports-lighting",
+        "illuminance",
+        "uniformity",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "field_length_m",
+          "description": "Sports field length",
+          "unit": "m",
+          "type": "float"
+        },
+        {
+          "name": "field_width_m",
+          "description": "Sports field width",
+          "unit": "m",
+          "type": "float"
+        },
+        {
+          "name": "luminaire_count",
+          "description": "Number of luminaires",
+          "unit": "count",
+          "type": "float"
+        },
+        {
+          "name": "luminaire_luminous_flux_lm",
+          "description": "Luminous flux per luminaire",
+          "unit": "lm",
+          "type": "float"
+        },
+        {
+          "name": "utilisation_factor",
+          "description": "Field utilisation factor",
+          "unit": "-",
+          "type": "float"
+        },
+        {
+          "name": "maintenance_factor",
+          "description": "Lighting maintenance factor",
+          "unit": "-",
+          "type": "float"
+        },
+        {
+          "name": "minimum_illuminance_lux",
+          "description": "Minimum grid illuminance",
+          "unit": "lux",
+          "type": "float"
+        },
+        {
+          "name": "maximum_illuminance_lux",
+          "description": "Maximum grid illuminance",
+          "unit": "lux",
+          "type": "float"
+        },
+        {
+          "name": "target_average_illuminance_lux",
+          "description": "Target average horizontal illuminance",
+          "unit": "lux",
+          "type": "float"
+        },
+        {
+          "name": "target_uniformity_u2",
+          "description": "Target U2 uniformity ratio",
+          "unit": "-",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "average_horizontal_illuminance_lux",
+          "description": "Average horizontal illuminance",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "uniformity_u1_min_max",
+          "description": "U1 uniformity ratio, minimum divided by maximum",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "uniformity_u2_min_avg",
+          "description": "U2 uniformity ratio, minimum divided by average",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "average_illuminance_margin_pct",
+          "description": "Average illuminance margin against target",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "uniformity_u2_margin_pct",
+          "description": "U2 uniformity margin against target",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "ice-load-calculation",
+      "discipline": "electrical",
+      "category": "structural-loading",
+      "category_label": null,
+      "task_name": "Ice Load Calculation",
+      "description": "Calculate ice and wind loading on an overhead conductor",
+      "long_description": "Calculates a reduced iced-conductor loading case using annular ice area, ice density, wind-on-ice pressure, and span length. The template reports vertical ice weight and combined vector loading for overhead line structural checks.",
+      "standards": [
+        "IEC 60826",
+        "AS/NZS 7000"
+      ],
+      "tags": [
+        "electrical",
+        "transmission-line",
+        "ice-load",
+        "wind-load",
+        "conductor",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "conductor_diameter_mm",
+          "description": "Bare conductor outside diameter",
+          "unit": "mm",
+          "type": "float"
+        },
+        {
+          "name": "ice_thickness_mm",
+          "description": "Radial ice accretion thickness",
+          "unit": "mm",
+          "type": "float"
+        },
+        {
+          "name": "ice_density_kg_m3",
+          "description": "Ice density",
+          "unit": "kg/m3",
+          "type": "float"
+        },
+        {
+          "name": "wind_on_ice_pressure_pa",
+          "description": "Wind pressure applied to the iced conductor diameter",
+          "unit": "Pa",
+          "type": "float"
+        },
+        {
+          "name": "span_length_m",
+          "description": "Conductor span length",
+          "unit": "m",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "iced_conductor_diameter_mm",
+          "description": "Diameter of conductor plus radial ice",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "ice_weight_n_per_m",
+          "description": "Vertical ice weight per metre",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "total_vertical_load_n_per_m",
+          "description": "Total vertical load per metre in the reduced case",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "wind_on_ice_load_n_per_m",
+          "description": "Transverse wind-on-ice load per metre",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "combined_ice_wind_load_n_per_m",
+          "description": "Vector combined ice and wind load per metre",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "span_combined_load_n",
+          "description": "Combined load integrated over the span",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "wind-load-conductor",
+      "discipline": "electrical",
+      "category": "structural-loading",
+      "category_label": null,
+      "task_name": "Wind Load Conductor",
+      "description": "Calculate wind load on an overhead conductor span",
+      "long_description": "Calculates a reduced overhead conductor wind load using an explicit terrain height exponent, conductor diameter, drag coefficient, and span length. The template is a deterministic structural-loading calculation for line design screening.",
+      "standards": [
+        "IEC 60826",
+        "AS/NZS 7000"
+      ],
+      "tags": [
+        "electrical",
+        "transmission-line",
+        "wind-load",
+        "conductor",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "wind_pressure_pa",
+          "description": "Reference wind pressure at 10 m",
+          "unit": "Pa",
+          "type": "float"
+        },
+        {
+          "name": "conductor_diameter_mm",
+          "description": "Conductor outside diameter",
+          "unit": "mm",
+          "type": "float"
+        },
+        {
+          "name": "span_length_m",
+          "description": "Conductor span length",
+          "unit": "m",
+          "type": "float"
+        },
+        {
+          "name": "drag_coefficient",
+          "description": "Conductor drag coefficient",
+          "unit": "-",
+          "type": "float"
+        },
+        {
+          "name": "terrain_category",
+          "description": "Reduced terrain category",
+          "unit": "-",
+          "type": "enum"
+        },
+        {
+          "name": "height_above_ground_m",
+          "description": "Conductor height above ground",
+          "unit": "m",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "height_adjusted_wind_pressure_pa",
+          "description": "Wind pressure adjusted from 10 m to conductor height",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "wind_load_per_unit_length_n_m",
+          "description": "Transverse wind load per metre of conductor",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "transverse_wind_load_n",
+          "description": "Total transverse wind load over the span",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "conduit-fill-calculation",
+      "discipline": "electrical",
+      "category": "structured-cabling",
+      "category_label": null,
+      "task_name": "Conduit Fill Calculation",
+      "description": "Structured cabling conduit fill percentage",
+      "long_description": "Calculates conduit fill for identical circular cables in a circular conduit. The deterministic method sums cable cross-sectional area, computes conduit internal area, reports fill percentage, and gives margin against an explicit maximum fill percentage.",
+      "standards": [
+        "ANSI/TIA-569",
+        "AS/NZS 3080"
+      ],
+      "tags": [
+        "electrical",
+        "conduit",
+        "fill",
+        "structured-cabling",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "conduit_internal_diameter_mm",
+          "description": "Conduit internal diameter",
+          "unit": "mm",
+          "type": "float"
+        },
+        {
+          "name": "cable_count",
+          "description": "Number of identical cables",
+          "unit": null,
+          "type": "float"
+        },
+        {
+          "name": "cable_outer_diameter_mm",
+          "description": "Cable outer diameter",
+          "unit": "mm",
+          "type": "float"
+        },
+        {
+          "name": "maximum_fill_pct",
+          "description": "Maximum permitted fill percentage",
+          "unit": "%",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "total_cable_area_mm2",
+          "description": "Total cable cross-sectional area",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "conduit_area_mm2",
+          "description": "Conduit internal cross-sectional area",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "fill_percentage",
+          "description": "Conduit fill percentage",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "fill_margin_pct",
+          "description": "Margin below the maximum fill percentage",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "fiber-link-loss-budget",
+      "discipline": "electrical",
+      "category": "structured-cabling",
+      "category_label": null,
+      "task_name": "Fiber Link Loss Budget",
+      "description": "Optical fibre link loss budget and power margin",
+      "long_description": "Calculates total optical link loss by summing fibre attenuation, connector losses, and splice losses, then compares the result with the system loss budget. This deterministic structured-cabling check reports component losses, total link loss, and remaining power margin.",
+      "standards": [
+        "ISO/IEC 11801",
+        "TIA-568"
+      ],
+      "tags": [
+        "electrical",
+        "fibre",
+        "fiber",
+        "link-loss",
+        "structured-cabling",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "fiber_length_km",
+          "description": "Fibre route length",
+          "unit": "km",
+          "type": "float"
+        },
+        {
+          "name": "fiber_attenuation_db_per_km",
+          "description": "Fibre attenuation",
+          "unit": "dB/km",
+          "type": "float"
+        },
+        {
+          "name": "connector_count",
+          "description": "Number of connector interfaces",
+          "unit": null,
+          "type": "float"
+        },
+        {
+          "name": "connector_loss_db",
+          "description": "Loss per connector",
+          "unit": "dB",
+          "type": "float"
+        },
+        {
+          "name": "splice_count",
+          "description": "Number of splices",
+          "unit": null,
+          "type": "float"
+        },
+        {
+          "name": "splice_loss_db",
+          "description": "Loss per splice",
+          "unit": "dB",
+          "type": "float"
+        },
+        {
+          "name": "system_loss_budget_db",
+          "description": "Available system optical loss budget",
+          "unit": "dB",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "fiber_loss_db",
+          "description": "Loss due to fibre attenuation",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "connector_loss_total_db",
+          "description": "Total connector loss",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "splice_loss_total_db",
+          "description": "Total splice loss",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "total_link_loss_db",
+          "description": "Total optical link loss",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "power_margin_db",
+          "description": "Remaining optical power margin",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
       "task_id": "static-thermal-rating",
       "discipline": "electrical",
       "category": "thermal-rating",
@@ -6013,6 +9221,308 @@
       ],
       "tool_mode": "with-tool",
       "archetype_count": 3
+    },
+    {
+      "task_id": "handling-capacity",
+      "discipline": "electrical",
+      "category": "traffic-analysis",
+      "category_label": null,
+      "task_name": "Handling Capacity",
+      "description": "Five-minute lift handling capacity percentage",
+      "long_description": "Calculates the five-minute handling capacity of a lift group from building population, round-trip time, car capacity, number of lifts, and car loading factor. The reduced method reports passengers carried in five minutes and capacity as a percentage of population.",
+      "standards": [
+        "CIBSE Guide D"
+      ],
+      "tags": [
+        "electrical",
+        "lifts",
+        "handling-capacity",
+        "vertical-transportation",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "building_population",
+          "description": "Population served by the lift group",
+          "unit": null,
+          "type": "float"
+        },
+        {
+          "name": "round_trip_time_s",
+          "description": "Lift round-trip time",
+          "unit": "s",
+          "type": "float"
+        },
+        {
+          "name": "car_capacity_persons",
+          "description": "Rated lift car capacity in persons",
+          "unit": null,
+          "type": "float"
+        },
+        {
+          "name": "lift_count",
+          "description": "Number of lifts in the group",
+          "unit": null,
+          "type": "float"
+        },
+        {
+          "name": "car_loading_factor_pct",
+          "description": "Effective car loading factor",
+          "unit": "%",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "passengers_per_5min",
+          "description": "Passengers transported in five minutes",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "handling_capacity_pct",
+          "description": "Five-minute handling capacity as population percentage",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "interval-calculation",
+      "discipline": "electrical",
+      "category": "traffic-analysis",
+      "category_label": null,
+      "task_name": "Interval Calculation",
+      "description": "Average lift interval from round-trip time and lift count",
+      "long_description": "Calculates the average waiting interval between lift arrivals by dividing round-trip time by the number of lifts. The template also reports the number of lift arrivals available in a five-minute assessment period.",
+      "standards": [
+        "CIBSE Guide D"
+      ],
+      "tags": [
+        "electrical",
+        "lifts",
+        "vertical-transportation",
+        "interval",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "round_trip_time_s",
+          "description": "Lift round-trip time",
+          "unit": "s",
+          "type": "float"
+        },
+        {
+          "name": "lift_count",
+          "description": "Number of lifts in the group",
+          "unit": null,
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "interval_s",
+          "description": "Average interval between lift arrivals",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "arrivals_per_5min",
+          "description": "Lift arrivals in a five-minute period",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "vms-legibility-distance",
+      "discipline": "electrical",
+      "category": "vms-design",
+      "category_label": null,
+      "task_name": "Vms Legibility Distance",
+      "description": "Variable message sign legibility distance and reading time",
+      "long_description": "Calculates variable message sign legibility distance from character height using a reduced 40 ft per inch rule of thumb. It converts design speed to ft/s, estimates reading time available, and reports message character capacity from an explicit reading rate.",
+      "standards": [
+        "MUTCD",
+        "NYSDOT VMS Guidelines"
+      ],
+      "tags": [
+        "electrical",
+        "vms",
+        "signage",
+        "legibility",
+        "its",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "character_height_in",
+          "description": "VMS character height",
+          "unit": "in",
+          "type": "float"
+        },
+        {
+          "name": "design_speed_mph",
+          "description": "Approach design speed",
+          "unit": "mph",
+          "type": "float"
+        },
+        {
+          "name": "reading_rate_chars_s",
+          "description": "Assumed driver reading rate",
+          "unit": "chars/s",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "minimum_legibility_distance_ft",
+          "description": "Minimum legibility distance",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "design_speed_ft_s",
+          "description": "Design speed converted to feet per second",
+          "unit": null,
+          "tolerance": 0.01
+        },
+        {
+          "name": "reading_time_available_s",
+          "description": "Reading time available over the legibility distance",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "message_length_limit_chars",
+          "description": "Message length supported by available reading time",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
+    },
+    {
+      "task_id": "rf-link-budget",
+      "discipline": "electrical",
+      "category": "wireless-design",
+      "category_label": null,
+      "task_name": "Rf Link Budget",
+      "description": "Wireless RF link budget with free-space path loss",
+      "long_description": "Calculates wireless link budget using transmit power, antenna gains, distance, frequency, obstacle losses, and receive sensitivity. The template computes free-space path loss, total path loss, received signal level, and link margin.",
+      "standards": [
+        "IEEE 802.11",
+        "FCC Part 15"
+      ],
+      "tags": [
+        "electrical",
+        "wireless",
+        "rf",
+        "link-budget",
+        "path-loss",
+        "deterministic"
+      ],
+      "inputs": [
+        {
+          "name": "transmit_power_dbm",
+          "description": "Transmit power",
+          "unit": "dBm",
+          "type": "float"
+        },
+        {
+          "name": "transmit_antenna_gain_dbi",
+          "description": "Transmit antenna gain",
+          "unit": "dBi",
+          "type": "float"
+        },
+        {
+          "name": "distance_m",
+          "description": "Link distance",
+          "unit": "m",
+          "type": "float"
+        },
+        {
+          "name": "frequency_ghz",
+          "description": "Carrier frequency",
+          "unit": "GHz",
+          "type": "float"
+        },
+        {
+          "name": "receive_antenna_gain_dbi",
+          "description": "Receive antenna gain",
+          "unit": "dBi",
+          "type": "float"
+        },
+        {
+          "name": "obstacle_losses_db",
+          "description": "Additional obstacle and miscellaneous losses",
+          "unit": "dB",
+          "type": "float"
+        },
+        {
+          "name": "required_receive_sensitivity_dbm",
+          "description": "Required receive sensitivity",
+          "unit": "dBm",
+          "type": "float"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "free_space_path_loss_db",
+          "description": "Free-space path loss",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "total_path_loss_db",
+          "description": "Total path loss including obstacles",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "received_signal_level_dbm",
+          "description": "Received signal level",
+          "unit": null,
+          "tolerance": 0.03
+        },
+        {
+          "name": "link_margin_db",
+          "description": "Margin above required receive sensitivity",
+          "unit": null,
+          "tolerance": 0.03
+        }
+      ],
+      "status": "built",
+      "difficulty_tiers": [
+        "easy",
+        "medium",
+        "hard"
+      ],
+      "tool_mode": "with-tool",
+      "archetype_count": 2
     },
     {
       "task_id": "lateral-earth-pressure",
@@ -14376,53 +17886,6 @@
       "complexity": "medium"
     },
     {
-      "task_id": "tidal-prism",
-      "discipline": "civil",
-      "category": "tidal-water-levels",
-      "category_label": "Tidal & Extreme Water Levels",
-      "task_name": "Tidal Prism Calculation",
-      "description": "Calculate tidal prism for an estuary or lagoon inlet",
-      "standards": [
-        "USACE CEM"
-      ],
-      "inputs": [
-        {
-          "name": "Basin surface area (m²)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Tidal range (m)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Inlet geometry",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Tidal prism (m³)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Mean tidal velocity (m/s)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
-    },
-    {
       "task_id": "surge-screening",
       "discipline": "civil",
       "category": "transient-analysis",
@@ -14609,78 +18072,6 @@
       ],
       "status": "proposed",
       "complexity": "low"
-    },
-    {
-      "task_id": "access-controller-sizing",
-      "discipline": "electrical",
-      "category": "access-control",
-      "category_label": "Access Control Systems",
-      "task_name": "Access Controller and Power Sizing",
-      "description": "Size access controllers and power supplies for door count and device loads",
-      "standards": [
-        "SIA OSDP",
-        "UL 294"
-      ],
-      "inputs": [
-        {
-          "name": "Number of doors",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Reader type per door",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Electric lock type per door",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Controller specifications",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Power supply capacity",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Number of controllers required",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Door allocation to controllers",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Power supply sizing (A)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Battery backup calculation",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "medium"
     },
     {
       "task_id": "arc-flash-label",
@@ -14916,78 +18307,6 @@
       ],
       "status": "proposed",
       "complexity": "high"
-    },
-    {
-      "task_id": "bess-sizing-basic",
-      "discipline": "electrical",
-      "category": "bess-design",
-      "category_label": "Battery Energy Storage Design",
-      "task_name": "Basic BESS Sizing",
-      "description": "Calculate required BESS power and energy capacity for specified application",
-      "standards": [
-        "IEC 62933",
-        "IEEE 2030.2.1"
-      ],
-      "inputs": [
-        {
-          "name": "Required discharge power (MW)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Required discharge duration (hours)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Usable SOC range (%)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Round-trip efficiency (%)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "End-of-life capacity retention (%)",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Nominal power rating (MW)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Nominal energy capacity (MWh)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Beginning-of-life capacity (MWh)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Usable energy (MWh)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
     },
     {
       "task_id": "braking-curve-calculation",
@@ -15847,155 +19166,6 @@
       "complexity": "medium"
     },
     {
-      "task_id": "cctv-storage-calculation",
-      "discipline": "electrical",
-      "category": "cctv-design",
-      "category_label": "CCTV System Design",
-      "task_name": "CCTV Storage Capacity Calculation",
-      "description": "Calculate storage requirements for video surveillance system",
-      "standards": [
-        "IEC 62676-4"
-      ],
-      "inputs": [
-        {
-          "name": "Number of cameras",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Resolution per camera",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Frame rate (fps)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Recording hours per day",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Retention period (days)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Compression codec",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Average bitrate (Mbps)",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Daily storage per camera (GB)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Total storage required (TB)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Recording capacity in days",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "RAID overhead consideration",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "medium"
-    },
-    {
-      "task_id": "ppm-calculation",
-      "discipline": "electrical",
-      "category": "cctv-design",
-      "category_label": "CCTV System Design",
-      "task_name": "CCTV Pixels Per Meter Calculation",
-      "description": "Calculate pixel density (PPM) for camera and lens combination at target distance",
-      "standards": [
-        "IEC 62676-4",
-        "EN 62676-4"
-      ],
-      "inputs": [
-        {
-          "name": "Camera resolution (horizontal pixels)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Sensor width (mm)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Lens focal length (mm)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Target distance (m)",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Horizontal field of view (m)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Pixels per meter (PPM)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Surveillance objective achieved",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Compliance status",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
-    },
-    {
       "task_id": "blowout-clearance",
       "discipline": "electrical",
       "category": "clearance-verification",
@@ -16351,78 +19521,6 @@
       "complexity": "low"
     },
     {
-      "task_id": "battery-sizing",
-      "discipline": "electrical",
-      "category": "dc-systems",
-      "category_label": "DC Systems & Battery Sizing",
-      "task_name": "Station Battery Sizing",
-      "description": "Calculate battery capacity for DC control and protection systems",
-      "standards": [
-        "IEEE 485",
-        "IEEE 1115"
-      ],
-      "inputs": [
-        {
-          "name": "Continuous loads list (A)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Momentary loads (breaker operations)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Backup duration (hours)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Design margin (%)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Temperature factors",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Aging factor",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Required battery capacity (Ah)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Number and size of cells",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Charger rating (A)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "medium"
-    },
-    {
       "task_id": "dc-system-study",
       "discipline": "electrical",
       "category": "dc-systems",
@@ -16480,394 +19578,6 @@
       ],
       "status": "proposed",
       "complexity": "medium"
-    },
-    {
-      "task_id": "line-capacitance",
-      "discipline": "electrical",
-      "category": "electrical-parameters",
-      "category_label": "Electrical Parameters",
-      "task_name": "Line Capacitance Calculation",
-      "description": "Calculate per-unit-length capacitance from conductor geometry",
-      "standards": [
-        "IEC 60909"
-      ],
-      "inputs": [
-        {
-          "name": "Conductor radius (m)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Phase spacing (m)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Height above ground (m)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Phase configuration",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Capacitance per phase (nF/km)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Charging MVA per 100 km",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Surge impedance (ohms)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
-    },
-    {
-      "task_id": "line-inductance",
-      "discipline": "electrical",
-      "category": "electrical-parameters",
-      "category_label": "Electrical Parameters",
-      "task_name": "Line Inductance Calculation",
-      "description": "Calculate per-unit-length inductance from conductor geometry",
-      "standards": [
-        "IEC 60909",
-        "IEEE 738"
-      ],
-      "inputs": [
-        {
-          "name": "GMR of conductor (m)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Phase spacing (m)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Phase configuration (horizontal/vertical/delta)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Bundling configuration",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Inductance per phase (mH/km)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "GMD (m)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Equivalent GMR for bundle",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
-    },
-    {
-      "task_id": "voltage-regulation",
-      "discipline": "electrical",
-      "category": "electrical-parameters",
-      "category_label": "Electrical Parameters",
-      "task_name": "Voltage Regulation Calculation",
-      "description": "Calculate voltage regulation (drop) along transmission line under load",
-      "standards": [
-        "IEC 60909",
-        "AS 2067"
-      ],
-      "inputs": [
-        {
-          "name": "Line R and X (ohm/km)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Line length (km)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Load power (MW, MVAr)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Sending end voltage (kV)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Load power factor",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Voltage drop (kV)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Voltage regulation (%)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Receiving end voltage (kV)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Power loss (MW)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "medium"
-    },
-    {
-      "task_id": "leni-calculation",
-      "discipline": "electrical",
-      "category": "energy-performance",
-      "category_label": "Energy Performance",
-      "task_name": "LENI (Lighting Energy Numeric Indicator) Calculation",
-      "description": "Calculate LENI for interior lighting energy performance",
-      "standards": [
-        "EN 15193-1"
-      ],
-      "inputs": [
-        {
-          "name": "Installed lighting power (W)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Control factors",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Daylight availability",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Operating hours",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Zone areas (m2)",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "LENI value (kWh/m2/year)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Comparison to reference LENI",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "medium"
-    },
-    {
-      "task_id": "road-aeci-calculation",
-      "discipline": "electrical",
-      "category": "energy-performance",
-      "category_label": "Energy Performance",
-      "task_name": "Road Lighting AECI Calculation",
-      "description": "Calculate Annual Energy Consumption Index for road lighting",
-      "standards": [
-        "EN 13201-5",
-        "AS/NZS 1158.3.1"
-      ],
-      "inputs": [
-        {
-          "name": "System power (W)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Annual operating hours per dimming state",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Dimming levels",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Illuminated area (m2)",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "AECI value (kWh/m2/year)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "medium"
-    },
-    {
-      "task_id": "road-pdi-calculation",
-      "discipline": "electrical",
-      "category": "energy-performance",
-      "category_label": "Energy Performance",
-      "task_name": "Road Lighting Power Density Index (PDI)",
-      "description": "Calculate Power Density Index for road lighting energy efficiency",
-      "standards": [
-        "EN 13201-5",
-        "AS/NZS 1158.3.1"
-      ],
-      "inputs": [
-        {
-          "name": "Total system power (W)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Maintained illuminance (lux)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Illuminated area (m2)",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "PDI value (W/(lux.m2))",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
-    },
-    {
-      "task_id": "escalator-capacity",
-      "discipline": "electrical",
-      "category": "escalator-design",
-      "category_label": "Escalator Design",
-      "task_name": "Escalator Capacity Calculation",
-      "description": "Calculate theoretical escalator passenger capacity",
-      "standards": [
-        "EN 115-1",
-        "AS 1735.10"
-      ],
-      "inputs": [
-        {
-          "name": "Escalator speed (m/s)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Step width (mm)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Step pitch (mm)",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Theoretical capacity (persons/hour)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Practical capacity at different loading",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
     },
     {
       "task_id": "escalator-dimensions",
@@ -17977,66 +20687,6 @@
       "complexity": "low"
     },
     {
-      "task_id": "interior-uniformity",
-      "discipline": "electrical",
-      "category": "interior-lighting",
-      "category_label": "Interior Workplace Lighting",
-      "task_name": "Interior Illuminance Uniformity Check",
-      "description": "Calculate illuminance uniformity for task and surrounding areas",
-      "standards": [
-        "EN 12464-1",
-        "AS/NZS 1680"
-      ],
-      "inputs": [
-        {
-          "name": "Illuminance grid values",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Task area boundaries",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Surrounding area boundaries",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Task area uniformity Uo",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Immediate surround illuminance",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Background illuminance",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Compliance status",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
-    },
-    {
       "task_id": "maintained-illuminance",
       "discipline": "electrical",
       "category": "interior-lighting",
@@ -18168,210 +20818,6 @@
       ],
       "status": "proposed",
       "complexity": "medium"
-    },
-    {
-      "task_id": "bandwidth-calculation",
-      "discipline": "electrical",
-      "category": "its-communications",
-      "category_label": "ITS Communications",
-      "task_name": "ITS Bandwidth Requirement Calculation",
-      "description": "Calculate total bandwidth for ITS network supporting field devices",
-      "standards": [
-        "IEEE 802.3",
-        "NTCIP"
-      ],
-      "inputs": [
-        {
-          "name": "Device inventory (cameras, controllers, sensors)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Data rate per device type (Mbps)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Network overhead factor (10-20%)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Future capacity buffer (%)",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Total required bandwidth (Mbps)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Peak demand estimate",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Backbone sizing recommendation",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "medium"
-    },
-    {
-      "task_id": "warning-time-calculation",
-      "discipline": "electrical",
-      "category": "level-crossings",
-      "category_label": "Level Crossing Design",
-      "task_name": "Level Crossing Warning Time Calculation",
-      "description": "Calculate strike-in point distance to provide minimum warning time for road users",
-      "standards": [
-        "AS 7711",
-        "Network Rail standards"
-      ],
-      "inputs": [
-        {
-          "name": "Maximum train speed (km/h)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Minimum warning time (s)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Road user clearance time (s)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Barrier lowering time (s)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "System delay (s)",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Strike-in distance (m)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Total warning time (s)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Component time breakdown",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Margin verification",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
-    },
-    {
-      "task_id": "lux-level-calculation",
-      "discipline": "electrical",
-      "category": "lighting-design",
-      "category_label": "Lighting Design",
-      "task_name": "Illuminance Level Calculation",
-      "description": "Calculate average illuminance and uniformity for a room using lumen method",
-      "standards": [
-        "AS/NZS 1680.1",
-        "AS/NZS 1680.2.2"
-      ],
-      "inputs": [
-        {
-          "name": "Room dimensions (L, W, H)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Surface reflectances",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Luminaire type and lumen output",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Number and layout of luminaires",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Maintenance factor",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Average illuminance (lux)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Uniformity ratio (Uo)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Specific luminaire power density (W/m2/100lux)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Compliance status",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
     },
     {
       "task_id": "arrester-selection",
@@ -18588,150 +21034,6 @@
       ],
       "status": "proposed",
       "complexity": "medium"
-    },
-    {
-      "task_id": "pfc-sizing",
-      "discipline": "electrical",
-      "category": "load-flow",
-      "category_label": "Load Flow Analysis",
-      "task_name": "Power Factor Correction Sizing",
-      "description": "Calculate required capacitor kVAr to improve power factor to target",
-      "standards": [
-        "IEEE 3002.2",
-        "AS/NZS 2067"
-      ],
-      "inputs": [
-        {
-          "name": "Load real power (kW)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Initial power factor",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Target power factor",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "System voltage (V)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Harmonic considerations",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Required reactive power (kVAr)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Capacitor bank size",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "New apparent power (kVA)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Current reduction (%)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
-    },
-    {
-      "task_id": "radial-feeder-voltage-drop",
-      "discipline": "electrical",
-      "category": "load-flow",
-      "category_label": "Load Flow Analysis",
-      "task_name": "Radial Feeder Voltage Drop Calculation",
-      "description": "Calculate voltage drop along radial distribution feeder",
-      "standards": [
-        "IEEE 3002.2",
-        "AS/NZS 3008.1"
-      ],
-      "inputs": [
-        {
-          "name": "Feeder impedance (R, X per km)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Feeder length (km)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Load power (kW, kVAr) at each node",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Source voltage (V)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Power factor",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Voltage at each node (V, pu)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Voltage drop (%, V)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Total losses (kW)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Current in each section (A)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
     },
     {
       "task_id": "residential-max-demand",
@@ -19123,72 +21425,6 @@
       "complexity": "medium"
     },
     {
-      "task_id": "poe-power-budget",
-      "discipline": "electrical",
-      "category": "poe-network",
-      "category_label": "Power over Ethernet",
-      "task_name": "PoE Power Budget Calculation",
-      "description": "Calculate total PoE power requirement and verify against switch capacity",
-      "standards": [
-        "IEEE 802.3bt",
-        "IEEE 802.3at"
-      ],
-      "inputs": [
-        {
-          "name": "Device list with PoE class",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Power draw per device (W)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Switch PoE budget (W)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Headroom percentage required",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Total power requirement (W)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Utilization percentage",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Available headroom (W)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Compliance status",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
-    },
-    {
       "task_id": "poe-temperature-derating",
       "discipline": "electrical",
       "category": "poe-network",
@@ -19259,66 +21495,6 @@
       ],
       "status": "proposed",
       "complexity": "medium"
-    },
-    {
-      "task_id": "power-load-calculation",
-      "discipline": "electrical",
-      "category": "power-supply",
-      "category_label": "Signalling Power Supply",
-      "task_name": "Signalling Power Load Calculation",
-      "description": "Calculate total power load for signalling equipment installation",
-      "standards": [
-        "EN 50125",
-        "AS 7717"
-      ],
-      "inputs": [
-        {
-          "name": "Equipment list with power ratings (W)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Quantity of each equipment type",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Diversity factor",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Future expansion allowance (%)",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Total connected load (W)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Maximum demand (W)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Recommended transformer/supply size (kVA)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
     },
     {
       "task_id": "solar-power-sizing",
@@ -20024,48 +22200,6 @@
       "complexity": "medium"
     },
     {
-      "task_id": "road-uniformity-check",
-      "discipline": "electrical",
-      "category": "road-lighting",
-      "category_label": "Road Lighting Design",
-      "task_name": "Road Lighting Uniformity Verification",
-      "description": "Calculate overall and longitudinal uniformity ratios for road lighting",
-      "standards": [
-        "EN 13201-2",
-        "AS/NZS 1158.2"
-      ],
-      "inputs": [
-        {
-          "name": "Calculated luminance/illuminance values across grid",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Overall uniformity Uo (L_min/L_avg)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Longitudinal uniformity Ul",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Pass/fail vs class target",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
-    },
-    {
       "task_id": "threshold-increment-ti",
       "discipline": "electrical",
       "category": "road-lighting",
@@ -20304,140 +22438,6 @@
         },
         {
           "name": "Tension as % of RTS",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "medium"
-    },
-    {
-      "task_id": "car-dimensions-check",
-      "discipline": "electrical",
-      "category": "shaft-sizing",
-      "category_label": "Lift Shaft and Car Sizing",
-      "task_name": "Lift Car Dimension Compliance Check",
-      "description": "Verify lift car dimensions meet accessibility and capacity requirements",
-      "standards": [
-        "ISO 4190-1",
-        "AS 1735.12",
-        "EN 81-70"
-      ],
-      "inputs": [
-        {
-          "name": "Car internal dimensions (width, depth) (mm)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Door clear opening (mm)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Rated load (kg)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Accessibility requirements",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Compliance status per dimension",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Minimum dimension verification",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Pass/fail overall",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
-    },
-    {
-      "task_id": "shaft-dimensions",
-      "discipline": "electrical",
-      "category": "shaft-sizing",
-      "category_label": "Lift Shaft and Car Sizing",
-      "task_name": "Shaft Dimension Calculation",
-      "description": "Calculate required shaft dimensions from car size and clearances",
-      "standards": [
-        "ISO 4190-1",
-        "EN 81-20",
-        "AS 1735.1"
-      ],
-      "inputs": [
-        {
-          "name": "Car internal dimensions (mm)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Counterweight position",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Door type (center/side)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Speed (m/s)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Number of cars in shaft",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Shaft width (mm)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Shaft depth (mm)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Pit depth (mm)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Headroom (mm)",
           "description": null,
           "unit": null,
           "tolerance": null
@@ -20988,361 +22988,6 @@
       "complexity": "medium"
     },
     {
-      "task_id": "4-20ma-scaling",
-      "discipline": "electrical",
-      "category": "signal-processing",
-      "category_label": "Signal Processing and Scaling",
-      "task_name": "4-20 mA Signal Scaling Calculation",
-      "description": "Calculate 4-20 mA current signal for given process variable or vice versa",
-      "standards": [
-        "ISA-5.1",
-        "IEC 60381"
-      ],
-      "inputs": [
-        {
-          "name": "Process variable value",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Lower range value (LRV)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Upper range value (URV)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Signal range (4-20 mA)",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Current signal (mA)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Percentage of span (%)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Process variable from mA",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
-    },
-    {
-      "task_id": "overlap-calculation",
-      "discipline": "electrical",
-      "category": "signal-sighting",
-      "category_label": "Signal Sighting and Spacing",
-      "task_name": "Signal Overlap Length Calculation",
-      "description": "Calculate safety overlap distance beyond stop signal for overrun protection",
-      "standards": [
-        "Network Rail NR/L2/SIG/10158",
-        "AS 7711"
-      ],
-      "inputs": [
-        {
-          "name": "Maximum approach speed (km/h)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Emergency braking rate (m/s2)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Track gradient (%)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Reaction time (s)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Danger point location",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Low adhesion factor",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Full-speed overlap (m)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Timed overlap option (m)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Gradient-adjusted distance (m)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Danger point clearance verification",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "medium"
-    },
-    {
-      "task_id": "signal-sighting-distance",
-      "discipline": "electrical",
-      "category": "signal-sighting",
-      "category_label": "Signal Sighting and Spacing",
-      "task_name": "Signal Sighting Distance Calculation",
-      "description": "Calculate minimum distance for driver to see, react, and brake to stop at signal",
-      "standards": [
-        "Network Rail NR/L2/SIG/10158",
-        "AS 7711"
-      ],
-      "inputs": [
-        {
-          "name": "Maximum line speed (km/h)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Service braking rate (m/s2)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Driver reaction time (s)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Track gradient (%)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Signal aspect",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Required sighting distance (m)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Braking distance component (m)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Reaction distance component (m)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Gradient adjustment factor",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
-    },
-    {
-      "task_id": "all-red-interval-calculation",
-      "discipline": "electrical",
-      "category": "signal-timing",
-      "category_label": "Traffic Signal Timing",
-      "task_name": "Red Clearance (All-Red) Interval Calculation",
-      "description": "Calculate all-red clearance interval for vehicles to clear intersection",
-      "standards": [
-        "MUTCD",
-        "AS 1742.14"
-      ],
-      "inputs": [
-        {
-          "name": "Intersection width (m)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Vehicle length (m)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Vehicle speed (m/s)",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "All-red interval duration (s)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Rounded to 0.1s (max 6.0s)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
-    },
-    {
-      "task_id": "pedestrian-clearance-time",
-      "discipline": "electrical",
-      "category": "signal-timing",
-      "category_label": "Traffic Signal Timing",
-      "task_name": "Pedestrian Clearance Time Calculation",
-      "description": "Calculate pedestrian clearance (Flashing Don't Walk) interval",
-      "standards": [
-        "MUTCD",
-        "AS 1742.14"
-      ],
-      "inputs": [
-        {
-          "name": "Crosswalk length (m or ft)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Pedestrian walking speed (m/s or ft/s)",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Flashing Don't Walk duration (s)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
-    },
-    {
-      "task_id": "yellow-interval-calculation",
-      "discipline": "electrical",
-      "category": "signal-timing",
-      "category_label": "Traffic Signal Timing",
-      "task_name": "Yellow Change Interval Calculation",
-      "description": "Calculate yellow change interval duration using ITE kinematic formula",
-      "standards": [
-        "ITE Yellow Interval Equation",
-        "MUTCD",
-        "AS 1742.14"
-      ],
-      "inputs": [
-        {
-          "name": "Approach speed (km/h or ft/s)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Perception/reaction time (s)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Deceleration rate (m/s2 or ft/s2)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Road grade (%)",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Yellow interval duration (s)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Rounded to 0.1s",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Grade adjustment factor",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
-    },
-    {
       "task_id": "sil-verification",
       "discipline": "electrical",
       "category": "sil-assessment",
@@ -21680,72 +23325,6 @@
       "complexity": "medium"
     },
     {
-      "task_id": "voltage-drop-dc",
-      "discipline": "electrical",
-      "category": "solar-pv-design",
-      "category_label": "Solar PV Design",
-      "task_name": "DC String Voltage Drop",
-      "description": "Calculate DC cable voltage drop from string to inverter",
-      "standards": [
-        "AS/NZS 5033",
-        "AS/NZS 3008.1"
-      ],
-      "inputs": [
-        {
-          "name": "String current at Impp (A)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "DC cable length (m)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Cable size (mm2)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Cable resistivity",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Voltage drop (V)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Voltage drop (%)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Annual energy loss (kWh)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Compliance status",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
-    },
-    {
       "task_id": "glare-rating-gr",
       "discipline": "electrical",
       "category": "sports-lighting",
@@ -21797,72 +23376,6 @@
         },
         {
           "name": "Pass/fail vs sport requirements",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "medium"
-    },
-    {
-      "task_id": "sports-illuminance-uniformity",
-      "discipline": "electrical",
-      "category": "sports-lighting",
-      "category_label": "Sports Lighting Design",
-      "task_name": "Sports Field Illuminance and Uniformity",
-      "description": "Calculate horizontal illuminance and uniformity for sports field",
-      "standards": [
-        "EN 12193",
-        "AS 2560"
-      ],
-      "inputs": [
-        {
-          "name": "Luminaire photometric data (IES/LDT)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Field geometry",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Mounting positions and aiming",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Maintenance factor",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Grid specification",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Average horizontal illuminance E_av (lux)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Uniformity ratios U1 (E_min/E_max), U2 (E_min/E_av)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Pass/fail vs class requirements",
           "description": null,
           "unit": null,
           "tolerance": null
@@ -22101,150 +23614,6 @@
       "complexity": "medium"
     },
     {
-      "task_id": "ice-load-calculation",
-      "discipline": "electrical",
-      "category": "structural-loading",
-      "category_label": "Structural Loading Analysis",
-      "task_name": "Ice Loading Calculation",
-      "description": "Calculate combined ice and wind loading on conductors",
-      "standards": [
-        "IEC 60826",
-        "AS/NZS 7000"
-      ],
-      "inputs": [
-        {
-          "name": "Conductor diameter (mm)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Ice thickness (mm)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Ice density (kg/m3)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Wind-on-ice pressure (Pa)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Span length (m)",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Ice weight per unit length (N/m)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Total vertical load (N/m)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Iced conductor diameter (mm)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Combined ice + wind load (N/m)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "medium"
-    },
-    {
-      "task_id": "wind-load-conductor",
-      "discipline": "electrical",
-      "category": "structural-loading",
-      "category_label": "Structural Loading Analysis",
-      "task_name": "Wind Load on Conductor Calculation",
-      "description": "Calculate wind load on conductor span for structure design",
-      "standards": [
-        "IEC 60826",
-        "AS/NZS 7000"
-      ],
-      "inputs": [
-        {
-          "name": "Wind pressure (Pa)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Conductor diameter (mm)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Span length (m)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Drag coefficient",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Terrain category",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Height above ground (m)",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Transverse wind load (N)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Wind load per unit length (N/m)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Height-adjusted wind pressure",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
-    },
-    {
       "task_id": "bend-radius-check",
       "discipline": "electrical",
       "category": "structured-cabling",
@@ -22297,156 +23666,6 @@
       ],
       "status": "proposed",
       "complexity": "low"
-    },
-    {
-      "task_id": "conduit-fill-calculation",
-      "discipline": "electrical",
-      "category": "structured-cabling",
-      "category_label": "Structured Cabling",
-      "task_name": "Conduit Fill Calculation",
-      "description": "Calculate conduit fill percentage and verify compliance with maximum fill ratio",
-      "standards": [
-        "ANSI/TIA-569",
-        "AS/NZS 3080"
-      ],
-      "inputs": [
-        {
-          "name": "Conduit internal diameter (mm)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Number and type of cables",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Cable outer diameter (mm)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Maximum fill percentage",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Total cable cross-section area (mm2)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Conduit cross-section area (mm2)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Fill percentage (%)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Compliance status",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
-    },
-    {
-      "task_id": "fiber-link-loss-budget",
-      "discipline": "electrical",
-      "category": "structured-cabling",
-      "category_label": "Structured Cabling",
-      "task_name": "Fiber Optic Link Loss Budget Calculation",
-      "description": "Calculate total link loss for fiber optic connection and verify against system budget",
-      "standards": [
-        "ISO/IEC 11801",
-        "TIA-568"
-      ],
-      "inputs": [
-        {
-          "name": "Fiber length (m)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Fiber attenuation (dB/km)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Number of connectors",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Connector loss (dB)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Number of splices",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Splice loss (dB)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "System loss budget (dB)",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Total link loss (dB)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Component breakdown",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Power margin (dB)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Compliance status",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "medium"
     },
     {
       "task_id": "dynamic-line-rating",
@@ -22658,106 +23877,6 @@
       ],
       "status": "proposed",
       "complexity": "high"
-    },
-    {
-      "task_id": "handling-capacity",
-      "discipline": "electrical",
-      "category": "traffic-analysis",
-      "category_label": "Lift Traffic Analysis",
-      "task_name": "Handling Capacity (HC) Calculation",
-      "description": "Calculate 5-minute handling capacity as percentage of population",
-      "standards": [
-        "CIBSE Guide D"
-      ],
-      "inputs": [
-        {
-          "name": "Building population",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Round Trip Time RTT (s)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Car capacity (persons)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Number of lifts",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Car loading factor (typically 80%)",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Handling Capacity HC (%)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Passengers per 5 minutes",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
-    },
-    {
-      "task_id": "interval-calculation",
-      "discipline": "electrical",
-      "category": "traffic-analysis",
-      "category_label": "Lift Traffic Analysis",
-      "task_name": "Interval (INT) Calculation",
-      "description": "Calculate average waiting interval between lift arrivals",
-      "standards": [
-        "CIBSE Guide D"
-      ],
-      "inputs": [
-        {
-          "name": "Round Trip Time RTT (s)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Number of lifts",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Interval INT (s)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Quality of Service rating",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
     },
     {
       "task_id": "round-trip-time",
@@ -23251,66 +24370,6 @@
       "complexity": "high"
     },
     {
-      "task_id": "vms-legibility-distance",
-      "discipline": "electrical",
-      "category": "vms-design",
-      "category_label": "Variable Message Sign Design",
-      "task_name": "VMS Legibility Distance Calculation",
-      "description": "Calculate minimum legibility distance for VMS based on character height and speed",
-      "standards": [
-        "MUTCD",
-        "NYSDOT VMS Guidelines"
-      ],
-      "inputs": [
-        {
-          "name": "Character height (inches)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Design speed (mph)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Font type",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Ambient light conditions",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Minimum legibility distance (ft)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Reading time available (s)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Message length limit (characters)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "low"
-    },
-    {
       "task_id": "gradient-check",
       "discipline": "electrical",
       "category": "wire-geometry",
@@ -23410,90 +24469,6 @@
       ],
       "status": "proposed",
       "complexity": "low"
-    },
-    {
-      "task_id": "rf-link-budget",
-      "discipline": "electrical",
-      "category": "wireless-design",
-      "category_label": "Wireless Network Design",
-      "task_name": "RF Link Budget Calculation",
-      "description": "Calculate wireless link budget to verify adequate signal strength",
-      "standards": [
-        "IEEE 802.11",
-        "FCC Part 15"
-      ],
-      "inputs": [
-        {
-          "name": "Transmit power (dBm)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Transmit antenna gain (dBi)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Distance (m)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Frequency (GHz)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Receive antenna gain (dBi)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Obstacle losses (dB)",
-          "description": null,
-          "unit": null,
-          "type": null
-        },
-        {
-          "name": "Required receive sensitivity (dBm)",
-          "description": null,
-          "unit": null,
-          "type": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "Free space path loss (dB)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Total path loss (dB)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Received signal level (dBm)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        },
-        {
-          "name": "Link margin (dB)",
-          "description": null,
-          "unit": null,
-          "tolerance": null
-        }
-      ],
-      "status": "proposed",
-      "complexity": "medium"
     },
     {
       "task_id": "fos-compliance",

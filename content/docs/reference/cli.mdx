@@ -28,7 +28,8 @@ Manage user defaults:
 
 ```bash
 uv run aec-bench config view
-uv run aec-bench config set default_compute_backend modal
+uv run aec-bench config set tasks-root tasks
+uv run aec-bench config set ledger-root artefacts/ledger
 uv run aec-bench config reset
 ```
 
@@ -126,7 +127,7 @@ Run an experiment manifest:
 uv run aec-bench run --config experiment.yaml
 ```
 
-Common overrides include task roots, model, adapter, backend, repetitions, and `--dry-run`.
+Common overrides include task roots, model, harness, backend, repetitions, and `--dry-run`. The CLI still accepts `--adapter` as an alias for `--harness`.
 
 ### `run-local`
 
@@ -135,7 +136,7 @@ Run one task without Docker or Harbor:
 ```bash
 uv run aec-bench run-local tasks/electrical/voltage-drop \
   --model gpt-4.1-mini \
-  --adapter direct
+  --harness direct
 ```
 
 Useful options:
@@ -144,17 +145,22 @@ Useful options:
 |------|---------|
 | `--output DIR` | Save local run output in a specific directory |
 | `--keep-workspace` | Preserve the temporary workspace for debugging |
+| `--legacy-script` | Use the older standalone script runner instead of the library adapter |
 | `--no-import` | Do not import the local result into the ledger |
 | `--no-normalise` | Skip canonical-reference normalisation before verification |
+| `--constitutional-model MODEL` | Override the constitutional inference model for RLM tasks that declare one |
 
-### `import` and `import-local`
+### `import`, `import-local`, and `import-prime-eval`
 
 Import completed results into the ledger:
 
 ```bash
 uv run aec-bench import jobs/exp-001
 uv run aec-bench import-local tasks/electrical/voltage-drop/_local_runs/run-001
+uv run aec-bench import-prime-eval <prime-eval-id> --experiment prime-eval-001
 ```
+
+`import-prime-eval` reads Prime hosted eval samples and writes normal aec-bench ledger artefacts, so hosted rollouts can be inspected with the same trace and behavioural report commands as local runs.
 
 ## Analysis and Review
 
@@ -173,10 +179,10 @@ uv run aec-bench evaluate --experiment exp-001 --model gpt-4.1-mini
 Generate focused outputs from ledger data:
 
 ```bash
-uv run aec-bench report summary --experiment exp-001
+uv run aec-bench report summary --experiment-id exp-001
 uv run aec-bench report leaderboard
-uv run aec-bench report traces --experiment exp-001
-uv run aec-bench report behavioral --experiment exp-001
+uv run aec-bench report traces --experiment-id exp-001
+uv run aec-bench report behavioral --experiment-id exp-001 --classifier claude-sonnet-4-20250514
 ```
 
 ### `ledger`
@@ -232,7 +238,7 @@ See [Library Catalogue](/docs/reference/library-catalogue) for schema and sync d
 Single-workspace evolution:
 
 ```bash
-uv run aec-bench evolve init workspaces/my-ws --name voltage-drop-evo --adapter rlm
+uv run aec-bench evolve init workspaces/my-ws --name voltage-drop-evo --harness rlm
 uv run aec-bench evolve run --config evolution.yaml
 uv run aec-bench evolve history workspaces/my-ws
 uv run aec-bench evolve rollback workspaces/my-ws evo-20260404-1220-2
@@ -256,15 +262,18 @@ Export AEC-Bench tasks as Prime/verifiers environments and run local or hosted e
 
 ```bash
 uv run aec-bench prime doctor
+uv run aec-bench prime adapters
 uv run aec-bench prime export --name aec-smoke --task electrical/voltage-drop
 uv run aec-bench prime push --name aec-smoke --task electrical/voltage-drop
 uv run aec-bench prime eval --remote-env owner/aec-smoke --hosted --model "Qwen/Qwen3.5-4B"
+uv run aec-bench prime eval --remote-env owner/aec-smoke --hosted --model "Qwen/Qwen3.5-4B" --adapter-from-run <training-run-id>
+uv run aec-bench import-prime-eval <prime-eval-id> --experiment prime-smoke-import
 uv run aec-bench prime train-config --environment owner/aec-smoke -o train.toml
 uv run aec-bench prime train train.toml
 uv run aec-bench prime smoke --name aec-smoke --task electrical/voltage-drop
 ```
 
-See [Prime Lab](/docs/advanced/prime-lab) for export lanes, adapter eval, and hosted training.
+See [Prime Lab](/docs/advanced/prime-lab) for export lanes, deployed adapter discovery, adapter eval, hosted training, and hosted rollout import.
 
 ## Exit Codes
 

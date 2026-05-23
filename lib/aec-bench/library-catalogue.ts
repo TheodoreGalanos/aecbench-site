@@ -49,7 +49,7 @@ export const LibraryCatalogueSchema = z.object({
   schema_version: z.literal(1),
   generated_at: z.string().min(1),
   library_version: z.string().min(1),
-  library_commit: z.string().min(1),
+  library_commit: z.string().min(1).nullable(),
   counts: z.object({
     total_templates: z.number().int().nonnegative(),
     total_seeds: z.number().int().nonnegative(),

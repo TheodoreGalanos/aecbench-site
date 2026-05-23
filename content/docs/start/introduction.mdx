@@ -9,8 +9,8 @@ AEC work mixes deterministic calculation, document interpretation, tool use, and
 
 aec-bench provides:
 
-- **144 built templates** and **324 proposed seed tasks** across civil, electrical, ground, mechanical, and structural engineering
-- **Agent harnesses** for direct answers, tool loops, RLM, and lambda-RLM style workflows
+- A public catalogue of built templates and proposed seed tasks across civil, electrical, ground, mechanical, and structural engineering
+- **Agent harnesses** for direct answers, tool loops, RLM, and Lambda-RLM workflows
 - **Automated scoring** through task-local verifiers and structured reward contracts
 - **Versioned datasets** so comparable runs are anchored to immutable task snapshots
 - **Prime Lab export** for local eval, hosted eval, adapter eval, and hosted training
@@ -36,7 +36,7 @@ The core loop is:
 4. Verify outputs and write trial records.
 5. Evaluate, report, and inspect traces.
 
-Advanced workflows build on that loop rather than replacing it.
+Prime export, evolution, and swarm runs all build on the same task, trial, verifier, and trace records.
 
 ## Next Steps
 

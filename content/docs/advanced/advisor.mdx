@@ -1,6 +1,6 @@
 ---
 title: Advisor
-description: The advisor is an optional per-adapter hook that lets a stronger model answer focused strategic questions during a trial.
+description: The advisor is an optional per-harness hook that lets a stronger model answer focused strategic questions during a trial.
 ---
 
 ## How it works
@@ -8,27 +8,29 @@ description: The advisor is an optional per-adapter hook that lets a stronger mo
 Inside a harness run, an adapter can issue an `AdvisorRequest` whenever it hits a decision point:
 
 ```python
-class AdvisorRequest(StrictModel):
-    goal: NonEmptyStr        # what the agent is trying to do overall
-    problem: NonEmptyStr     # the specific thing it's stuck on now
-    attempt: str | None      # what it already tried, if anything
+@dataclass(frozen=True)
+class AdvisorRequest:
+    goal: str                # what the agent is trying to do overall
+    problem: str             # the specific thing it is stuck on now
+    attempt: str | None = None
 ```
 
 The advisor returns a structured response:
 
 ```python
-class AdvisorResponse(StrictModel):
-    advice: NonEmptyStr         # strategic guidance
-    suggested_action: NonEmptyStr  # one concrete next step
-    confidence: float           # 0.0–1.0
+@dataclass(frozen=True)
+class AdvisorResponse:
+    advice: str                 # strategic guidance
+    suggested_action: str       # one concrete next step
+    confidence: float           # 0.0 to 1.0
     reasoning: str              # why this suggestion
 ```
 
-The advisor returns guidance only — it doesn't write output files or invoke tools. The agent decides what to do with the response.
+The advisor returns guidance only. It does not write output files or invoke tools. The agent decides what to do with the response.
 
 ## Configuration
 
-Advisor settings live in the adapter's config, not the task:
+Advisor settings live in the harness config, not the task:
 
 ```toml
 [advisor]
@@ -47,14 +49,18 @@ Different adapters give the advisor different context. A tool-loop adapter might
 
 ```python
 class AdvisorContextStrategy(Protocol):
-    def build_context(self, state: AdapterState, window: int) -> list[Message]: ...
+    def build_advisor_context(
+        self,
+        request: AdvisorRequest,
+        conversation_state: Any,
+    ) -> list[dict[str, str]]: ...
 ```
 
-This is why the same advisor model can sensibly coach both a REPL agent and a tool-loop agent — the adapter shapes the context to match its own execution model.
+This is why the same advisor model can sensibly coach both a REPL agent and a tool-loop agent: the adapter shapes the context to match its own execution model.
 
 ## Usage tracking
 
-Advisor calls are **tracked separately** from the main agent's token budget so they don't leak into the headline cost:
+Advisor calls are tracked separately from the main agent's token budget:
 
 ```python
 class AdvisorUsageStats(StrictModel):
@@ -65,7 +71,7 @@ class AdvisorUsageStats(StrictModel):
     advisor_cost_usd: float
 ```
 
-Reports surface these alongside the base cost so readers can see the split — "this run cost $0.42 to execute, plus $0.18 in advisor calls".
+Reports can surface these alongside the base cost so readers can see the split: "this run cost USD 0.42 to execute, plus USD 0.18 in advisor calls".
 
 ## Failure handling
 
@@ -73,10 +79,10 @@ If the advisor call fails (network error, provider timeout, parsing failure), th
 
 ```python
 AdvisorResponse(
-    advice="Advisor unavailable — proceed on your own.",
-    suggested_action="Continue with the current approach.",
+    advice="Advisor unavailable - proceed on your own judgement",
+    suggested_action="continue",
     confidence=0.0,
-    reasoning="fallback",
+    reasoning="advisor call failed",
 )
 ```
 
@@ -84,9 +90,9 @@ A fallback response means the trial continues without useful guidance; the zero 
 
 ## When to use it
 
-The advisor pays off when the base model is fast and cheap but stumbles on strategic choices — a Haiku executor with Sonnet as the coach, say. Two signals that it's worth wiring up:
+The advisor pays off when the base model is fast and cheap but stumbles on strategic choices, such as a Haiku executor with Sonnet as the coach. Two signals that it is worth wiring up:
 
 - Your agent consistently makes **early wrong-direction choices** that ripple into the rest of the trial
-- The cheap model is **competent at execution** but chooses poorly — raising its ceiling matters more than raising its throughput
+- The cheap model is **competent at execution** but chooses poorly; raising its ceiling matters more than raising its throughput
 
-For a strong base model, the advisor is usually overkill — better to spend the tokens on longer turn budgets. For a weak base model, the advisor can lift a task's success rate substantially at a fraction of the cost of upgrading the executor.
+For a strong base model, the advisor is usually overkill. Spend the tokens on longer turn budgets. For a weak base model, the advisor can lift a task's success rate at a fraction of the cost of upgrading the executor.

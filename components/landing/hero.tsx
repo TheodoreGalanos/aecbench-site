@@ -42,6 +42,12 @@ export function Hero() {
           >
             <span aria-hidden="true" className="text-accent-teal">&gt;</span>read_the_docs
           </Link>
+          <Link
+            href="/tasks"
+            className="inline-flex items-center gap-2 rounded border border-landing-border px-4 py-3 font-mono text-sm font-semibold text-landing-text transition-colors hover:border-accent-amber"
+          >
+            <span aria-hidden="true" className="text-accent-teal">&gt;</span>browse_tasks
+          </Link>
         </div>
       </div>
       </FadeUp>

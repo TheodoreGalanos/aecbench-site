@@ -47,12 +47,12 @@ describe('Disciplines', () => {
     expect(screen.getByText(/\+ 141 proposed/)).toBeInTheDocument();
   });
 
-  it('links each card to /leaderboard/[discipline]', () => {
+  it('links each card to the task library discipline anchor', () => {
     render(<Disciplines counts={counts} totalTasks={467} />);
     const links = screen.getAllByRole('link');
     const hrefs = links.map((a) => a.getAttribute('href'));
-    expect(hrefs).toContain('/leaderboard/civil');
-    expect(hrefs).toContain('/leaderboard/structural');
+    expect(hrefs).toContain('/tasks#civil-tasks-heading');
+    expect(hrefs).toContain('/tasks#structural-tasks-heading');
   });
 
   it('renders the live coverage line using totalTasks prop', () => {

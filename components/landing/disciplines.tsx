@@ -1,5 +1,5 @@
 // ABOUTME: Disciplines showcase — 5 cards in a row; metadata pulled from lib/disciplines.
-// ABOUTME: Each card links to /leaderboard/[discipline] and displays live built/proposed counts.
+// ABOUTME: Each card links to /tasks#discipline and displays live built/proposed counts.
 import Link from 'next/link';
 import { BlueprintBg } from './blueprint-bg';
 import { SectionAnno } from './section-anno';
@@ -52,7 +52,7 @@ export function Disciplines({ counts, totalTasks }: DisciplinesProps) {
               return (
                 <Link
                   key={slug}
-                  href={`/leaderboard/${slug}`}
+                  href={`/tasks#${slug}-tasks-heading`}
                   className="group flex min-h-[170px] flex-col overflow-hidden rounded border border-landing-border bg-[#050505] p-4 transition-colors hover:border-accent-amber"
                 >
                   <div className="mb-2 flex justify-between font-mono text-[0.6rem] uppercase tracking-wider text-[#666]">

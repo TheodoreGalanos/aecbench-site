@@ -49,6 +49,12 @@ export function CallToAction() {
             <span aria-hidden="true" className="text-accent-teal">&gt;</span>quickstart
           </Link>
           <Link
+            href="/tasks"
+            className="inline-flex items-center gap-2 rounded border border-landing-border px-4 py-3 font-mono text-sm text-landing-text transition-colors hover:border-accent-amber"
+          >
+            <span aria-hidden="true" className="text-accent-teal">&gt;</span>browse task library
+          </Link>
+          <Link
             href="/docs"
             className="inline-flex items-center gap-2 rounded border border-landing-border px-4 py-3 font-mono text-sm text-landing-text transition-colors hover:border-accent-amber"
           >

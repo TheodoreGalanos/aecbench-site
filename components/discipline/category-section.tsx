@@ -24,10 +24,10 @@ export function CategorySection({ category }: CategorySectionProps) {
       </summary>
       <div className="grid grid-cols-1 gap-3 p-3 md:grid-cols-2">
         {category.built.map((e) => (
-          <TaskCard key={e.task_id} entry={e} />
+          <TaskCard key={`${e.discipline}/${e.task_id}`} entry={e} />
         ))}
         {category.proposed.map((e) => (
-          <TaskCard key={e.task_id} entry={e} />
+          <TaskCard key={`${e.discipline}/${e.task_id}/proposed`} entry={e} />
         ))}
       </div>
     </details>

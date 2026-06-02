@@ -31,6 +31,14 @@ describe('TaskCard — built template', () => {
     expect(screen.getByText('Voltage Drop')).toBeInTheDocument();
   });
 
+  it('links built templates to the discipline/task detail route', () => {
+    render(<TaskCard entry={builtAllTiers} />);
+    expect(screen.getByRole('link', { name: /open voltage drop/i })).toHaveAttribute(
+      'href',
+      '/tasks/electrical/voltage-drop',
+    );
+  });
+
   it('renders difficulty_tiers as min–max range when length > 1', () => {
     render(<TaskCard entry={builtAllTiers} />);
     expect(screen.getByText(/easy–hard/)).toBeInTheDocument();
@@ -75,6 +83,11 @@ describe('TaskCard — proposed seed', () => {
   it('renders the PROPOSED pill', () => {
     render(<TaskCard entry={seed} />);
     expect(screen.getByText('PROPOSED')).toBeInTheDocument();
+  });
+
+  it('does not link proposed seeds to a template detail page', () => {
+    render(<TaskCard entry={seed} />);
+    expect(screen.queryByRole('link', { name: /open gravel road thickness/i })).not.toBeInTheDocument();
   });
 
   it('renders complexity as the chip (not a range)', () => {

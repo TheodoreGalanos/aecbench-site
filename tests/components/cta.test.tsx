@@ -22,9 +22,13 @@ describe('CallToAction', () => {
     expect(screen.getByText(/2\.4k/)).toBeInTheDocument();
   });
 
-  it('renders three secondary commands', () => {
+  it('renders task library and secondary commands', () => {
     render(<CallToAction />);
     expect(screen.getByRole('link', { name: /quickstart/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /browse task library/i })).toHaveAttribute(
+      'href',
+      '/tasks',
+    );
     expect(screen.getByRole('link', { name: /contribute a task/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /submit your model/i })).toBeInTheDocument();
   });

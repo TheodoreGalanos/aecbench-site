@@ -12,12 +12,14 @@ describe('Hero', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders both CTA links with command-style labels', () => {
+  it('renders command-style links for results, docs, and tasks', () => {
     render(<Hero />);
     const explore = screen.getByRole('link', { name: /explore_results/i });
     const docs = screen.getByRole('link', { name: /read_the_docs/i });
+    const tasks = screen.getByRole('link', { name: /browse_tasks/i });
     expect(explore).toHaveAttribute('href', '/leaderboard');
     expect(docs).toHaveAttribute('href', '/docs');
+    expect(tasks).toHaveAttribute('href', '/tasks');
   });
 
   it('mentions 500+ tasks in the subtitle', () => {

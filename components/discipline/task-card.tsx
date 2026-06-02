@@ -1,5 +1,6 @@
 // ABOUTME: Single card presentation for a library catalogue entry (template or seed).
 // ABOUTME: Status pill + title + description + standards chips + IO/archetype footer.
+import Link from 'next/link';
 import type { LibraryCatalogueEntry } from '@/lib/aec-bench/library-catalogue';
 
 const TIER_ORDER: Record<'easy' | 'medium' | 'hard', number> = { easy: 0, medium: 1, hard: 2 };
@@ -26,11 +27,10 @@ export function TaskCard({ entry }: TaskCardProps) {
     entry.status === 'built'
       ? 'bg-accent-amber text-[#0a0a0a]'
       : 'bg-accent-teal text-[#0a0a0a]';
-
-  return (
-    <article className="flex flex-col gap-2 rounded border border-landing-border bg-[#050505] p-3">
+  const card = (
+    <article className="flex h-full flex-col gap-2 rounded border border-landing-border bg-[#050505] p-3 transition-colors hover:border-accent-amber/60">
       <header className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex min-w-0 items-center gap-2">
           <span
             className={`rounded px-1.5 py-0.5 font-mono text-[0.6rem] uppercase tracking-wider ${pillClass}`}
           >
@@ -68,5 +68,17 @@ export function TaskCard({ entry }: TaskCardProps) {
           : ''}
       </footer>
     </article>
+  );
+
+  if (entry.status !== 'built') return card;
+
+  return (
+    <Link
+      href={`/tasks/${entry.discipline}/${entry.task_id}`}
+      aria-label={`Open ${entry.task_name} template detail`}
+      className="block h-full"
+    >
+      {card}
+    </Link>
   );
 }

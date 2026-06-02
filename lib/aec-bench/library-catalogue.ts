@@ -148,3 +148,22 @@ export function getCatalogueForDiscipline(
     },
   };
 }
+
+export function getCatalogueEntry(
+  domain: Domain,
+  taskId: string,
+  catalogue: LibraryCatalogue = getCatalogue(),
+): LibraryCatalogueEntry | null {
+  return (
+    [...catalogue.templates, ...catalogue.seeds].find(
+      (entry) => entry.discipline === domain && entry.task_id === taskId,
+    ) ?? null
+  );
+}
+
+export function getTemplateVariants(
+  taskId: string,
+  catalogue: LibraryCatalogue = getCatalogue(),
+): LibraryCatalogueEntry[] {
+  return catalogue.templates.filter((entry) => entry.task_id === taskId);
+}

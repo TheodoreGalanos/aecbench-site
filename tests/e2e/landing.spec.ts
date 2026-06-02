@@ -51,6 +51,18 @@ test.describe('Landing page', () => {
     await expect(page).toHaveURL('/leaderboard');
   });
 
+  test('browse_tasks CTA goes to /tasks', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('link', { name: /browse_tasks/i }).click();
+    await expect(page).toHaveURL('/tasks');
+  });
+
+  test('discipline cards link into the task library sitemap', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('a[href="/tasks#electrical-tasks-heading"]').click();
+    await expect(page).toHaveURL(/\/tasks#electrical-tasks-heading$/);
+  });
+
   test('nav does not include Blog link', async ({ page }) => {
     await page.goto('/');
     const navLinks = page.locator('nav a');

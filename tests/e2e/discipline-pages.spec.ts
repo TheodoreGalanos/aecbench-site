@@ -1,6 +1,6 @@
-// ABOUTME: Full e2e path for the 5 discipline routes — link-through, collapsible, nav chips.
-// ABOUTME: Smoke tests: landing card click, heading, catalogue summary, expand, prev/next, 404.
-import { test, expect, type Page } from '@playwright/test';
+// ABOUTME: Full e2e path for the 5 discipline leaderboard routes.
+// ABOUTME: Smoke tests: direct route, heading, catalogue summary, expand, prev/next, 404.
+import { test, expect } from '@playwright/test';
 
 const SLUGS = ['civil', 'electrical', 'ground', 'mechanical', 'structural'] as const;
 type Slug = (typeof SLUGS)[number];
@@ -13,16 +13,10 @@ const NAMES: Record<Slug, string> = {
   structural: 'Structural',
 };
 
-async function landingToDiscipline(page: Page, slug: Slug) {
-  await page.goto('/');
-  await page.locator(`a[href="/leaderboard/${slug}"]`).first().click();
-  await expect(page).toHaveURL(new RegExp(`/leaderboard/${slug}$`));
-}
-
 test.describe('discipline pages — smoke', () => {
   for (const slug of SLUGS) {
-    test(`${slug}: landing → page → heading + catalogue summary`, async ({ page }) => {
-      await landingToDiscipline(page, slug);
+    test(`${slug}: route → heading + catalogue summary`, async ({ page }) => {
+      await page.goto(`/leaderboard/${slug}`);
       await expect(
         page.getByRole('heading', { level: 1, name: new RegExp(NAMES[slug], 'i') }),
       ).toBeVisible();

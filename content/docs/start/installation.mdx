@@ -14,18 +14,25 @@ Docker, Modal, Prime, and hosted Harbor execution are optional. You only need th
 
 ## From Source
 
-The source checkout is the most reliable install path while the library is changing quickly:
+Use the source checkout when developing templates, tasks, or library code:
 
 ```bash
 git clone https://github.com/aurecon/aec-bench.git
 cd aec-bench
-uv sync --dev
+uv sync --extra webui --dev
 uv run aec-bench --version
 ```
 
 The console entry point is `aec-bench`. In a source checkout, run it through `uv run` so Python, dependencies, and local package code stay aligned.
 
 ## Optional Extras
+
+Web UI support is optional:
+
+```bash
+uv sync --extra webui --dev
+uv run aec-bench web
+```
 
 Prime Lab support is optional:
 

@@ -1,4 +1,4 @@
-// ABOUTME: Tests the restyled CTA section — install command, meta line, secondary buttons.
+// ABOUTME: Tests the CTA section source checkout command, meta line, and secondary buttons.
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { CallToAction } from '@/components/landing/cta';
@@ -11,14 +11,14 @@ describe('CallToAction', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders the pip install CopyBox', () => {
+  it('renders the source checkout CopyBox', () => {
     render(<CallToAction />);
-    expect(screen.getByText('pip install aec-bench')).toBeInTheDocument();
+    expect(screen.getByText('git clone https://github.com/aurecon/aec-bench.git')).toBeInTheDocument();
   });
 
-  it('renders the mono meta line with latest version and stars', () => {
+  it('renders the mono meta line with source status and stars', () => {
     render(<CallToAction />);
-    expect(screen.getByText(/v0\.4\.1/)).toBeInTheDocument();
+    expect(screen.getByText(/source checkout/i)).toBeInTheDocument();
     expect(screen.getByText(/2\.4k/)).toBeInTheDocument();
   });
 

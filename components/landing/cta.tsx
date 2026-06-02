@@ -1,4 +1,4 @@
-// ABOUTME: Bottom call-to-action — pip install copy-box, version meta line, three secondary commands.
+// ABOUTME: Bottom call-to-action with source checkout copy-box and secondary commands.
 import Link from 'next/link';
 import { BlueprintBg } from './blueprint-bg';
 import { SectionAnno } from './section-anno';
@@ -23,11 +23,11 @@ export function CallToAction() {
         </p>
 
         <div className="mt-8">
-          <CopyBox command="pip install aec-bench" />
+          <CopyBox command="git clone https://github.com/aurecon/aec-bench.git" />
         </div>
 
         <div className="mt-4 flex flex-wrap justify-center gap-3 font-mono text-xs text-landing-muted">
-          <span>latest <span className="text-accent-amber">v0.4.1</span></span>
+          <span><span className="text-accent-amber">source checkout</span></span>
           <span>·</span>
           <Link
             href="https://github.com/aurecon/aec-bench"

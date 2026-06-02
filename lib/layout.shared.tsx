@@ -1,21 +1,20 @@
 // ABOUTME: Shared layout configuration for Fumadocs HomeLayout and DocsLayout.
 // ABOUTME: Defines navigation links, logo, and GitHub URL used across all layouts.
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
-import Image from 'next/image';
 
 export function baseOptions(): BaseLayoutProps {
   return {
     nav: {
       title: (
         <div className="flex items-center gap-2">
-          <Image
+          <img
             src="/logo-dark.png"
             alt="aec-bench"
             width={28}
             height={20}
             className="hidden dark:block"
           />
-          <Image
+          <img
             src="/logo-light.png"
             alt="aec-bench"
             width={28}

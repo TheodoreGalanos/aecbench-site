@@ -3,7 +3,8 @@ title: Quickstart
 description: The quickstart is a short path from a fresh checkout to generating a task, running a local trial, and evaluating the imported ledger.
 ---
 
-This walkthrough uses the source checkout because aec-bench is moving quickly and the CLI surface is the source of truth.
+This walkthrough uses the source checkout because it is the current public setup
+path while the package release is being prepared.
 
 ## Prerequisites
 
@@ -20,7 +21,8 @@ uv sync --dev
 uv run aec-bench --help
 ```
 
-If you install a packaged release later, run the `aec-bench` console script directly instead of prefixing CLI commands with `uv run`.
+In a source checkout, run commands through `uv run` so the local package code and
+dependencies stay aligned.
 
 ## Generate
 

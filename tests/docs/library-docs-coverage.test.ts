@@ -38,15 +38,31 @@ describe('library documentation coverage', () => {
   it('reflects the refreshed built-in template catalogue', () => {
     const catalogue = JSON.parse(readFileSync(join(ROOT, 'data', 'library-catalogue.json'), 'utf-8'));
     const templates = readDoc('core/templates.mdx');
+    const libraryCatalogue = readDoc('reference/library-catalogue.mdx');
 
     expect(catalogue.counts.total_templates).toBe(184);
     expect(catalogue.counts.total_seeds).toBe(284);
+    expect(catalogue.library_commit).toMatch(/^[0-9a-f]{7,40}$/);
     expect(catalogue.counts.by_discipline.electrical.templates).toBe(52);
     expect(catalogue.counts.by_discipline.mechanical.templates).toBe(50);
     expect(catalogue.counts.by_discipline.structural.templates).toBe(15);
     expect(templates).toContain('184 built templates');
+    expect(libraryCatalogue).toContain(`"library_commit": "${catalogue.library_commit}"`);
     expect(templates).toContain('Mechanical');
     expect(templates).toContain('Structural');
+  });
+
+  it('keeps installation docs on source-checkout setup until a package is published', () => {
+    const docs = [
+      readDoc('start/installation.mdx'),
+      readDoc('start/quickstart.mdx'),
+      readDoc('reference/cli.mdx'),
+    ].join('\n');
+
+    expect(docs).toContain('git clone https://github.com/aurecon/aec-bench.git');
+    expect(docs).not.toContain('pip install aec-bench');
+    expect(docs).not.toContain('aec-bench[webui]');
+    expect(docs).not.toContain('published package');
   });
 
   it('keeps public docs out of internal winning-work scope', () => {

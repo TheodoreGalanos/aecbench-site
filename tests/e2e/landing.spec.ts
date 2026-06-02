@@ -38,7 +38,7 @@ test.describe('Landing page', () => {
     await expect(page.getByRole('heading', { name: /define.*run.*score/i })).toBeVisible();
   });
 
-  test('CTA copy button copies pip install command', async ({ page, context }) => {
+  test('CTA copy button copies source checkout command', async ({ page, context }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await page.goto('/');
     await page.locator('button', { hasText: /^copy$/i }).first().click();

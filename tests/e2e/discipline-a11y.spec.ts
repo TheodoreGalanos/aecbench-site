@@ -1,5 +1,5 @@
 // ABOUTME: axe audit for /leaderboard/civil — desktop + mobile, collapsed + expanded categories.
-// ABOUTME: Zero-violation expectation on all three viewports/states within our content section.
+// ABOUTME: Zero-violation expectation on core page states plus expanded catalogue content.
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
@@ -21,10 +21,13 @@ test.describe('discipline page a11y', () => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto('/leaderboard/civil');
     await page.waitForSelector('h1');
-    await page.locator('details summary').first().click();
-    // Scope to our content section to avoid auditing Fumadocs nav chrome.
+    const firstCategory = page.locator('details').first();
+    await firstCategory.locator('summary').click();
+    await expect(firstCategory).toHaveJSProperty('open', true);
+    // Collapsed state already audits the full section; this checks expanded
+    // catalogue content directly without re-scanning the full leaderboard.
     const results = await new AxeBuilder({ page })
-      .include('section[aria-labelledby="leaderboard-heading"]')
+      .include('details[open]')
       .withTags(['wcag2a', 'wcag2aa'])
       .analyze();
     expect(results.violations).toEqual([]);

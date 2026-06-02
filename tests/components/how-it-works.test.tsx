@@ -16,15 +16,16 @@ describe('HowItWorks', () => {
     }
   });
 
-  it('renders the CLI readout mock', () => {
+  it('renders the documented CLI readout', () => {
     render(<HowItWorks />);
-    expect(screen.getByText(/bench run/)).toBeInTheDocument();
-    expect(screen.getByText(/cable-sizing/)).toBeInTheDocument();
+    expect(screen.getByText(/uv run aec-bench run-local/)).toBeInTheDocument();
+    expect(screen.getByText(/--harness/)).toBeInTheDocument();
+    expect(screen.getByText(/uv run aec-bench evaluate/)).toBeInTheDocument();
   });
 
-  it('links to architecture docs', () => {
+  it('links to the CLI docs', () => {
     render(<HowItWorks />);
-    const link = screen.getByRole('link', { name: /full pipeline/i });
-    expect(link).toHaveAttribute('href', '/docs/core/architecture');
+    const link = screen.getByRole('link', { name: /cli guide/i });
+    expect(link).toHaveAttribute('href', '/docs/reference/cli');
   });
 });

@@ -30,20 +30,22 @@ export function TaskCard({ entry }: TaskCardProps) {
   const card = (
     <article className="flex h-full flex-col gap-2 rounded border border-landing-border bg-[#050505] p-3 transition-colors hover:border-accent-amber/60">
       <header className="flex items-start justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex min-w-0 flex-1 items-start gap-2">
           <span
-            className={`rounded px-1.5 py-0.5 font-mono text-[0.6rem] uppercase tracking-wider ${pillClass}`}
+            className={`shrink-0 rounded px-1.5 py-0.5 font-mono text-[0.6rem] uppercase tracking-wider ${pillClass}`}
           >
             {entry.status === 'built' ? 'BUILT' : 'PROPOSED'}
           </span>
-          <p className="truncate text-sm font-semibold text-landing-text">{entry.task_name}</p>
+          <p className="min-w-0 flex-1 break-words text-sm font-semibold leading-snug text-landing-text">
+            {entry.task_name}
+          </p>
         </div>
         {chip && (
           <span className="shrink-0 font-mono text-[0.65rem] text-landing-muted">{chip}</span>
         )}
       </header>
 
-      <p className="line-clamp-2 text-xs text-landing-muted">{entry.description}</p>
+      <p className="line-clamp-2 break-words text-xs text-landing-muted">{entry.description}</p>
 
       {shownStandards.length > 0 && (
         <ul className="flex flex-wrap items-center gap-1">

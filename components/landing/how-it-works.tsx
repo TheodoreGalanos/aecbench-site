@@ -60,22 +60,23 @@ export function HowItWorks() {
 
         {/* CLI readout */}
         <pre className="mt-4 overflow-x-auto rounded-lg border border-landing-border bg-[#050505] p-3 font-mono text-xs leading-relaxed text-[#c7c7c7]">
-<span className="text-accent-teal">aec-bench ~ $</span> bench run <span className="text-accent-amber">--task</span> cable-sizing <span className="text-accent-amber">--harness</span> tool_loop <span className="text-accent-amber">--model</span> claude-sonnet-4{'\n'}
-<span className="text-[#666]">› resolving 24 task instances</span>{'\n'}
-<span className="text-[#666]">› staging sandbox … </span><span className="text-[#6fd08a]">ok</span>{'\n'}
-<span className="text-[#666]">› executing agent (tool_loop, 12 max turns)</span>{'\n'}
-{'  '}instance 01/24 → reward <span className="text-accent-amber">0.83</span> tokens <span className="text-accent-amber">9.1k</span> turns <span className="text-accent-amber">6</span>{'\n'}
-{'  '}instance 02/24 → reward <span className="text-accent-amber">0.71</span> tokens <span className="text-accent-amber">11.4k</span> turns <span className="text-accent-amber">8</span>{'\n'}
-<span className="text-[#666]">› </span><span className="text-[#6fd08a]">done.</span><span className="text-[#666]"> ledger updated. see </span><span className="text-accent-amber">./out/0412-a7/</span>
+<span className="text-accent-teal">aec-bench ~ $</span> uv run aec-bench run-local \{'\n'}
+{'  '}tasks/generated/electrical/cable-sizing/voltage-drop/sydney-suburban-residential-lighting-00 \{'\n'}
+{'  '}<span className="text-accent-amber">--model</span> claude-sonnet-4-20250514 <span className="text-accent-amber">--harness</span> direct{'\n'}
+<span className="text-[#666]">› staging temporary workspace … </span><span className="text-[#6fd08a]">ok</span>{'\n'}
+<span className="text-[#666]">› executing harness direct</span>{'\n'}
+<span className="text-[#666]">› verifier complete · reward </span><span className="text-accent-amber">0.83</span><span className="text-[#666]"> · imported as experiment </span><span className="text-accent-amber">local</span>{'\n'}
+<span className="text-accent-teal">aec-bench ~ $</span> uv run aec-bench evaluate <span className="text-accent-amber">--experiment</span> local <span className="text-accent-amber">--report</span> report.html{'\n'}
+<span className="text-[#666]">› </span><span className="text-[#6fd08a]">done.</span><span className="text-[#666]"> report written to </span><span className="text-accent-amber">report.html</span>
         </pre>
 
         <div className="mt-4 font-mono text-sm">
           <Link
-            href="/docs/core/architecture"
+            href="/docs/reference/cli"
             className="inline-flex items-center gap-2 text-accent-amber transition-opacity hover:opacity-80"
           >
             <span className="text-accent-teal">→</span>
-            read the full pipeline
+            read the CLI guide
           </Link>
         </div>
       </div>

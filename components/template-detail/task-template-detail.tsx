@@ -336,23 +336,23 @@ export function TaskTemplateDetail({
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             task library
           </Link>
-          <div className="grid gap-8 lg:grid-cols-[1fr_330px] lg:items-end">
-            <div>
+          <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1fr)_330px] lg:items-end">
+            <div className="min-w-0">
               <div className="mb-4 flex flex-wrap gap-2">
                 <span className={chipClass('amber')}>built template</span>
                 <span className={chipClass('teal')}>{entry.category}</span>
                 <span className={chipClass('muted')}>{entry.tool_mode ?? 'tool mode unset'}</span>
               </div>
-              <h1 className="max-w-3xl text-4xl font-semibold tracking-normal text-landing-text md:text-6xl">
+              <h1 className="max-w-full break-words text-4xl font-semibold tracking-normal text-landing-text md:max-w-3xl md:text-6xl">
                 {entry.task_name}
               </h1>
-              <p className="mt-5 max-w-3xl text-base leading-7 text-landing-muted md:text-lg">
+              <p className="mt-5 max-w-full break-words text-base leading-7 text-landing-muted md:max-w-3xl md:text-lg">
                 {entry.long_description ?? entry.description}
               </p>
             </div>
-            <aside className="rounded border border-landing-border bg-[#050505] p-4">
+            <aside className="min-w-0 overflow-hidden rounded border border-landing-border bg-[#050505] p-4">
               <p className="font-mono text-xs uppercase tracking-wider text-landing-muted">catalogue source</p>
-              <dl className="mt-4 grid gap-2 font-mono text-xs">
+              <dl className="mt-4 grid min-w-0 gap-2 font-mono text-xs">
                 <div className="flex justify-between gap-4">
                   <dt className="text-landing-muted">version</dt>
                   <dd>{catalogueMeta.libraryVersion}</dd>
@@ -362,18 +362,18 @@ export function TaskTemplateDetail({
                   <dd>{catalogueMeta.libraryCommit ?? 'unavailable'}</dd>
                 </div>
                 {detail?.sourcePath && (
-                <div className="grid gap-1 border-t border-landing-border pt-3">
-                  <dt className="text-landing-muted">template path</dt>
-                  <dd className="break-words text-accent-teal">{detail.sourcePath}</dd>
-                </div>
-              )}
-              {canonicalPath && (
-                <div className="grid gap-1 border-t border-landing-border pt-3">
-                  <dt className="text-landing-muted">canonical path</dt>
-                  <dd className="break-words text-accent-amber">{canonicalPath}</dd>
-                </div>
-              )}
-            </dl>
+                  <div className="grid gap-1 border-t border-landing-border pt-3">
+                    <dt className="text-landing-muted">template path</dt>
+                    <dd className="min-w-0 break-all text-accent-teal">{detail.sourcePath}</dd>
+                  </div>
+                )}
+                {canonicalPath && (
+                  <div className="grid gap-1 border-t border-landing-border pt-3">
+                    <dt className="text-landing-muted">canonical path</dt>
+                    <dd className="min-w-0 break-all text-accent-amber">{canonicalPath}</dd>
+                  </div>
+                )}
+              </dl>
               {relatedVariants.length > 0 && (
                 <div className="mt-4 border-t border-landing-border pt-4">
                   <p className="mb-2 font-mono text-xs text-landing-muted">same task id</p>

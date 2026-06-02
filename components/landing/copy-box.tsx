@@ -24,15 +24,15 @@ export function CopyBox({ command, prompt = '$' }: CopyBoxProps) {
 
   return (
     <div className="mx-auto flex max-w-xl items-stretch overflow-hidden rounded border border-landing-border bg-[#050505]">
-      <div className="flex flex-1 items-center gap-2 px-4 py-3 text-left font-mono text-sm text-landing-text">
+      <div className="flex min-w-0 flex-1 items-center gap-2 px-4 py-3 text-left font-mono text-sm text-landing-text">
         <span aria-hidden="true" className="text-accent-teal">{prompt}</span>
-        <span>{command}</span>
+        <span className="min-w-0 break-all">{command}</span>
       </div>
       <button
         type="button"
         onClick={handleCopy}
         aria-label={copied ? 'Copied to clipboard' : `Copy command ${command}`}
-        className="border-l border-landing-border bg-landing-card px-4 font-mono text-xs uppercase tracking-wider text-landing-muted transition-colors hover:text-accent-amber"
+        className="shrink-0 border-l border-landing-border bg-landing-card px-4 font-mono text-xs uppercase tracking-wider text-landing-muted transition-colors hover:text-accent-amber"
       >
         {copied ? 'copied' : 'copy'}
       </button>

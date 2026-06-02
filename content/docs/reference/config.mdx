@@ -223,21 +223,37 @@ timeout: 1800
 harness_config: experiment.yaml      # optional
 ```
 
-## `suite.toml` — template registry
+## `suite.toml` — generated-suite config
 
-Declares which templates and seed sets a project uses:
+Declares how `aec-bench generate suite` should select templates, allocate instances, and write generated task output:
 
 ```toml
-[template_suite.voltage-drop]
-template_name       = "voltage-drop"
-versions            = ["1.0.0", "1.1.0"]
-difficulty_presets  = ["easy", "medium", "hard"]
+name = "my-suite"
+seed = 20260524
 
-[seed_spec.my-seed]
-domains     = ["electrical"]
-task_types  = ["single-step"]
-count       = 5
+[coverage]
+difficulties = { easy = 0.3333333333, medium = 0.3333333333, hard = 0.3333333334 }
+min_tasks_per_discipline = 3
+
+[templates]
+include = ["electrical/*", "civil/*"]
+user_dirs = []
+
+[visibility]
+mix = { all_given = 0.78, partial = 0.22 }
+
+[tool_mode]
+mix = { with_tool = 1.0 }
+
+[instances]
+per_task = 3
+total_max = 200
+
+[output]
+dir = "tasks/generated/my-suite"
 ```
+
+The `templates.include` entries match each template's logical `discipline/name` path, such as `electrical/voltage-drop`. `generate suite --dry-run` returns the planned counts by discipline, difficulty, visibility, and tool mode before writing task instances.
 
 ## Dataset manifest
 

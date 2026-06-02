@@ -5,26 +5,36 @@ description: Agent configuration covers provider credentials, experiment agent e
 
 ## Providers
 
-Provider handling depends on the execution path. Agent harnesses backed by PydanticAI infer provider routing from the model string. Script-style agents can also build sandbox environment variables from an explicit provider name.
+Provider handling depends on the execution path. Agent harnesses backed by PydanticAI infer provider routing from the model string and available credentials. Script-style agents can also build sandbox environment variables from an explicit provider name.
 
 | Runtime path | Required env vars |
 |--------------|-------------------|
 | Anthropic API | `ANTHROPIC_API_KEY` |
-| Azure OpenAI | `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT`; optional `AZURE_OPENAI_API_VERSION` |
+| Azure OpenAI or Azure AI Foundry v1 | `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT`; optional `AZURE_OPENAI_API_VERSION` |
 | Bedrock through PydanticAI | `AWS_REGION` or `AWS_DEFAULT_REGION`, plus AWS credentials available to the process |
 | Bedrock script-style provider | `AWS_BEDROCK_ENDPOINT`, `AWS_BEARER_TOKEN` or `AWS_BEARER_TOKEN_BEDROCK`, `AWS_REGION` or `AWS_DEFAULT_REGION` |
 | OpenAI script-style provider | `OPENAI_API_KEY` |
+| Together AI | `TOGETHER_API_KEY` |
 
 ```bash
 # .env
 ANTHROPIC_API_KEY=sk-ant-...
 AZURE_OPENAI_API_KEY=...
-AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
+AZURE_OPENAI_ENDPOINT=https://example.services.ai.azure.com/openai/v1/
 OPENAI_API_KEY=sk-...
+TOGETHER_API_KEY=...
 AWS_REGION=us-west-2
 ```
 
 Keep credentials out of config files. Agent definitions should reference environment variables or rely on the provider SDK's normal credential chain.
+
+For Azure AI Foundry deployments that expose the v1 OpenAI-compatible API, set `AZURE_OPENAI_ENDPOINT` to the `/openai/v1/` endpoint and pass the deployment name as `model`. For Together AI, prefix the model with `together:` so routing stays explicit when multiple provider credentials are present:
+
+```bash
+uv run aec-bench run-local tasks/electrical/voltage-drop \
+  --model "together:Qwen/Qwen3.7-Max" \
+  --harness direct
+```
 
 ## Agent definitions
 

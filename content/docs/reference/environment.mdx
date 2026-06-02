@@ -11,7 +11,9 @@ aec-bench loads `.env` from the project root at CLI startup via `dotenv.load_dot
 # .env
 ANTHROPIC_API_KEY=sk-ant-...
 AZURE_OPENAI_API_KEY=...
-AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
+AZURE_OPENAI_ENDPOINT=https://example.services.ai.azure.com/openai/v1/
+AZURE_OPENAI_API_VERSION=2024-10-21
+TOGETHER_API_KEY=...
 ```
 
 Don't commit `.env` — the project template adds it to `.gitignore`.
@@ -24,7 +26,9 @@ Which variables are required depends on which models appear in your agent config
 |----------|---------|-------|
 | `ANTHROPIC_API_KEY` | Claude models | Required for any `claude-*` model |
 | `AZURE_OPENAI_API_KEY` | Azure-routed OpenAI | Required alongside endpoint |
-| `AZURE_OPENAI_ENDPOINT` | Azure-routed OpenAI | Full URL to the resource |
+| `AZURE_OPENAI_ENDPOINT` | Azure OpenAI or Azure AI Foundry v1 | Use the resource endpoint, or the `/openai/v1/` endpoint for Foundry deployments |
+| `AZURE_OPENAI_API_VERSION` | Azure OpenAI | Optional; defaults to `2024-10-21` where needed |
+| `TOGETHER_API_KEY` | Together AI | Use with `together:` model prefixes |
 | `OPENAI_API_KEY` | OpenAI direct | Fallback when Azure isn't configured |
 | `AWS_REGION` / `AWS_DEFAULT_REGION` | Bedrock through SDKs | Region selector |
 | `AWS_BEARER_TOKEN` / `AWS_BEARER_TOKEN_BEDROCK` | Bedrock script-style provider | Used by script-style Bedrock agent runners |
@@ -66,7 +70,7 @@ A project initialised with `aec-bench init` follows this layout:
 ```
 project_root/
 ├── aec-bench.toml              # project config
-├── suite.toml                  # template/seed registry (optional)
+├── suite.toml                  # generated-suite config (optional)
 ├── .env                        # local secrets (gitignored)
 │
 ├── tasks/                      # task catalog
@@ -86,10 +90,9 @@ project_root/
 │
 ├── templates/                  # template definitions
 │   └── voltage-drop/
-│       ├── template_meta.toml
-│       ├── engine.py
 │       ├── params.toml
-│       └── instruction.md
+│       ├── instruction.md
+│       └── engine.py
 │
 ├── artefacts/
 │   ├── ledger/                 # trial records (append-only)

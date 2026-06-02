@@ -55,11 +55,14 @@ Set credentials for the provider used by your model or endpoint alias:
 |----------|-----------------------|
 | Anthropic | `ANTHROPIC_API_KEY` |
 | OpenAI | `OPENAI_API_KEY` |
-| Azure OpenAI | `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT` |
+| Azure OpenAI or Azure AI Foundry v1 | `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT`; optional `AZURE_OPENAI_API_VERSION` |
+| Together AI | `TOGETHER_API_KEY` |
 | AWS Bedrock | `AWS_BEARER_TOKEN_BEDROCK`, `AWS_REGION` or `AWS_DEFAULT_REGION` |
 | Prime hosted eval/training | authenticated `prime` CLI session |
 
 When you run the CLI from a project checkout, aec-bench loads `.env` at startup. Existing shell variables take precedence.
+
+For Azure AI Foundry deployments that expose the v1 OpenAI-compatible API, use the `/openai/v1/` endpoint and pass the deployment name as `--model`. For Together AI, use an explicit `together:` model prefix.
 
 ## Verify Installation
 

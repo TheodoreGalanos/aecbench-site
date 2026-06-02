@@ -65,7 +65,7 @@ describe('LeaderboardSurface', () => {
         heading="Leaderboard"
       />,
     );
-    expect(screen.getByRole('button', { name: /--x.*cost/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /--x.*latency/i })).toBeInTheDocument();
     expect(container.querySelector('svg')).toBeTruthy();
     expect(screen.getByRole('list', { name: /chart legend/i })).toBeInTheDocument();
     expect(screen.getByRole('table')).toBeInTheDocument();
@@ -107,6 +107,6 @@ describe('LeaderboardSurface', () => {
         heading="Leaderboard"
       />,
     );
-    expect(screen.getByText(/overall across all disciplines/i)).toBeInTheDocument();
+    expect(screen.getByText(/run-level aggregates/i)).toBeInTheDocument();
   });
 });

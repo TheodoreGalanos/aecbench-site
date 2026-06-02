@@ -1,4 +1,4 @@
-// ABOUTME: Exhaustive tests for Pareto frontier computation over (reward, cost/tokens/latency).
+// ABOUTME: Exhaustive tests for Pareto frontier computation over reward and x-axis metrics.
 // ABOUTME: Covers degenerate inputs, ties, domination chains, and floating-point edges.
 import { describe, it, expect } from 'vitest';
 import { computeParetoFrontier } from '@/lib/aec-bench/pareto';
@@ -58,6 +58,18 @@ describe('computeParetoFrontier', () => {
       P('d', 3, 0.1),
     ]);
     expect(frontier).toEqual(new Set(['a', 'b', 'c']));
+  });
+
+  it('supports higher-is-better x axes such as completion coverage', () => {
+    const frontier = computeParetoFrontier(
+      [
+        P('complete-strong', 1, 0.8),
+        P('partial-strong', 0.5, 0.8),
+        P('complete-weak', 1, 0.6),
+      ],
+      { xHigherIsBetter: true },
+    );
+    expect(frontier).toEqual(new Set(['complete-strong']));
   });
 
   it('treats frontier as a readonly Set', () => {

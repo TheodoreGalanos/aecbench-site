@@ -7,8 +7,13 @@ export interface ScatterPoint {
   y: number;
 }
 
+export interface ParetoOptions {
+  xHigherIsBetter?: boolean;
+}
+
 export function computeParetoFrontier(
   points: ReadonlyArray<ScatterPoint>,
+  options: ParetoOptions = {},
 ): ReadonlySet<string> {
   const frontier = new Set<string>();
   for (let i = 0; i < points.length; i++) {
@@ -18,8 +23,10 @@ export function computeParetoFrontier(
       if (i === j) continue;
       const q = points[j];
       // q dominates p iff q is at least as good on both AND strictly better on at least one.
-      const atLeastAsGood = q.x <= p.x && q.y >= p.y;
-      const strictlyBetter = q.x < p.x || q.y > p.y;
+      const atLeastAsGoodOnX = options.xHigherIsBetter ? q.x >= p.x : q.x <= p.x;
+      const strictlyBetterOnX = options.xHigherIsBetter ? q.x > p.x : q.x < p.x;
+      const atLeastAsGood = atLeastAsGoodOnX && q.y >= p.y;
+      const strictlyBetter = strictlyBetterOnX || q.y > p.y;
       if (atLeastAsGood && strictlyBetter) {
         dominated = true;
         break;

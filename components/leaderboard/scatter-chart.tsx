@@ -19,6 +19,7 @@ const PROVIDER_COLOURS: Record<Provider, string> = {
 const VB_W = 800;
 const VB_H = 400;
 const PLOT = { l: 48, r: 16, t: 16, b: 40 };
+const LABEL_MAX = 22;
 
 export interface ScatterChartProps {
   entries: ReadonlyArray<LeaderboardEntry>;
@@ -38,6 +39,28 @@ function rowKey(e: LeaderboardEntry): string {
 function makeLinear(dMin: number, dMax: number, rMin: number, rMax: number) {
   const span = dMax - dMin || 1;
   return (v: number) => rMin + ((v - dMin) * (rMax - rMin)) / span;
+}
+
+function labelText(entry: LeaderboardEntry): string {
+  const label = entry.model_display;
+  return label.length <= LABEL_MAX ? label : `${label.slice(0, LABEL_MAX - 3)}...`;
+}
+
+interface LabelBox {
+  x1: number;
+  x2: number;
+  y1: number;
+  y2: number;
+}
+
+function labelBox(
+  point: { x: number; y: number },
+  candidate: { dx: number; dy: number; anchor: 'start' | 'end' },
+  width: number,
+): LabelBox {
+  const x1 = candidate.anchor === 'start' ? point.x + candidate.dx : point.x + candidate.dx - width;
+  const x2 = candidate.anchor === 'start' ? point.x + candidate.dx + width : point.x + candidate.dx;
+  return { x1, x2, y1: point.y + candidate.dy - 12, y2: point.y + candidate.dy + 2 };
 }
 
 function DotGlyph({
@@ -119,6 +142,56 @@ export function ScatterChart({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [entries, axisMetric, xMax],
   );
+
+  const labelPlans = useMemo(() => {
+    const candidates = [
+      { dx: 10, dy: -10, anchor: 'start' as const },
+      { dx: 10, dy: 16, anchor: 'start' as const },
+      { dx: -10, dy: -10, anchor: 'end' as const },
+      { dx: -10, dy: 16, anchor: 'end' as const },
+    ];
+    const occupied: LabelBox[] = [];
+
+    return [...scaled]
+      .sort((a, b) => b.entry.reward - a.entry.reward)
+      .map((point) => {
+        const text = labelText(point.entry);
+        const width = text.length * 5.8;
+        const ordered = point.x > VB_W * 0.72
+          ? [candidates[2], candidates[3], candidates[0], candidates[1]]
+          : candidates;
+        let picked = ordered[0];
+        let pickedBox = labelBox(point, picked, width);
+
+        for (const candidate of ordered) {
+          const box = labelBox(point, candidate, width);
+          const inside = box.x1 >= PLOT.l && box.x2 <= VB_W - PLOT.r && box.y1 >= PLOT.t && box.y2 <= VB_H - PLOT.b;
+          const overlaps = occupied.some((prev) => box.x1 < prev.x2 && box.x2 > prev.x1 && box.y1 < prev.y2 && box.y2 > prev.y1);
+          if (inside && !overlaps) {
+            picked = candidate;
+            pickedBox = box;
+            break;
+          }
+        }
+
+        occupied.push({
+          x1: pickedBox.x1 - 3,
+          x2: pickedBox.x2 + 3,
+          y1: pickedBox.y1 - 3,
+          y2: pickedBox.y2 + 3,
+        });
+
+        return {
+          key: point.key,
+          text,
+          x: point.x + picked.dx,
+          y: point.y + picked.dy,
+          lineX: point.x + picked.dx * 0.72,
+          lineY: point.y + picked.dy * 0.72,
+          anchor: picked.anchor,
+        };
+      });
+  }, [scaled]);
 
   const hoveredPoint = hoveredRowKey !== null ? scaled.find((p) => p.key === hoveredRowKey) : null;
 
@@ -233,6 +306,32 @@ export function ScatterChart({
           points={scaled.map(({ key, x, y }) => ({ key, x, y }))}
           frontierKeys={frontierKeys}
         />
+
+        {/* model labels */}
+        <g aria-hidden="true" className="pointer-events-none">
+          {labelPlans.map((label) => (
+            <g key={`label-${label.key}`} data-testid={`label-${label.key}`}>
+              <line
+                x1={label.lineX}
+                x2={label.x}
+                y1={label.lineY}
+                y2={label.y - 3}
+                stroke="#3a3a3a"
+                strokeWidth={0.6}
+              />
+              <text
+                x={label.x}
+                y={label.y}
+                fill={frontierKeys.has(label.key) ? '#e8a838' : '#b8b8b8'}
+                fontFamily="JetBrains Mono, monospace"
+                fontSize="9"
+                textAnchor={label.anchor}
+              >
+                {label.text}
+              </text>
+            </g>
+          ))}
+        </g>
 
         {/* dots */}
         {scaled.map(({ key, entry, x, y }) => {

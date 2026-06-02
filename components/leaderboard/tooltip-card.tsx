@@ -52,11 +52,13 @@ export function TooltipCard({
         <dd className="text-[#c7c7c7]">
           {formatReward(entry.reward)} <span className="text-[#888]">{formatCi(entry.reward_ci)}</span>
         </dd>
-        <dt>CI</dt>
-        <dd className="text-[#c7c7c7]">{formatCi(entry.reward_ci)}</dd>
         <dt>{axisMetric.key}</dt>
         <dd className="text-[#c7c7c7]">
           {x === null ? '—' : axisMetric.format(x)}
+        </dd>
+        <dt>coverage</dt>
+        <dd className="text-[#c7c7c7]">
+          {entry.completion_rate === undefined ? '—' : AXIS_METRICS.completion.format(entry.completion_rate)}
         </dd>
         <dt>tokens</dt>
         <dd className="text-[#c7c7c7]">
@@ -68,9 +70,15 @@ export function TooltipCard({
             ? '—'
             : AXIS_METRICS.latency.format(entry.mean_duration_seconds)}
         </dd>
+        <dt>p95</dt>
+        <dd className="text-[#c7c7c7]">
+          {entry.latency_p95_seconds === null || entry.latency_p95_seconds === undefined
+            ? '—'
+            : AXIS_METRICS.latency.format(entry.latency_p95_seconds)}
+        </dd>
         <dt>trials</dt>
         <dd className="text-[#c7c7c7]">
-          {entry.trials} · {entry.repetitions} reps
+          {entry.complete_trials}/{entry.expected_trials ?? entry.trials} · {entry.repetitions} reps
         </dd>
       </dl>
       {onFrontier && (

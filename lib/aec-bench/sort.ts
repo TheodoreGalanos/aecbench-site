@@ -9,6 +9,7 @@ export type SortColumn =
   | 'delta'
   | 'tokens'
   | 'cost'
+  | 'coverage'
   | 'civil'
   | 'electrical'
   | 'ground'
@@ -35,6 +36,8 @@ function accessor(column: SortColumn): (e: LeaderboardEntry) => number | string 
       return (e) => e.mean_tokens;
     case 'cost':
       return (e) => e.mean_cost_usd;
+    case 'coverage':
+      return (e) => e.completion_rate ?? null;
     default:
       if (DOMAIN_COLS.includes(column)) {
         const d = column as Domain;

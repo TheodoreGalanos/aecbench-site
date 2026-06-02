@@ -1,12 +1,12 @@
-// ABOUTME: Tests for axis metric accessors and formatters across cost / tokens / latency.
+// ABOUTME: Tests for axis metric accessors and formatters across cost / tokens / latency / coverage.
 // ABOUTME: Format strings must degrade gracefully for extreme magnitudes and nulls.
 import { describe, it, expect } from 'vitest';
 import { AXIS_METRICS } from '@/lib/aec-bench/axis-metric';
 import { makeEntry } from './fixtures/entries';
 
 describe('AXIS_METRICS', () => {
-  it('exposes cost / tokens / latency keys', () => {
-    expect(Object.keys(AXIS_METRICS).sort()).toEqual(['cost', 'latency', 'tokens']);
+  it('exposes cost / tokens / latency / completion keys', () => {
+    expect(Object.keys(AXIS_METRICS).sort()).toEqual(['completion', 'cost', 'latency', 'tokens']);
   });
 
   describe('cost', () => {
@@ -51,9 +51,22 @@ describe('AXIS_METRICS', () => {
     });
   });
 
+  describe('completion', () => {
+    const m = AXIS_METRICS.completion;
+    it('accesses completion_rate', () => {
+      expect(m.accessor(makeEntry({ completion_rate: 0.958 }))).toBe(0.958);
+      expect(m.accessor(makeEntry({ completion_rate: undefined }))).toBeNull();
+    });
+    it('formats as a whole percentage and marks higher as better', () => {
+      expect(m.format(0.958)).toBe('96%');
+      expect(m.higherIsBetter).toBe(true);
+    });
+  });
+
   it('carries a label with units', () => {
     expect(AXIS_METRICS.cost.label).toMatch(/cost/i);
     expect(AXIS_METRICS.tokens.label).toMatch(/tokens/i);
     expect(AXIS_METRICS.latency.label).toMatch(/latency/i);
+    expect(AXIS_METRICS.completion.label).toMatch(/coverage/i);
   });
 });

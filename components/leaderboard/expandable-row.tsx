@@ -55,6 +55,15 @@ function formatCi(ci: [number, number] | null): string {
   return `[${ci[0].toFixed(2)} – ${ci[1].toFixed(2)}]`;
 }
 
+function formatCoverage(entry: LeaderboardEntry): string {
+  return AXIS_METRICS.completion.format(entry.completion_rate ?? 1);
+}
+
+function formatPercent(v: number | undefined): string {
+  if (v === undefined) return '—';
+  return `${Math.round(v * 100)}%`;
+}
+
 export function ExpandableRow({
   entry,
   rankDisplay,
@@ -64,6 +73,8 @@ export function ExpandableRow({
   onToggle,
 }: ExpandableRowProps) {
   const rowName = `${entry.model_display} ${entry.adapter}`;
+  const expectedTrials = entry.expected_trials ?? entry.trials;
+  const isPartialSuite = entry.suite_done === false || (entry.completion_rate ?? 1) < 0.995;
   return (
     <>
       <tr
@@ -95,6 +106,9 @@ export function ExpandableRow({
                 {entry.is_mock && (
                   <span className="ml-2 text-[#888]" aria-label="mock entry">[mock]</span>
                 )}
+                {isPartialSuite && !entry.is_mock && (
+                  <span className="ml-2 text-accent-amber" aria-label="incomplete suite">partial</span>
+                )}
               </div>
             </div>
             {onFrontier && <FrontierBadge />}
@@ -107,7 +121,7 @@ export function ExpandableRow({
           {entry.mean_tokens === null ? '—' : AXIS_METRICS.tokens.format(entry.mean_tokens)}
         </td>
         <td className="px-3 py-3 text-right text-[0.72rem] text-[#888]">
-          {entry.mean_cost_usd === null ? '—' : AXIS_METRICS.cost.format(entry.mean_cost_usd)}
+          {formatCoverage(entry)}
         </td>
       </tr>
       <AnimatePresence initial={false}>
@@ -143,7 +157,23 @@ export function ExpandableRow({
                     <dd className="text-[#c7c7c7]">{formatCi(entry.reward_ci)}</dd>
                     <dt>trials</dt>
                     <dd className="text-[#c7c7c7]">
-                      {entry.trials} ({entry.repetitions} reps)
+                      {entry.complete_trials}/{expectedTrials} complete ({entry.repetitions} reps)
+                    </dd>
+                    <dt>failed</dt>
+                    <dd className="text-[#c7c7c7]">
+                      {entry.failed_trials ?? Math.max(entry.trials - entry.complete_trials, 0)}
+                    </dd>
+                    <dt>coverage</dt>
+                    <dd className="text-[#c7c7c7]">{formatCoverage(entry)}</dd>
+                    <dt>p95 latency</dt>
+                    <dd className="text-[#c7c7c7]">
+                      {entry.latency_p95_seconds === null || entry.latency_p95_seconds === undefined
+                        ? '—'
+                        : AXIS_METRICS.latency.format(entry.latency_p95_seconds)}
+                    </dd>
+                    <dt>credit mix</dt>
+                    <dd className="text-[#c7c7c7]">
+                      {formatPercent(entry.zero_reward_rate)} zero · {formatPercent(entry.partial_credit_rate)} partial · {formatPercent(entry.perfect_reward_rate)} perfect
                     </dd>
                     <dt>last submission</dt>
                     <dd className="text-[#c7c7c7]">{entry.last_submission}</dd>

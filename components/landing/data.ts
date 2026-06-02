@@ -1,4 +1,3 @@
-// components/landing/data.ts
 // ABOUTME: Adapts the build-emitted leaderboard artefact into the PreviewModel shape.
 // ABOUTME: Existing landing components read PreviewModel without knowing the source changed.
 import { getTopN } from '@/lib/aec-bench/read';
@@ -20,10 +19,10 @@ export interface PreviewModel {
     structural: number;
   };
   tokensMillions: number;
-  costUsd: number;
+  medianSeconds: number | null;
+  coveragePct: number;
   /** Change vs previous run — positive means improvement (reward went up). */
   deltaLastRun: number;
-  costPerTask: number;
 }
 
 function adapt(entry: LeaderboardEntry): PreviewModel {
@@ -42,9 +41,9 @@ function adapt(entry: LeaderboardEntry): PreviewModel {
     },
     tokensMillions:
       entry.mean_tokens === null ? 0 : Math.round((entry.mean_tokens * entry.trials) / 1e4) / 100,
-    costUsd: entry.total_cost_usd ?? 0,
+    medianSeconds: entry.mean_duration_seconds,
+    coveragePct: Math.round((entry.completion_rate ?? 1) * 100),
     deltaLastRun: entry.delta_vs_previous ?? 0,
-    costPerTask: entry.mean_cost_usd ?? 0,
   };
 }
 

@@ -29,5 +29,4 @@ docs/superpowers/
 # superpowers brainstorm artefacts (visual companion mockups)
 .superpowers/
 
-# ingest build output
-/public/data/
+# local-only scratch outputs should live outside public/data; distilled leaderboard data is deployed

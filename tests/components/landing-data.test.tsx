@@ -16,9 +16,9 @@ describe('previewModels', () => {
       expect(m.provider).toMatch(/^(anthropic|openai|google|meta|other)$/);
       expect(typeof m.overallScore).toBe('number');
       expect(typeof m.tokensMillions).toBe('number');
-      expect(typeof m.costUsd).toBe('number');
+      expect(typeof m.coveragePct).toBe('number');
+      expect(m.medianSeconds === null || typeof m.medianSeconds === 'number').toBe(true);
       expect(typeof m.deltaLastRun).toBe('number');
-      expect(typeof m.costPerTask).toBe('number');
       expect(m.disciplines).toHaveProperty('civil');
       expect(m.disciplines).toHaveProperty('electrical');
     }

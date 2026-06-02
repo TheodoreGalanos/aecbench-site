@@ -11,14 +11,14 @@ import { filterAndReshape } from '@/lib/aec-bench/filter';
 import { sortEntries, type SortColumn, type SortSpec } from '@/lib/aec-bench/sort';
 import { computeParetoFrontier, type ScatterPoint } from '@/lib/aec-bench/pareto';
 
-const VALID_AXES: AxisKey[] = ['cost', 'tokens', 'latency'];
+const VALID_AXES: AxisKey[] = ['latency', 'tokens', 'completion'];
 const VALID_SORT_COLUMNS: SortColumn[] = [
-  'rank', 'model', 'reward', 'delta', 'tokens', 'cost',
+  'rank', 'model', 'reward', 'delta', 'tokens', 'cost', 'coverage',
   'civil', 'electrical', 'ground', 'mechanical', 'structural',
 ];
 
 function parseAxis(v: string | null): AxisKey {
-  return VALID_AXES.includes(v as AxisKey) ? (v as AxisKey) : 'cost';
+  return VALID_AXES.includes(v as AxisKey) ? (v as AxisKey) : 'latency';
 }
 
 function parseList(v: string | null): string[] {
@@ -78,7 +78,10 @@ export function useLeaderboardState(
     }
     return out;
   }, [sorted, axisX]);
-  const frontierKeys = useMemo(() => computeParetoFrontier(points), [points]);
+  const frontierKeys = useMemo(
+    () => computeParetoFrontier(points, { xHigherIsBetter: AXIS_METRICS[axisX].higherIsBetter }),
+    [points, axisX],
+  );
 
   const expandedRowKeyFromUrl = searchParams.get('open');
   const expandedRowKey = useMemo(() => {

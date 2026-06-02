@@ -16,7 +16,7 @@ export interface MobileFilterSheetProps {
   onApply: (state: { axisX: AxisKey; disciplines: Domain[]; harnesses: string[] }) => void;
 }
 
-const AXES: AxisKey[] = ['cost', 'tokens', 'latency'];
+const AXES: AxisKey[] = ['latency', 'tokens', 'completion'];
 
 export function MobileFilterSheet({
   axisX,

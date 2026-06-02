@@ -15,6 +15,10 @@ export interface RunStatus {
 const raw = getRunStatus();
 const dataset = getDataset();
 
+function formatDatasetVersion(version: string): string {
+  return /^\d/.test(version) ? `v${version}` : version;
+}
+
 export const runStatus: RunStatus = {
   tasks: raw.tasks,
   models: raw.models,
@@ -22,5 +26,5 @@ export const runStatus: RunStatus = {
   disciplines: raw.disciplines,
   lastSubmissionIso: raw.last_submission,
   generatedAtIso: raw.generated_at,
-  datasetVersion: `v${dataset.version}`,
+  datasetVersion: formatDatasetVersion(dataset.version),
 };

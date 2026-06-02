@@ -6,7 +6,7 @@ import { MobileFilterSheet } from '@/components/leaderboard/mobile-filter-sheet'
 
 describe('MobileFilterSheet', () => {
   const baseProps = {
-    axisX: 'cost' as const,
+    axisX: 'latency' as const,
     disciplines: [] as const,
     harnesses: [] as const,
     harnessOptions: ['tool_loop', 'rlm'] as const,

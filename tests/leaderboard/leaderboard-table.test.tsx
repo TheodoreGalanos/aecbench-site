@@ -34,7 +34,7 @@ describe('LeaderboardTable', () => {
   it('fires onSortChange when a sortable header is clicked', () => {
     const onSortChange = vi.fn();
     render(<LeaderboardTable {...base} onSortChange={onSortChange} />);
-    fireEvent.click(screen.getByRole('columnheader', { name: /reward/i }));
+    fireEvent.click(screen.getByRole('columnheader', { name: /coverage/i }));
     expect(onSortChange).toHaveBeenCalled();
   });
 

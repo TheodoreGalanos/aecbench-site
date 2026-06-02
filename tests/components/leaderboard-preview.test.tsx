@@ -1,5 +1,5 @@
 // ABOUTME: Tests the restyled leaderboard preview renders structure + shape, not specific values.
-// ABOUTME: Real values vary with mock data; we assert counts + types + format.
+// ABOUTME: Real values vary with release runs; we assert counts + types + format.
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { LeaderboardPreview } from '@/components/landing/leaderboard-preview';
@@ -11,7 +11,7 @@ describe('LeaderboardPreview', () => {
       screen.getByRole('heading', { name: /current standings/i }),
     ).toBeInTheDocument();
     expect(screen.getByText(/dataset/)).toBeInTheDocument();
-    expect(screen.getByText(/v0\.4\.1/)).toBeInTheDocument();
+    expect(screen.getByText('release', { selector: '.text-accent-amber' })).toBeInTheDocument();
   });
 
   it('renders 4 rank badges (zero-padded)', () => {

@@ -1,4 +1,4 @@
-// ABOUTME: Tests the reward×cost teaser renders the top-4 compact list and mini-scatter card.
+// ABOUTME: Tests the reward×latency teaser renders the top-4 compact list and mini-scatter card.
 // ABOUTME: SVG content is asserted via test-id and accessible name.
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
@@ -8,7 +8,7 @@ describe('RewardCostTeaser', () => {
   it('renders the section heading', () => {
     render(<RewardCostTeaser />);
     expect(
-      screen.getByRole('heading', { name: /reward.*cost/i }),
+      screen.getByRole('heading', { name: /reward.*latency/i }),
     ).toBeInTheDocument();
   });
 
@@ -19,10 +19,10 @@ describe('RewardCostTeaser', () => {
     expect(rankMarks.length).toBeGreaterThanOrEqual(4);
   });
 
-  it('renders a Pareto-frontier chart (svg with accessible name)', () => {
+  it('renders a release scatter chart (svg with accessible name)', () => {
     render(<RewardCostTeaser />);
     expect(
-      screen.getByRole('img', { name: /reward vs cost/i }),
+      screen.getByRole('img', { name: /reward vs median latency/i }),
     ).toBeInTheDocument();
   });
 

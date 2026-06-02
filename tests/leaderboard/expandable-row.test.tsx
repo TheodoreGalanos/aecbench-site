@@ -1,5 +1,5 @@
 // ABOUTME: Tests for the expandable leaderboard row.
-// ABOUTME: Covers collapsed render, expanded content, keyboard toggle, [mock] tag.
+// ABOUTME: Covers collapsed render, expanded content, keyboard toggle, [mock] and partial tags.
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { ExpandableRow } from '@/components/leaderboard/expandable-row';
@@ -16,6 +16,11 @@ describe('ExpandableRow', () => {
     delta_vs_previous: 0.02,
     mean_tokens: 46000,
     mean_cost_usd: 1.8,
+    completion_rate: 0.98,
+    suite_done: false,
+    expected_trials: 180,
+    complete_trials: 176,
+    failed_trials: 4,
     is_mock: false,
   });
 
@@ -28,14 +33,15 @@ describe('ExpandableRow', () => {
     onToggle: vi.fn(),
   };
 
-  it('renders the model, adapter, reward, delta, tokens, cost when collapsed', () => {
+  it('renders the model, adapter, reward, delta, tokens, coverage when collapsed', () => {
     render(<table><tbody><ExpandableRow {...baseProps} /></tbody></table>);
     expect(screen.getByText('Claude Opus 4.7')).toBeInTheDocument();
     expect(screen.getByText('rlm')).toBeInTheDocument();
     expect(screen.getByText('0.82')).toBeInTheDocument();
     expect(screen.getByText(/\+0\.02/)).toBeInTheDocument();
     expect(screen.getByText(/46\.0k/)).toBeInTheDocument();
-    expect(screen.getByText(/\$1\.80/)).toBeInTheDocument();
+    expect(screen.getByText(/98%/)).toBeInTheDocument();
+    expect(screen.getByText(/partial/i)).toBeInTheDocument();
   });
 
   it('shows the [frontier] badge when onFrontier=true', () => {
@@ -71,5 +77,7 @@ describe('ExpandableRow', () => {
     expect(screen.getByText(/95% CI/)).toBeInTheDocument();
     expect(screen.getByText(/\[0\.79.*0\.85\]/)).toBeInTheDocument();
     expect(screen.getByText(/trials/i)).toBeInTheDocument();
+    expect(screen.getByText(/176\/180 complete/i)).toBeInTheDocument();
+    expect(screen.getByText(/zero.*partial.*perfect/i)).toBeInTheDocument();
   });
 });

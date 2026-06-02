@@ -26,6 +26,13 @@ describe('ScatterChart', () => {
     expect(dotGroups.length).toBe(FIXTURE_ENTRIES.length);
   });
 
+  it('renders one model label per plotted point', () => {
+    const { container } = render(<ScatterChart {...defaultProps} />);
+    const labels = container.querySelectorAll('[data-testid^="label-"]');
+    expect(labels.length).toBe(FIXTURE_ENTRIES.length);
+    expect(screen.getByText('Claude Opus 4.7')).toBeInTheDocument();
+  });
+
   it('renders the axis labels from the axisMetric', () => {
     render(<ScatterChart {...defaultProps} />);
     expect(screen.getByText(AXIS_METRICS.cost.label)).toBeInTheDocument();
@@ -59,7 +66,7 @@ describe('ScatterChart', () => {
     const key = `${FIXTURE_ENTRIES[0].model_key}::${FIXTURE_ENTRIES[0].adapter}`;
     render(<ScatterChart {...defaultProps} hoveredRowKey={key} />);
     expect(screen.getByRole('tooltip')).toBeInTheDocument();
-    expect(screen.getByText(FIXTURE_ENTRIES[0].model_display)).toBeInTheDocument();
+    expect(screen.getAllByText(FIXTURE_ENTRIES[0].model_display).length).toBeGreaterThan(0);
   });
 
   it('applies a frontier ring to frontier dots (via data attribute)', () => {

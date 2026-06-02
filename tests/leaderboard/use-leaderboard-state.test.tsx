@@ -20,9 +20,9 @@ describe('useLeaderboardState', () => {
     searchParams = new URLSearchParams('');
   });
 
-  it('defaults to axisX=cost, no filters, sort=rank asc, no expansion', () => {
+  it('defaults to axisX=latency, no filters, sort=rank asc, no expansion', () => {
     const { result } = renderHook(() => useLeaderboardState(FIXTURE_ENTRIES, {}));
-    expect(result.current.axisX).toBe('cost');
+    expect(result.current.axisX).toBe('latency');
     expect(result.current.disciplines).toEqual([]);
     expect(result.current.harnesses).toEqual([]);
     expect(result.current.sort).toEqual({ column: 'rank', dir: 'asc' });

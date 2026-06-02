@@ -1,5 +1,5 @@
 // ABOUTME: End-to-end tests for the /leaderboard page covering all interactive flows.
-// ABOUTME: Runs against a built site with the committed mock artefact.
+// ABOUTME: Runs against the dev server with the committed release leaderboard artefact.
 import { test, expect } from '@playwright/test';
 
 test.describe('/leaderboard', () => {
@@ -11,17 +11,14 @@ test.describe('/leaderboard', () => {
     const dotCount = await dots.count();
     expect(rowCount).toBeGreaterThan(0);
     expect(dotCount).toBeGreaterThan(0);
-    expect(Math.abs(rowCount - dotCount)).toBeLessThanOrEqual(1);
+    expect(dotCount).toBeLessThanOrEqual(rowCount);
   });
 
   test('axis swap updates URL and x-axis label', async ({ page }) => {
     await page.goto('/leaderboard');
-    // The --x chip button has aria-label "--x cost"
-    await page.getByRole('button', { name: /--x.*cost/i }).click();
-    // Popover options use role="option"
+    await page.getByRole('button', { name: /--x.*latency/i }).click();
     await page.getByRole('option', { name: /^tokens$/i }).click();
     await expect(page).toHaveURL(/x=tokens/);
-    // Axis label in scatter SVG is "tokens / task (avg)"
     await expect(page.getByText(/tokens \/ task/i)).toBeVisible();
   });
 
@@ -36,21 +33,16 @@ test.describe('/leaderboard', () => {
     await expect(page.getByText(/reward \(civil\)/i)).toBeVisible();
   });
 
-  test('harness filter shrinks the dataset', async ({ page }) => {
+  test('harness filter can select the release harness', async ({ page }) => {
     await page.goto('/leaderboard');
-    // Wait for hydration — ensure table rows are present before counting
     const rows = page.getByRole('table').locator('tbody tr[aria-label]');
     await expect(rows.first()).toBeVisible();
     const rowsBefore = await rows.count();
-    // The --harness chip button has aria-label "--harness all" (no filters active)
     await page.getByRole('button', { name: /--harness.*all/i }).click();
-    // Use "direct" — 1 entry out of 7 uses the direct adapter in mock data.
-    // Option accessible name includes a checkbox prefix (e.g. "☐ direct"), so match loosely.
-    // "direct" is unique in the adapter list, avoiding substring collisions (unlike "rlm" / "lambda-rlm").
-    await page.getByRole('option', { name: /direct/i }).click();
-    await expect(page).toHaveURL(/h=direct/);
+    await page.getByRole('option', { name: /tool_loop/i }).click();
+    await expect(page).toHaveURL(/h=tool_loop/);
     const rowsAfter = await rows.count();
-    expect(rowsAfter).toBeLessThan(rowsBefore);
+    expect(rowsAfter).toBe(rowsBefore);
   });
 
   test('row expand reveals per-discipline panel', async ({ page }) => {
@@ -95,9 +87,8 @@ test.describe('/leaderboard', () => {
     await expect(page).toHaveURL(/d=civil/);
   });
 
-  test('mock PREVIEW caveat renders', async ({ page }) => {
+  test('release coverage caveat renders', async ({ page }) => {
     await page.goto('/leaderboard');
-    // Warning text includes "mock submissions"
-    await expect(page.getByText(/mock submissions/i)).toBeVisible();
+    await expect(page.getByText(/incomplete suites/i)).toBeVisible();
   });
 });

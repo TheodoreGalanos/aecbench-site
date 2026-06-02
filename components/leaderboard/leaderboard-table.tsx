@@ -33,14 +33,14 @@ const HEADERS: HeaderCell[] = [
   { key: 'reward', label: 'REWARD', align: 'right' },
   { key: 'delta', label: 'Δ LAST', align: 'right', hideMobile: true },
   { key: 'tokens', label: 'TOKENS', align: 'right', hideMobile: true },
-  { key: 'cost', label: '$', align: 'right' },
+  { key: 'coverage', label: 'COVERAGE', align: 'right' },
 ];
 
 function nextSort(current: SortSpec, col: SortColumn): SortSpec {
   if (current.column === col) {
     return { column: col, dir: current.dir === 'asc' ? 'desc' : 'asc' };
   }
-  const numeric: SortColumn[] = ['reward', 'delta', 'tokens', 'cost', 'rank'];
+  const numeric: SortColumn[] = ['reward', 'delta', 'tokens', 'cost', 'coverage', 'rank'];
   return { column: col, dir: numeric.includes(col) ? 'desc' : 'asc' };
 }
 

@@ -53,6 +53,9 @@ export function LeaderboardSurface({
 
   const dataset = entries[0]?.dataset ?? 'dataset';
   const headingId = 'leaderboard-heading';
+  const hasPartialSuites = entries.some(
+    (entry) => entry.suite_done === false || (entry.completion_rate ?? 1) < 0.995,
+  );
 
   return (
     <section aria-labelledby={headingId} className="mx-auto max-w-6xl px-6 py-10 md:py-14">
@@ -68,6 +71,11 @@ export function LeaderboardSurface({
         {isMock && (
           <p className="mt-2 font-mono text-[0.7rem] text-[#888]">
             ⚠ frontier and values are from mock submissions — real data lands as submissions arrive
+          </p>
+        )}
+        {!isMock && hasPartialSuites && (
+          <p className="mt-2 font-mono text-[0.7rem] text-[#888]">
+            release data includes incomplete suites — coverage is shown per row
           </p>
         )}
       </header>
@@ -110,8 +118,8 @@ export function LeaderboardSurface({
       </div>
       {state.disciplines.length > 0 && (
         <p className="mb-2 font-mono text-[0.65rem] text-[#888]">
-          ⓘ cost / tokens / latency are overall across all disciplines — library does not yet track
-          per-discipline costs
+          ⓘ tokens, latency, and coverage are run-level aggregates; discipline filters reshape reward
+          only
         </p>
       )}
       <div className="mb-6">

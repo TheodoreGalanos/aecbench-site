@@ -1,5 +1,5 @@
 // ABOUTME: Compact leaderboard preview styled as a bench run terminal output.
-// ABOUTME: Shows rank, model, per-discipline bars, reward, delta, tokens, cost per task.
+// ABOUTME: Shows rank, model, per-discipline bars, reward, delta, tokens, and coverage.
 import Link from 'next/link';
 import { previewModels, type PreviewModel } from './data';
 import { runStatus } from './run-status';
@@ -65,7 +65,7 @@ export function LeaderboardPreview() {
               <span className="h-2 w-2 rounded-full bg-landing-border" />
             </div>
             <span className="ml-1">~/aec-bench / leaderboard.tsv</span>
-            <span className="ml-auto text-[0.65rem]">{runStatus.models} rows · streaming</span>
+            <span className="ml-auto text-[0.65rem]">{runStatus.models} rows · release eval</span>
           </div>
 
           {/* Cmdline */}
@@ -73,19 +73,19 @@ export function LeaderboardPreview() {
             <span className="text-accent-teal">aec-bench ~ $</span>{' '}
             bench leaderboard <span className="text-accent-amber">--top</span> 4{' '}
             <span className="text-accent-amber">--by</span> reward{' '}
-            <span className="text-[#666]">› stream ok</span>
+            <span className="text-[#666]">› release ok</span>
           </div>
 
           {/* Data grid */}
           <div className="font-mono text-xs">
-            <div className="hidden md:grid grid-cols-[44px_1.6fr_1fr_70px_1fr_90px_70px] border-b border-landing-border text-[0.62rem] uppercase tracking-wider text-[#666]">
+            <div className="hidden md:grid grid-cols-[44px_1.6fr_1fr_70px_1fr_90px_80px] border-b border-landing-border text-[0.62rem] uppercase tracking-wider text-[#666]">
               <div className="px-3 py-2">#</div>
               <div className="px-3 py-2">Model</div>
               <div className="px-3 py-2">Per-discipline</div>
               <div className="px-3 py-2 text-right">Reward</div>
               <div className="px-3 py-2">Δ last run</div>
               <div className="px-3 py-2 text-right">Tokens</div>
-              <div className="px-3 py-2 text-right">Cost</div>
+              <div className="px-3 py-2 text-right">Coverage</div>
             </div>
 
             {previewModels.map((m) => {
@@ -93,7 +93,7 @@ export function LeaderboardPreview() {
               return (
                 <div
                   key={m.rank}
-                  className="grid grid-cols-[36px_1fr_60px_70px] md:grid-cols-[44px_1.6fr_1fr_70px_1fr_90px_70px] items-center border-b border-[#141414] last:border-b-0"
+                  className="grid grid-cols-[36px_1fr_60px_70px] md:grid-cols-[44px_1.6fr_1fr_70px_1fr_90px_80px] items-center border-b border-[#141414] last:border-b-0"
                 >
                   <div className="px-3 py-3 font-bold text-accent-amber">
                     <span className="text-[#555]">#</span>
@@ -116,7 +116,7 @@ export function LeaderboardPreview() {
                     {m.tokensMillions.toFixed(2)}M
                   </div>
                   <div className="px-3 py-3 text-right text-[0.72rem] text-[#888]">
-                    ${m.costUsd.toFixed(2)}
+                    {m.coveragePct}%
                   </div>
                 </div>
               );

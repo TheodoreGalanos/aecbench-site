@@ -13,23 +13,21 @@ test.describe('Landing page', () => {
     const bar = page.getByRole('status', { name: /aec-bench run status/i });
     await expect(bar).toBeVisible();
     // New honest labels — no fake run_id.
-    await expect(bar.getByText(/v0\.4\.1/)).toBeVisible();
+    await expect(bar.getByText(/dataset release/)).toBeVisible();
     await expect(bar.getByText(/last submission/i)).toBeVisible();
     await expect(bar.getByText(/built/i)).toBeVisible();
-    // Mocks in play → PREVIEW mode.
-    await expect(bar.getByText(/PREVIEW/)).toBeVisible();
+    await expect(bar.getByText(/LIVE/)).toBeVisible();
   });
 
   test('renders the leaderboard preview with model rows', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /current standings/i })).toBeVisible();
-    // Claude Sonnet 4 appears in multiple sections — assert at least one is visible.
-    await expect(page.getByText('Claude Sonnet 4').first()).toBeVisible();
+    await expect(page.getByText('Grok 4.3').first()).toBeVisible();
   });
 
-  test('renders the reward × cost teaser', async ({ page }) => {
+  test('renders the reward × latency teaser', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /reward.*cost/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /reward.*latency/i })).toBeVisible();
   });
 
   test('renders disciplines and how-it-works', async ({ page }) => {

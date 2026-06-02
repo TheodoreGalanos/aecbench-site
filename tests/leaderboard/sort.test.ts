@@ -23,6 +23,12 @@ describe('sortEntries', () => {
     expect(out[0].model_key).toBe('haiku-4.5');
   });
 
+  it('sorts by coverage descending', () => {
+    const out = sortEntries(FIXTURE_ENTRIES, { column: 'coverage', dir: 'desc' });
+    expect(out[0].completion_rate).toBe(1);
+    expect(out[out.length - 1].completion_rate).toBe(0.75);
+  });
+
   it('sinks null delta to the end regardless of direction', () => {
     const ascOut = sortEntries(FIXTURE_ENTRIES, { column: 'delta', dir: 'asc' });
     expect(ascOut[ascOut.length - 1].model_key).toBe('llama-3.3-70b');
@@ -58,7 +64,7 @@ describe('sortEntries', () => {
 
   it('accepts all sort columns without throwing', () => {
     const cols: SortColumn[] = [
-      'rank', 'model', 'reward', 'delta', 'tokens', 'cost',
+      'rank', 'model', 'reward', 'delta', 'tokens', 'cost', 'coverage',
       'civil', 'electrical', 'ground', 'mechanical', 'structural',
     ];
     for (const c of cols) {

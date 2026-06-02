@@ -6,7 +6,7 @@ import { ControlStrip } from '@/components/leaderboard/control-strip';
 
 describe('ControlStrip', () => {
   const defaults = {
-    axisX: 'cost' as const,
+    axisX: 'latency' as const,
     disciplines: [] as const,
     harnesses: [] as const,
     harnessOptions: ['tool_loop', 'rlm', 'direct', 'lambda-rlm'] as const,
@@ -17,7 +17,7 @@ describe('ControlStrip', () => {
 
   it('renders the three chips with their values', () => {
     render(<ControlStrip {...defaults} />);
-    expect(screen.getByRole('button', { name: /--x.*cost/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /--x.*latency/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /--discipline.*all/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /--harness.*all/i })).toBeInTheDocument();
   });
@@ -35,7 +35,7 @@ describe('ControlStrip', () => {
   it('opens the axis popover on chip click and fires onAxisChange', () => {
     const onAxisChange = vi.fn();
     render(<ControlStrip {...defaults} onAxisChange={onAxisChange} />);
-    fireEvent.click(screen.getByRole('button', { name: /--x.*cost/i }));
+    fireEvent.click(screen.getByRole('button', { name: /--x.*latency/i }));
     fireEvent.click(screen.getByRole('option', { name: /tokens/i }));
     expect(onAxisChange).toHaveBeenCalledWith('tokens');
   });

@@ -59,7 +59,7 @@ describe('library documentation coverage', () => {
       readDoc('reference/cli.mdx'),
     ].join('\n');
 
-    expect(docs).toContain('git clone https://github.com/aurecon/aec-bench.git');
+    expect(docs).toContain('git clone https://github.com/TheodorosGalanos/aec-bench.git');
     expect(docs).not.toContain('pip install aec-bench');
     expect(docs).not.toContain('aec-bench[webui]');
     expect(docs).not.toContain('published package');
@@ -75,6 +75,6 @@ describe('library documentation coverage', () => {
 
     expect(docs.toLowerCase()).not.toContain('winning work');
     expect(docs.toLowerCase()).not.toContain('winning-work');
-    expect(docs.toLowerCase()).not.toContain('aurecon-specific');
+    expect(docs.toLowerCase()).not.toContain('company-specific');
   });
 });

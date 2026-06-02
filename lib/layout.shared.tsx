@@ -47,6 +47,6 @@ export function baseOptions(): BaseLayoutProps {
         active: 'none',
       },
     ],
-    githubUrl: 'https://github.com/aurecon/aec-bench',
+    githubUrl: 'https://github.com/TheodorosGalanos/aec-bench',
   };
 }

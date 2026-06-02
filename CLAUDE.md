@@ -1,6 +1,6 @@
 # AEC-Bench Site
 
-Benchmark and community site for [aec-bench](https://github.com/aurecon/aec-bench) — measuring AI capability on real Architecture, Engineering & Construction tasks. Positioned as the definitive AEC AI benchmark (SWE-bench authority + ARC Prize community warmth).
+Benchmark and community site for [aec-bench](https://github.com/TheodorosGalanos/aec-bench) — measuring AI capability on real Architecture, Engineering & Construction tasks. Positioned as the definitive AEC AI benchmark (SWE-bench authority + ARC Prize community warmth).
 
 ## What This Repo Is
 
@@ -54,7 +54,7 @@ public/           # Static assets (logo, favicon, OG images)
 ## Documentation Terminology
 
 - Use **"agent harnesses"** (not "adapters") when referring to execution strategies (tool loop, RLM, lambda-RLM, direct)
-- Write for **external researchers and developers** — assume no Aurecon-internal context
+- Write for **external researchers and developers** — assume no company-internal context
 - Favour Australian English spelling (colour, behaviour, organisation)
 
 ## Content in `content/docs/`

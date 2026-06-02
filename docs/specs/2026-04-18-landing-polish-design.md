@@ -187,7 +187,7 @@ Replace the three-icon layout with two stacked elements:
 - Headline: "Benchmark your model against real engineering."
 - Sub: "Open-source. Reproducible. Runs locally or against any provider."
 - **Primary:** copy-box `$ pip install aec-bench` with a `copy` button (uses `navigator.clipboard.writeText`). `copy` → transient `copied` state.
-- Meta line (mono): `latest v0.4.1 · github.com/aurecon/aec-bench · 2.4k ★`.
+- Meta line (mono): `latest v0.4.1 · github.com/TheodorosGalanos/aec-bench · 2.4k ★`.
 - Secondary row: three ghost buttons (`> quickstart`, `> contribute a task`, `> submit your model`).
 
 ## Nav changes (`lib/layout.shared.tsx`)

@@ -1862,12 +1862,12 @@ export function CallToAction() {
           <span>latest <span className="text-accent-amber">v0.4.1</span></span>
           <span>·</span>
           <Link
-            href="https://github.com/aurecon/aec-bench"
+            href="https://github.com/TheodorosGalanos/aec-bench"
             target="_blank"
             rel="noopener noreferrer"
             className="transition-colors hover:text-landing-text"
           >
-            github.com/aurecon/aec-bench
+            github.com/TheodorosGalanos/aec-bench
           </Link>
           <span>·</span>
           <span className="text-accent-teal">2.4k ★</span>
@@ -1887,7 +1887,7 @@ export function CallToAction() {
             <span aria-hidden className="text-accent-teal">&gt;</span>contribute a task
           </Link>
           <Link
-            href="https://github.com/aurecon/aec-bench"
+            href="https://github.com/TheodorosGalanos/aec-bench"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded border border-landing-border px-4 py-3 font-mono text-sm text-landing-text transition-colors hover:border-accent-amber"
@@ -2092,7 +2092,7 @@ export function baseOptions(): BaseLayoutProps {
         external: true,
       },
     ],
-    githubUrl: 'https://github.com/aurecon/aec-bench',
+    githubUrl: 'https://github.com/TheodorosGalanos/aec-bench',
   };
 }
 ```

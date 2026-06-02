@@ -141,7 +141,7 @@ describe('SubmissionSchema', () => {
     const sub = {
       experiment_id: 'e1',
       dataset: 'aec-bench@0.4.1',
-      submitter: { github: 'aurecon' },
+      submitter: { github: 'TheodorosGalanos' },
       model_claim: { library_model: 'claude-sonnet-4-6' },
       submitted_at: '2026-04-10T12:00:00Z',
     };

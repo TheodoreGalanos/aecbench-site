@@ -21,7 +21,7 @@ with the decision to keep submissions open but PR-reviewed, the cleaner order is
 infrastructure; the `/leaderboard` page design is a separate spec that follows.
 
 The chosen submission model is open + community-contributed + PR-reviewed
-(not Aurecon-primary, not replay-verified). Storage is git-only with static
+(not maintainer-primary, not replay-verified). Storage is git-only with static
 materialisation at build time. Supabase is deferred to Phase 4+ with triggers
 captured in memory (`aecbench-storage-scale-migration`).
 
@@ -227,7 +227,7 @@ aecbench-site/
 │   ├── snapshots/
 │   │   └── leaderboard-2026-04-12.json        # previous artefact (for Δ)
 │   └── experiments/
-│       ├── sonnet4-tool-loop-aurecon/
+│       ├── sonnet4-tool-loop-maintainer/
 │       │   ├── submission.yml
 │       │   ├── experiment-manifest.(yml|json)  # the config the submitter ran against
 │       │   └── trials/

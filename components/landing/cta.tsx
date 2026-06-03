@@ -23,19 +23,19 @@ export function CallToAction() {
         </p>
 
         <div className="mt-8">
-          <CopyBox command="git clone https://github.com/TheodorosGalanos/aec-bench.git" />
+          <CopyBox command="git clone https://github.com/TheodoreGalanos/aec-bench.git" />
         </div>
 
         <div className="mt-4 flex flex-wrap justify-center gap-3 font-mono text-xs text-landing-muted">
           <span><span className="text-accent-amber">source checkout</span></span>
           <span>·</span>
           <Link
-            href="https://github.com/TheodorosGalanos/aec-bench"
+            href="https://github.com/TheodoreGalanos/aec-bench"
             target="_blank"
             rel="noopener noreferrer"
             className="transition-colors hover:text-landing-text"
           >
-            github.com/TheodorosGalanos/aec-bench
+            github.com/TheodoreGalanos/aec-bench
           </Link>
           <span>·</span>
           <span className="text-accent-teal">2.4k ★</span>
@@ -61,7 +61,7 @@ export function CallToAction() {
             <span aria-hidden="true" className="text-accent-teal">&gt;</span>contribute a task
           </Link>
           <Link
-            href="https://github.com/TheodorosGalanos/aec-bench"
+            href="https://github.com/TheodoreGalanos/aec-bench"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded border border-landing-border px-4 py-3 font-mono text-sm text-landing-text transition-colors hover:border-accent-amber"

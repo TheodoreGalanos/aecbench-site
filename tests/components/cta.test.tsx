@@ -13,7 +13,7 @@ describe('CallToAction', () => {
 
   it('renders the source checkout CopyBox', () => {
     render(<CallToAction />);
-    expect(screen.getByText('git clone https://github.com/TheodorosGalanos/aec-bench.git')).toBeInTheDocument();
+    expect(screen.getByText('git clone https://github.com/TheodoreGalanos/aec-bench.git')).toBeInTheDocument();
   });
 
   it('renders the mono meta line with source status and stars', () => {

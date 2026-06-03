@@ -1,6 +1,6 @@
 # AEC-Bench Site
 
-Benchmark and community site for [aec-bench](https://github.com/TheodorosGalanos/aec-bench) — measuring AI capability on real Architecture, Engineering & Construction tasks. Positioned as the definitive AEC AI benchmark (SWE-bench authority + ARC Prize community warmth).
+Benchmark and community site for [aec-bench](https://github.com/TheodoreGalanos/aec-bench) — measuring AI capability on real Architecture, Engineering & Construction tasks. Positioned as the definitive AEC AI benchmark (SWE-bench authority + ARC Prize community warmth).
 
 ## What This Repo Is
 

@@ -11,16 +11,16 @@ describe('CopyBox', () => {
   });
 
   it('renders the command text', () => {
-    render(<CopyBox command="git clone https://github.com/TheodorosGalanos/aec-bench.git" />);
-    expect(screen.getByText('git clone https://github.com/TheodorosGalanos/aec-bench.git')).toBeInTheDocument();
+    render(<CopyBox command="git clone https://github.com/TheodoreGalanos/aec-bench.git" />);
+    expect(screen.getByText('git clone https://github.com/TheodoreGalanos/aec-bench.git')).toBeInTheDocument();
   });
 
   it('copies to clipboard and shows "copied" feedback on click', async () => {
-    render(<CopyBox command="git clone https://github.com/TheodorosGalanos/aec-bench.git" />);
+    render(<CopyBox command="git clone https://github.com/TheodoreGalanos/aec-bench.git" />);
     const btn = screen.getByRole('button', { name: /copy/i });
     fireEvent.click(btn);
     await waitFor(() => {
-      expect(navigator.clipboard.writeText).toHaveBeenCalledWith('git clone https://github.com/TheodorosGalanos/aec-bench.git');
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith('git clone https://github.com/TheodoreGalanos/aec-bench.git');
       expect(screen.getByRole('button', { name: /copied/i })).toBeInTheDocument();
     });
   });

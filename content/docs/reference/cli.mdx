@@ -270,11 +270,18 @@ uv run aec-bench prime eval --remote-env owner/aec-smoke --hosted --model "Qwen/
 uv run aec-bench prime eval --remote-env owner/aec-smoke --hosted --model "Qwen/Qwen3.5-4B" --adapter-from-run <training-run-id>
 uv run aec-bench import-prime-eval <prime-eval-id> --experiment prime-smoke-import
 uv run aec-bench prime train-config --environment owner/aec-smoke -o train.toml
+uv run aec-bench prime train-config \
+  --environment owner/aec-suite \
+  -o filtered.toml \
+  --difficulty-ratio easy=0.45 \
+  --difficulty-ratio medium=0.40 \
+  --difficulty-ratio hard=0.15 \
+  --online-difficulty-filtering
 uv run aec-bench prime train train.toml
 uv run aec-bench prime smoke --name aec-smoke --task electrical/voltage-drop
 ```
 
-See [Prime Lab](/docs/advanced/prime-lab) for export lanes, deployed adapter discovery, adapter eval, hosted training, and hosted rollout import.
+See [Prime Lab](/docs/advanced/prime-lab) for export lanes, deployed adapter discovery, adapter eval, hosted training, online difficulty filtering, and hosted rollout import.
 
 ## Exit Codes
 

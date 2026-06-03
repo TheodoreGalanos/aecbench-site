@@ -35,6 +35,19 @@ describe('library documentation coverage', () => {
     expect(cli).toContain('aec-bench swarm status');
   });
 
+  it('documents Prime online difficulty filtering for hosted training', () => {
+    const primeLab = readDoc('advanced/prime-lab.mdx');
+    const cli = readDoc('reference/cli.mdx');
+
+    expect(primeLab).toContain('--difficulty-ratio easy=0.45');
+    expect(primeLab).toContain('--online-difficulty-filtering');
+    expect(primeLab).toContain('env_ratios');
+    expect(primeLab).not.toContain(
+      'Multi-environment training suites | Multiple generated environments or dataset slices | Planned config layer',
+    );
+    expect(cli).toContain('--difficulty-ratio easy=0.45');
+  });
+
   it('reflects the refreshed built-in template catalogue', () => {
     const catalogue = JSON.parse(readFileSync(join(ROOT, 'data', 'library-catalogue.json'), 'utf-8'));
     const templates = readDoc('core/templates.mdx');

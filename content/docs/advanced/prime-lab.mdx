@@ -14,7 +14,7 @@ aec-bench classifies tasks into conservative Prime lanes:
 | Deterministic formula and calculation tasks | `SingleTurnEnv` style package with deterministic rubric | Supported |
 | Workspace tasks that need files or commands | `StatefulToolEnv` style package with workspace tools | Supported |
 | RLM and lambda-RLM tasks | Stateful workspace export carrying policy guardrails | Supported for eval; deeper policy export is future work |
-| Multi-environment training suites | Multiple generated environments or dataset slices | Planned config layer |
+| Multi-environment training suites | Difficulty-filtered environment views with Prime buffer ratios | Supported through `prime train-config` |
 
 The key invariant is that the original task verifier still decides reward. Prime changes the evaluation substrate, not the task's definition of correctness.
 
@@ -166,7 +166,7 @@ For base-versus-adapter comparisons, keep the environment slug, split, difficult
 
 ## Hosted training
 
-Write a conservative training config:
+Write a conservative single-slice training config:
 
 ```bash
 uv run aec-bench prime train-config \
@@ -179,6 +179,40 @@ uv run aec-bench prime train-config \
   --num-examples 50 \
   --max-steps 20
 ```
+
+For broad training suites, generate a multi-environment config with one
+difficulty-filtered view per ratio. This keeps the environment package fixed
+while Prime samples from easy, medium, and hard slices according to
+`[buffer].env_ratios`:
+
+```bash
+uv run aec-bench prime train-config \
+  --environment your-owner/aec-release-train \
+  --output configs/rl/aec-filtered-ratios.toml \
+  --model "Qwen/Qwen3.5-9B" \
+  --split all \
+  --harness stateful \
+  --difficulty-ratio easy=0.45 \
+  --difficulty-ratio medium=0.40 \
+  --difficulty-ratio hard=0.15 \
+  --max-steps 50 \
+  --batch-size 64 \
+  --rollouts-per-example 8 \
+  --max-tokens 4096 \
+  --online-difficulty-filtering \
+  --easy-threshold 0.8 \
+  --hard-threshold 0.2 \
+  --easy-fraction 0.25 \
+  --hard-fraction 0.25
+```
+
+Each `--difficulty-ratio DIFFICULTY=RATIO` flag emits a separate `[[env]]`
+block with that difficulty passed to `load_environment(...)`. The ratio flags
+are mutually exclusive with repeated `--difficulty`, which still means one
+environment view that allows multiple difficulties. `--online-difficulty-filtering`
+adds Prime's adaptive buffer thresholds; retaining some easy and hard examples
+helps noisy AEC reward surfaces avoid collapsing into only already-solved
+examples or only zero-signal failures.
 
 Launch training through Prime:
 

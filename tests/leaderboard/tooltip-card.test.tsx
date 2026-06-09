@@ -31,6 +31,12 @@ describe('TooltipCard', () => {
     expect(screen.getAllByText(/\[0\.79.*0\.85\]/).length).toBeGreaterThan(0);
   });
 
+  it('shows cost even when another x-axis metric is active', () => {
+    render(<TooltipCard entry={entry} axisMetric={AXIS_METRICS.latency} onFrontier={false} />);
+    expect(screen.getByText('cost')).toBeInTheDocument();
+    expect(screen.getByText('$1.80')).toBeInTheDocument();
+  });
+
   it('shows the frontier badge when onFrontier=true', () => {
     const { rerender } = render(
       <TooltipCard entry={entry} axisMetric={AXIS_METRICS.cost} onFrontier={false} />,

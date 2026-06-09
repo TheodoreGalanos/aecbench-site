@@ -40,6 +40,7 @@ describe('ExpandableRow', () => {
     expect(screen.getByText('0.82')).toBeInTheDocument();
     expect(screen.getByText(/\+0\.02/)).toBeInTheDocument();
     expect(screen.getByText(/46\.0k/)).toBeInTheDocument();
+    expect(screen.getByText(/\$1\.80/)).toBeInTheDocument();
     expect(screen.getByText(/98%/)).toBeInTheDocument();
     expect(screen.getByText(/partial/i)).toBeInTheDocument();
   });
@@ -78,6 +79,7 @@ describe('ExpandableRow', () => {
     expect(screen.getByText(/\[0\.79.*0\.85\]/)).toBeInTheDocument();
     expect(screen.getByText(/trials/i)).toBeInTheDocument();
     expect(screen.getByText(/176\/180 complete/i)).toBeInTheDocument();
+    expect(screen.getByText(/cost\/completed/i)).toBeInTheDocument();
     expect(screen.getByText(/zero.*partial.*perfect/i)).toBeInTheDocument();
   });
 });

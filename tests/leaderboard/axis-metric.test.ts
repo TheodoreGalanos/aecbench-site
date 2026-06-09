@@ -15,8 +15,11 @@ describe('AXIS_METRICS', () => {
       expect(m.accessor(makeEntry({ mean_cost_usd: 1.5 }))).toBe(1.5);
       expect(m.accessor(makeEntry({ mean_cost_usd: null }))).toBeNull();
     });
-    it('formats small values with two decimals', () => {
-      expect(m.format(0.01)).toBe('$0.01');
+    it('formats tiny per-task values without rounding them to zero', () => {
+      expect(m.format(0.0001017)).toBe('$0.00010');
+      expect(m.format(0.002845)).toBe('$0.0028');
+      expect(m.format(0.03041)).toBe('$0.030');
+      expect(m.format(0.01)).toBe('$0.010');
       expect(m.format(1.8)).toBe('$1.80');
       expect(m.format(1234.56)).toBe('$1234.56');
     });

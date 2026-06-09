@@ -134,12 +134,17 @@ def build_entries(
         row["model_slug"]: row
         for row in read_csv(analysis_dir / "cost_speed_quality_frontier_finished.csv")
     }
+    cost_rows = {
+        row["model_slug"]: row
+        for row in read_csv(analysis_dir / "performance_cost_frontier_foundry.csv")
+    }
     per_discipline = compute_per_discipline(trial_rows)
 
     entries: list[dict[str, Any]] = []
     for row in model_rows:
         slug = row["model_slug"]
         frontier = frontier_rows.get(slug, {})
+        cost = cost_rows.get(slug, {})
         input_tokens = f(row, "mean_input_tokens")
         output_tokens = f(row, "mean_output_tokens")
         total_tokens = None
@@ -165,8 +170,8 @@ def build_entries(
             "failed_trials": failed,
             "completion_rate": round4(completed / expected if expected else 0),
             "suite_done": row.get("suite_done") == "True",
-            "mean_cost_usd": None,
-            "total_cost_usd": None,
+            "mean_cost_usd": round4(f(cost, "mean_cost_per_completed_trial_usd")),
+            "total_cost_usd": round4(f(cost, "suite_completed_cost_usd")),
             "mean_tokens": round(total_tokens) if total_tokens is not None else None,
             "mean_input_tokens": round(input_tokens) if input_tokens is not None else None,
             "mean_output_tokens": round(output_tokens) if output_tokens is not None else None,

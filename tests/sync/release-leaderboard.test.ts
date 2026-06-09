@@ -116,6 +116,19 @@ describe('release leaderboard sync', () => {
     );
 
     await writeFile(
+      join(analysis, 'performance_cost_frontier_foundry.csv'),
+      csv([
+        [
+          'model_slug',
+          'mean_cost_per_completed_trial_usd',
+          'suite_completed_cost_usd',
+        ],
+        ['gpt-5-2', '0.0304104457703927', '50.32928775'],
+        ['grok-4-3', '0.0250810892210144', '41.53428375'],
+      ]),
+    );
+
+    await writeFile(
       join(analysis, 'release_trials_rectified.csv'),
       csv([
         ['model_slug', 'discipline', 'status', 'reward'],
@@ -147,6 +160,8 @@ describe('release leaderboard sync', () => {
     expect(artefact.entries[0].per_discipline.civil).toBe(1);
     expect(artefact.entries[0].expected_trials).toBe(6);
     expect(artefact.entries[0].completion_rate).toBe(0.3333);
+    expect(artefact.entries[0].mean_cost_usd).toBe(0.0304);
+    expect(artefact.entries[0].total_cost_usd).toBe(50.3293);
 
     const civil = LeaderboardArtefactSchema.parse(
       JSON.parse(await readFile(join(output, 'disciplines/civil.json'), 'utf-8')),

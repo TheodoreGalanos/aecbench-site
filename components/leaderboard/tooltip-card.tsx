@@ -56,6 +56,14 @@ export function TooltipCard({
         <dd className="text-[#c7c7c7]">
           {x === null ? '—' : axisMetric.format(x)}
         </dd>
+        {axisMetric.key !== 'cost' && (
+          <>
+            <dt>cost</dt>
+            <dd className="text-[#c7c7c7]">
+              {entry.mean_cost_usd === null ? '—' : AXIS_METRICS.cost.format(entry.mean_cost_usd)}
+            </dd>
+          </>
+        )}
         <dt>coverage</dt>
         <dd className="text-[#c7c7c7]">
           {entry.completion_rate === undefined ? '—' : AXIS_METRICS.completion.format(entry.completion_rate)}

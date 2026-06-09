@@ -36,8 +36,8 @@ describe('ControlStrip', () => {
     const onAxisChange = vi.fn();
     render(<ControlStrip {...defaults} onAxisChange={onAxisChange} />);
     fireEvent.click(screen.getByRole('button', { name: /--x.*latency/i }));
-    fireEvent.click(screen.getByRole('option', { name: /tokens/i }));
-    expect(onAxisChange).toHaveBeenCalledWith('tokens');
+    fireEvent.click(screen.getByRole('option', { name: /cost/i }));
+    expect(onAxisChange).toHaveBeenCalledWith('cost');
   });
 
   it('hides the discipline chip when lockedDiscipline is set', () => {

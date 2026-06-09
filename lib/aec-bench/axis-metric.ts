@@ -13,6 +13,10 @@ export interface AxisMetric {
 }
 
 function formatCost(v: number): string {
+  if (v === 0) return '$0';
+  if (v < 0.001) return `$${v.toFixed(5)}`;
+  if (v < 0.01) return `$${v.toFixed(4)}`;
+  if (v < 0.1) return `$${v.toFixed(3)}`;
   return `$${v.toFixed(2)}`;
 }
 
@@ -31,7 +35,7 @@ function formatLatency(v: number): string {
 export const AXIS_METRICS: Record<AxisKey, AxisMetric> = {
   cost: {
     key: 'cost',
-    label: 'cost / task (USD)',
+    label: 'cost / completed task (USD)',
     accessor: (e) => e.mean_cost_usd,
     format: formatCost,
   },

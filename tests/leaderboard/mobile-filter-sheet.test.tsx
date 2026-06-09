@@ -30,10 +30,12 @@ describe('MobileFilterSheet', () => {
     const onApply = vi.fn();
     render(<MobileFilterSheet {...baseProps} onApply={onApply} />);
     fireEvent.click(screen.getByRole('button', { name: /filters/i }));
+    fireEvent.click(screen.getByRole('option', { name: /cost/i }));
     fireEvent.click(screen.getByRole('option', { name: /civil/i }));
     expect(onApply).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: /apply/i }));
     expect(onApply).toHaveBeenCalledWith(expect.objectContaining({
+      axisX: 'cost',
       disciplines: ['civil'],
     }));
   });

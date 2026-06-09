@@ -30,9 +30,9 @@ describe('useLeaderboardState', () => {
   });
 
   it('hydrates from URL params', () => {
-    searchParams = new URLSearchParams('x=tokens&d=civil,electrical&h=rlm&sort=reward&dir=desc&open=claude-opus-4.7::rlm');
+    searchParams = new URLSearchParams('x=cost&d=civil,electrical&h=rlm&sort=reward&dir=desc&open=claude-opus-4.7::rlm');
     const { result } = renderHook(() => useLeaderboardState(FIXTURE_ENTRIES, {}));
-    expect(result.current.axisX).toBe('tokens');
+    expect(result.current.axisX).toBe('cost');
     expect(result.current.disciplines).toEqual(['civil', 'electrical']);
     expect(result.current.harnesses).toEqual(['rlm']);
     expect(result.current.sort).toEqual({ column: 'reward', dir: 'desc' });

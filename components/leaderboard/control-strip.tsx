@@ -9,6 +9,7 @@ import { ControlStripPopover } from './control-strip-popover';
 import { clsx } from '@/lib/clsx';
 
 const AXIS_OPTIONS = [
+  { value: 'cost', label: 'cost' },
   { value: 'latency', label: 'latency' },
   { value: 'tokens', label: 'tokens' },
   { value: 'completion', label: 'completion' },

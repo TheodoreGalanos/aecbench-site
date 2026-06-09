@@ -11,7 +11,7 @@ import { filterAndReshape } from '@/lib/aec-bench/filter';
 import { sortEntries, type SortColumn, type SortSpec } from '@/lib/aec-bench/sort';
 import { computeParetoFrontier, type ScatterPoint } from '@/lib/aec-bench/pareto';
 
-const VALID_AXES: AxisKey[] = ['latency', 'tokens', 'completion'];
+const VALID_AXES: AxisKey[] = ['cost', 'latency', 'tokens', 'completion'];
 const VALID_SORT_COLUMNS: SortColumn[] = [
   'rank', 'model', 'reward', 'delta', 'tokens', 'cost', 'coverage',
   'civil', 'electrical', 'ground', 'mechanical', 'structural',

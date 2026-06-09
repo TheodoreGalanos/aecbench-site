@@ -118,7 +118,7 @@ export function LeaderboardSurface({
       </div>
       {state.disciplines.length > 0 && (
         <p className="mb-2 font-mono text-[0.65rem] text-[#888]">
-          ⓘ tokens, latency, and coverage are run-level aggregates; discipline filters reshape reward
+          ⓘ cost, tokens, latency, and coverage are run-level aggregates; discipline filters reshape reward
           only
         </p>
       )}

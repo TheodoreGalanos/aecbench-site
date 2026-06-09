@@ -38,6 +38,13 @@ describe('LeaderboardTable', () => {
     expect(onSortChange).toHaveBeenCalled();
   });
 
+  it('sorts cost ascending on first click', () => {
+    const onSortChange = vi.fn();
+    render(<LeaderboardTable {...base} onSortChange={onSortChange} />);
+    fireEvent.click(screen.getByRole('columnheader', { name: /cost/i }));
+    expect(onSortChange).toHaveBeenCalledWith({ column: 'cost', dir: 'asc' });
+  });
+
   it('flips sort direction when the same header is clicked twice', () => {
     const onSortChange = vi.fn();
     const { rerender } = render(<LeaderboardTable {...base} onSortChange={onSortChange} />);

@@ -120,6 +120,9 @@ export function ExpandableRow({
         <td className="hidden px-3 py-3 text-right text-[0.72rem] text-[#888] md:table-cell">
           {entry.mean_tokens === null ? '—' : AXIS_METRICS.tokens.format(entry.mean_tokens)}
         </td>
+        <td className="hidden px-3 py-3 text-right text-[0.72rem] text-[#888] md:table-cell">
+          {entry.mean_cost_usd === null ? '—' : AXIS_METRICS.cost.format(entry.mean_cost_usd)}
+        </td>
         <td className="px-3 py-3 text-right text-[0.72rem] text-[#888]">
           {formatCoverage(entry)}
         </td>
@@ -134,7 +137,7 @@ export function ExpandableRow({
             transition={{ duration: 0.18, ease: 'easeOut' }}
             className="border-b border-[#141414] bg-[#080808]"
           >
-            <td colSpan={7} className="px-6 py-4 font-mono text-[0.75rem] text-[#c7c7c7]">
+            <td colSpan={8} className="px-6 py-4 font-mono text-[0.75rem] text-[#c7c7c7]">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <section>
                   <h4 className="mb-2 text-[0.6rem] uppercase tracking-wider text-[#888]">
@@ -165,6 +168,14 @@ export function ExpandableRow({
                     </dd>
                     <dt>coverage</dt>
                     <dd className="text-[#c7c7c7]">{formatCoverage(entry)}</dd>
+                    <dt>cost/completed</dt>
+                    <dd className="text-[#c7c7c7]">
+                      {entry.mean_cost_usd === null ? '—' : AXIS_METRICS.cost.format(entry.mean_cost_usd)}
+                    </dd>
+                    <dt>suite cost</dt>
+                    <dd className="text-[#c7c7c7]">
+                      {entry.total_cost_usd === null ? '—' : AXIS_METRICS.cost.format(entry.total_cost_usd)}
+                    </dd>
                     <dt>p95 latency</dt>
                     <dd className="text-[#c7c7c7]">
                       {entry.latency_p95_seconds === null || entry.latency_p95_seconds === undefined

@@ -1,51 +1,57 @@
 ---
 title: Installation
-description: Installation covers the Python, uv, optional Prime, backend, and provider credential requirements needed to run aec-bench locally.
+description: Install the provider-free aec-bench package, then add only the execution, interface, or provider integrations you need.
 ---
 
 ## System Requirements
 
 - **Python:** 3.13 or later
-- **Package manager:** `uv`
+- **Package installer:** `pip` for the published package; `uv` for source development
 - **OS:** macOS, Linux, or Windows through WSL
 - **Memory:** 4 GB RAM minimum, 8 GB recommended for larger generated suites
 
-Docker, Modal, Prime, and hosted Harbor execution are optional. You only need those services when you choose the matching execution or training path.
+Docker, Modal, Morph Cloud, Prime, and Harbor are optional. You only need them when you select the matching execution or training path.
+
+## Install the Package
+
+The base installation is provider-free. It supports task discovery, generation and validation, datasets, the ledger, deterministic evaluation and reports, and provider-free world functions.
+
+```bash
+pip install aec-bench
+aec-bench --help
+```
+
+Optional commands remain visible in `--help`. If a feature is not installed, the command reports the extra that provides it.
+
+## Optional Extras
+
+Install only the features you use:
+
+| Feature | Install command |
+|---------|-----------------|
+| Harbor execution and import | `pip install "aec-bench[execution]"` |
+| Harbor on Morph Cloud | `pip install "aec-bench[execution,morph]"` |
+| Local model-backed agent harnesses and reviewers | `pip install "aec-bench[local-agents]"` |
+| Prime CLI, export, and hosted evaluation | `pip install "aec-bench[prime]"` |
+| Prime Agent interactive worlds over ACP | `pip install "aec-bench[prime-agent]"` |
+| Web UI | `pip install "aec-bench[webui]"` |
+| Terminal UI | `pip install "aec-bench[tui]"` |
+| Evolution with local model execution | `pip install "aec-bench[evolution,local-agents]"` |
+
+The `prime-agent` extra installs ACP support. Install the upstream Prime Agent executable separately and keep `prime-agent` on `PATH`.
 
 ## From Source
 
-Use the source checkout when developing templates, tasks, or library code:
+Use the source checkout when contributing templates, tasks, documentation, or library code:
 
 ```bash
 git clone https://github.com/TheodoreGalanos/aec-bench.git
 cd aec-bench
-uv sync --extra webui --dev
-uv run aec-bench --version
+uv sync --all-extras --dev
+uv run aec-bench --help
 ```
 
 The console entry point is `aec-bench`. In a source checkout, run it through `uv run` so Python, dependencies, and local package code stay aligned.
-
-## Optional Extras
-
-Web UI support is optional:
-
-```bash
-uv sync --extra webui --dev
-uv run aec-bench web
-```
-
-Prime Lab support is optional:
-
-```bash
-uv sync --extra prime --dev
-uv run aec-bench prime doctor
-```
-
-Provider integrations for direct Python agent calls may require the `pydantic-ai` extra:
-
-```bash
-uv sync --extra pydantic-ai --dev
-```
 
 ## Provider Credentials
 
@@ -58,9 +64,10 @@ Set credentials for the provider used by your model or endpoint alias:
 | Azure OpenAI or Azure AI Foundry v1 | `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT`; optional `AZURE_OPENAI_API_VERSION` |
 | Together AI | `TOGETHER_API_KEY` |
 | AWS Bedrock | `AWS_BEARER_TOKEN_BEDROCK`, `AWS_REGION` or `AWS_DEFAULT_REGION` |
+| Morph Cloud | `MORPH_API_KEY` |
 | Prime hosted eval/training | authenticated `prime` CLI session |
 
-When you run the CLI from a project checkout, aec-bench loads `.env` at startup. Existing shell variables take precedence.
+aec-bench loads `.env` from the project root at startup. Existing shell variables take precedence.
 
 For Azure AI Foundry deployments that expose the v1 OpenAI-compatible API, use the `/openai/v1/` endpoint and pass the deployment name as `--model`. For Together AI, use an explicit `together:` model prefix.
 
@@ -69,18 +76,12 @@ For Azure AI Foundry deployments that expose the v1 OpenAI-compatible API, use t
 Use CLI help and a non-provider command first:
 
 ```bash
-uv run aec-bench --help
-uv run aec-bench generate list-templates --discipline ground
-uv run aec-bench library export --stdout --pretty
+aec-bench --help
+aec-bench generate list-templates --discipline ground
+aec-bench library export --stdout --pretty
 ```
 
-Then run a provider-backed command once credentials are present:
-
-```bash
-uv run aec-bench run-local tasks/electrical/voltage-drop \
-  --model gpt-4.1-mini \
-  --harness direct
-```
+These commands use no provider credentials. Follow the [Quickstart](/docs/start/quickstart) when you are ready to run a local model-backed trial.
 
 ## Project Layout
 

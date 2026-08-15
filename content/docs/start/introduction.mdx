@@ -9,8 +9,9 @@ AEC work mixes deterministic calculation, document interpretation, tool use, and
 
 aec-bench provides:
 
-- A public catalogue of built templates and proposed seed tasks across civil, electrical, ground, mechanical, and structural engineering
-- **Agent harnesses** for direct answers, tool loops, RLM, and Lambda-RLM workflows
+- **Template catalogue** with 352 built templates and 284 proposed seed tasks across six engineering disciplines in the current upstream export
+- **Agent harnesses** for direct answers, tool loops, RLM, Lambda-RLM, and Prime Agent workflows
+- **Interactive Worlds and finite lifecycles** for causal decisions and staged evidence work
 - **Automated scoring** through task-local verifiers and structured reward contracts
 - **Versioned datasets** so comparable runs are anchored to immutable task snapshots
 - **Prime Lab export** for local eval, hosted eval, adapter eval, and hosted training
@@ -23,8 +24,9 @@ aec-bench provides:
 | Civil | Hydrology, hydraulics, drainage, roads, coastal, wind and load derivations |
 | Electrical | Cable sizing, PV, grounding, arc flash, thermal rating, short-circuit |
 | Ground | Bearing capacity, settlement, CPT/SPT interpretation, slope and retaining-wall checks |
+| Maritime | Rule length, freeboard length, block coefficient, and class-society calculations |
 | Mechanical | HVAC, pumps, fire services, process calculations, acoustics, wastewater |
-| Structural | Marine, concrete, structural fire, load combinations, movement and connection checks |
+| Structural | Concrete, structural fire, load combinations, movement and connection checks |
 
 ## Mental model
 
@@ -36,11 +38,13 @@ The core loop is:
 4. Verify outputs and write trial records.
 5. Evaluate, report, and inspect traces.
 
-Prime export, evolution, and swarm runs all build on the same task, trial, verifier, and trace records.
+Artefact tasks, Interactive Worlds, and finite lifecycles share evaluation, trial evidence, and reporting boundaries without forcing one execution model on every task.
 
 ## Next Steps
 
 - [Quickstart](/docs/start/quickstart) — Generate and run a first task
 - [Templates](/docs/core/templates) — Understand the built-in template catalogue
+- [Interactive Worlds](/docs/core/interactive-worlds) — Benchmark repeated decisions against task-owned state
+- [Finite Lifecycles](/docs/core/lifecycles) — Control staged evidence and submissions
 - [Agent Harnesses](/docs/agents/harnesses) — Choose an execution strategy
 - [Prime Lab](/docs/advanced/prime-lab) — Export tasks for hosted eval and training

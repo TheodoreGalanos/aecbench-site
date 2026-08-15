@@ -25,32 +25,30 @@ Use stdout for CI or inspection:
 uv run aec-bench library export --stdout --pretty
 ```
 
-The current synced catalogue contains 184 built templates and 284 proposed seeds:
+The current upstream library export contains 352 built templates and 284 proposed seeds across six disciplines:
 
 | Discipline | Built templates | Proposed seeds |
 |------------|-----------------|----------------|
-| Civil | 57 | 30 |
-| Electrical | 52 | 92 |
-| Ground | 10 | 3 |
-| Mechanical | 50 | 92 |
-| Structural | 15 | 67 |
+| Civil | 93 | 30 |
+| Electrical | 108 | 92 |
+| Ground | 20 | 3 |
+| Maritime | 3 | 0 |
+| Mechanical | 93 | 92 |
+| Structural | 35 | 67 |
 
 ## Schema
 
-The v1 export has top-level metadata, counts, templates, and seeds:
+The v1 export has top-level metadata, counts, templates, and seeds. This shortened example omits the per-discipline count map:
 
 ```json
 {
   "schema_version": 1,
-  "generated_at": "2026-06-02T01:02:52.270976Z",
-  "library_version": "0.1.0",
-  "library_commit": "ea6194f",
+  "generated_at": "<ISO-8601 timestamp>",
+  "library_version": "<library version>",
+  "library_commit": "<git commit>",
   "counts": {
-    "total_templates": 184,
-    "total_seeds": 284,
-    "by_discipline": {
-      "civil": { "templates": 57, "seeds": 30 }
-    }
+    "total_templates": 352,
+    "total_seeds": 284
   },
   "templates": [],
   "seeds": []
@@ -62,7 +60,7 @@ Each entry includes:
 | Field | Meaning |
 |-------|---------|
 | `task_id` | Stable slug used by docs and discipline pages |
-| `discipline` | One of civil, electrical, ground, mechanical, structural |
+| `discipline` | One of civil, electrical, ground, maritime, mechanical, structural |
 | `category` | Machine-readable category slug |
 | `task_name` | Display title |
 | `description` and `long_description` | Short and expanded public descriptions |
@@ -73,7 +71,15 @@ Each entry includes:
 | `tool_mode` | Whether generated tasks expose tools |
 | `archetype_count` | Number of sampling archetypes for built templates |
 
+## Generation identity
+
+The catalogue describes public template families. Each generated task has its own deterministic provenance: template source digest, seed, stable instance index, difficulty, and visibility. Keep those fields with the generated task so a catalogue refresh cannot silently change the identity of an existing instance.
+
 ## Site sync
+
+The task browser uses the last successfully synced snapshot: 184 built templates and 284 proposed seeds across five disciplines. The upstream library export is authoritative for current template and seed counts.
+
+The current library export includes Maritime, but the task browser accepts only five disciplines. Add Maritime to the task-browser catalogue contract and routes before syncing the six-discipline file. The leaderboard can remain on its existing five-domain contract until ranked Maritime trial data exists.
 
 From the site checkout:
 

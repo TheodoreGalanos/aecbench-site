@@ -1,0 +1,113 @@
+---
+title: Adaptive Harnesses
+description: How aec-bench separates the fixed execution kernel, agent-harness configuration, and execution program for governed comparison and repair.
+---
+
+Most package users do not need to manage kernel fingerprints. Select an agent harness and use the normal run commands. This page is for researchers and maintainers who need governed candidate comparison, replayable repair, or experimental isolation across execution structures.
+
+Adaptive harness experiments separate three objects that are easy to blur together:
+
+- the trusted code that may execute;
+- the selected agent-harness configuration; and
+- the program that schedules task attempts.
+
+The compact notation is **K / Hx / px**. These are library contracts, not names for
+research phases or claims that the system has learned a better harness.
+
+## Fixed kernel
+
+The **fixed kernel** (`K`) is the versioned code allowed to execute in an adaptive run. Its identity records the kernel version and a digest of the executable source it owns.
+
+Documentation, research notes, task results, and unrelated library modules are not part of the kernel only because they share a checkout. If executable kernel code changes, its identity changes. A candidate configuration or program cannot silently change it.
+
+## Harness instance
+
+The **Harness instance** (`Hx`) is the content-addressed configuration of the agent
+harness used for a candidate. It selects declared agent bindings and their bounded
+runtime settings without importing arbitrary code.
+
+Typical fields include:
+
+- the agent-harness kind, such as direct, tool loop, RLM, or Lambda-RLM;
+- model and endpoint references;
+- turn, token, subcall, cost, and concurrency limits;
+- declared capabilities and output requirements; and
+- the kernel reference against which the instance was validated.
+
+An `Hx` change is therefore an explicit experimental treatment. It is not a hidden
+environment variable or an in-place mutation of the incumbent run.
+
+## Execution program
+
+The **execution program** (`px`) is a validated graph of task operations. The fixed kernel compiles it into a `RunBundle` and sends it through the normal aec-bench execution path.
+
+A program can express bounded patterns such as:
+
+- one task attempt;
+- independent task fan-out;
+- a declared stage graph;
+- a coalesced batch operation; or
+- a final output-commit step.
+
+Programs do not contain import hooks, provider clients, or arbitrary Python.
+
+## K / Hx / px
+
+Keeping the three identities separate makes comparisons interpretable:
+
+```text
+fixed K
+  + candidate Hx
+  + candidate px
+  + exact task snapshot
+  -> validated RunBundle
+  -> Harbor execution
+  -> imported TrialRecord and receipts
+```
+
+Within a comparison, changing `Hx` should not change `px`; changing `px` should not
+change `Hx`; neither should mutate `K`. The task snapshot, verifier, seeds, repetitions,
+and shared budget must also remain explicit.
+
+## Compilation and execution
+
+The compiler fails closed before execution when a candidate:
+
+- names a primitive outside the fixed kernel;
+- exceeds a declared budget;
+- contains an invalid graph or unreachable node;
+- refers to an incompatible task or harness profile; or
+- cannot bind every execution dependency to the frozen identities.
+
+Successful compilation produces an immutable run bundle. Harbor remains the execution
+substrate: adaptive machinery does not bypass normal task packaging, workspace
+isolation, verifier execution, output collection, or trial import.
+
+## Evidence and authority
+
+Candidate code may propose a configuration or program, but it does not own acceptance.
+The host records:
+
+- proposal and compilation identities;
+- node and stage receipts;
+- task, verifier, and output identities;
+- actual budget usage;
+- task outcomes and infrastructure failures; and
+- the authority decision that allowed any promotion or repair.
+
+Task failure and evidence-system failure remain distinct. Missing receipts, broken
+imports, or unavailable infrastructure cannot be scored as evidence that one candidate
+is worse.
+
+## Repair and optimisation
+
+Repair and optimisation are separate uses of the same contracts:
+
+- **repair** starts from a typed failure attributed to `Hx` or `px` and permits only an
+  authorised patch to that owner;
+- **optimisation** compares a frozen proposal set even when the incumbent is already
+  valid.
+
+Neither path demonstrates learning merely because it can select, patch, or compare
+candidates. Claims about learned policies or transfer require separate, preregistered
+evidence.

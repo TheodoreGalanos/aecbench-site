@@ -1,0 +1,93 @@
+---
+title: Prime Agent
+description: Prime Agent runs as an isolated external process for local artefact tasks and bounded ACP sessions.
+---
+
+Prime Agent is an agent harness, not a compute backend. aec-bench launches the upstream executable and adapts its output into the same verification, evaluation, and evidence boundaries used by other harnesses.
+
+Do not confuse it with [Prime Lab](/docs/advanced/prime-lab). Prime Agent executes one local actor process. Prime Lab exports environments for hosted evaluation and training.
+
+## Install
+
+The artefact-task adapter is in the provider-free base package. Install the upstream executable separately:
+
+```bash
+pip install aec-bench
+# Follow the upstream Prime Agent installation so prime-agent is on PATH.
+```
+
+The executable is maintained by [Prime Intellect](https://github.com/PrimeIntellect-ai/prime-agent#getting-started). aec-bench checks for it when the harness is selected and reports a direct installation error if it is absent.
+
+The integration is tested against Prime Agent 0.7.0 and JSON event-stream version 3. Unsupported stream versions fail explicitly.
+
+## Artefact tasks
+
+Use the public harness name with `run-local`:
+
+```bash
+aec-bench run-local tasks/<task> \
+  --harness prime-agent \
+  --model anthropic/<model-id>
+```
+
+aec-bench stages the task, starts Prime Agent in JSON mode, and then uses the normal output, normalisation, verifier, evaluation, and ledger-import flow. The model string is passed to Prime Agent unchanged.
+
+Each trial uses isolated configuration and session directories under `logs/prime/`. Ambient skills, extensions, prompt templates, themes, and context files are disabled. Provider credentials can still be inherited by the process, but aec-bench does not write them to provenance.
+
+The retained evidence includes:
+
+- the Prime JSON event stream;
+- standard error output;
+- a run summary;
+- saved Prime session files;
+- the submitted task output; and
+- normal trial, evaluation, usage, and artefact references.
+
+Unsupported event streams do not fall back to an unverified transcript interpretation.
+
+## Interactive World sessions
+
+Install the ACP client support for Interactive Worlds and lifecycles:
+
+```bash
+pip install "aec-bench[prime-agent]"
+```
+
+The ACP integration connects Prime Agent to selected [Interactive Worlds](/docs/core/interactive-worlds). One generic actor endpoint exposes only the installed world actions and actor-visible results. It does not expose task state, host controls, verifier data, or world persistence.
+
+AEC-Bench currently supports:
+
+- one wastewater pump-station stewardship session;
+- one dam-seepage monitoring episode; and
+- one fresh Prime session per checkpoint for the hydraulic-review lifecycle.
+
+These sessions are available only through Python entry points; there is no general ACP CLI:
+
+- `aec_bench.harness.pump_station_prime.session.run_pump_station_prime_session`
+- `aec_bench.harness.dam_seepage_prime.session.run_dam_seepage_prime_session`
+
+The pump session receives a host-selected world request. The dam session receives one exact registered world profile. After the actor process closes, the host replays accepted typed actions and runs task evaluation outside the actor endpoint.
+
+Task termination, host truncation, model completion, and provider error remain separate facts.
+
+## Skills and isolation
+
+World sessions install only explicit generic skills by default. Prime receives the task objective, actor-visible starting material, and the allowed actor capability. Task-family methods or hidden solution plans are not present unless a study selects a declared treatment.
+
+The pump-station journey can close Prime at an Operations boundary, apply one deterministic task-owned host control, and start a fresh session from the exact new snapshot. The model does not choose or apply that control.
+
+Prime runtime state is isolated for each session. World state, replay, and verification remain with the task owner.
+
+## Security boundary
+
+For artefact tasks, Prime Agent executes model-generated Python and shell commands with the current user's operating-system permissions. Trial-specific directories and disabled ambient configuration improve reproducibility, but they are not a security sandbox.
+
+ACP world and lifecycle sessions select an explicit isolation mode. `development_same_user` has the same local security limit. On macOS, `macos_sandbox` uses `sandbox-exec` and a scoped actor socket; only a successful session in this mode is marked as benchmark-valid isolation.
+
+Use unsandboxed local paths only with trusted task packages.
+
+## Evidence authority
+
+Prime event logs are execution evidence. They do not define reward. Task verifiers supply task-owned evidence, evaluation owns reward and validity, and `TrialRecord` remains the reportable provenance envelope.
+
+See [Agent Harnesses](/docs/agents/harnesses) for comparison with the other local strategies and [Contracts](/docs/core/contracts) for the evidence model.

@@ -1,0 +1,97 @@
+---
+title: Finite Lifecycles
+description: Finite lifecycles control a bounded sequence of evidence releases, submissions, host-owned progression, and task-owned verification.
+---
+
+A finite lifecycle models work with a known sequence of stages. Each stage releases defined evidence and accepts one structurally valid result before the host advances the lifecycle. After execution, the task verifier checks correctness and supplies reward evidence; evaluation owns the normalised reward and validity.
+
+Use a lifecycle when the stage order and completion conditions are known before execution. Use an [Interactive World](/docs/core/interactive-worlds) when actor actions change an ongoing causal state. Use an [artefact task](/docs/core/tasks) when one workspace or submission is enough.
+
+## Ownership boundary
+
+The task owns stage meaning. The lifecycle host owns progression.
+
+| Task owner | Lifecycle host |
+|------------|----------------|
+| Stage objectives and instructions | Release of the active stage |
+| Actor-visible evidence | Structural validation and submission archiving |
+| Required submission fields | Stage advancement and failure |
+| Completion meaning and verifier rules | Finalisation and durable run state |
+
+Only one stage is active at a time. A structurally invalid result leaves the current stage and all earlier submissions unchanged. A structurally valid result is archived and completes the active stage, but this does not mean that the answer is correct. The actor cannot activate the next stage itself.
+
+The host marks the lifecycle complete only after it archives the terminal result. The task verifier separately checks correctness and supplies task-owned evidence.
+
+## Package shape
+
+`EvidenceLifecycleSpec` is the current ordered staged-evidence subtype, not the minimum contract for every finite lifecycle. It declares a lifecycle identity and ordered checkpoints. Each checkpoint names:
+
+- its instruction;
+- the evidence release visible at that stage;
+- the expected submission path;
+- any earlier checkpoint that must already be accepted; and
+- the required submission fields.
+
+Materialisation creates a portable public package with stage instructions, evidence releases, and submission locations. The host checks submission structure; the task verifier defines task-specific correctness and supplies reward evidence to evaluation.
+
+Lifecycle identity is separate from task status. `proposed`, `active`, `deprecated`, and `retired` describe catalogue status. Lifecycle checkpoints describe evidence progression during one run.
+
+## Inspect and materialise
+
+List the installed lifecycle tasks:
+
+```bash
+aec-bench task lifecycle list
+```
+
+Materialise one package and run the deterministic smoke actor:
+
+```bash
+aec-bench task lifecycle materialize hydraulic-design-response-lifecycle-review \
+  --output artefacts/lifecycles/hydraulic-review
+
+aec-bench task lifecycle run-smoke artefacts/lifecycles/hydraulic-review \
+  --run-dir artefacts/lifecycle-runs/hydraulic-review-smoke
+
+aec-bench task lifecycle verify artefacts/lifecycles/hydraulic-review \
+  --run-dir artefacts/lifecycle-runs/hydraulic-review-smoke
+```
+
+`run-smoke` is a deterministic local proof of the package and host boundary. It does not prove a model or hosted provider integration.
+
+Some lifecycle families expose public semantic variants. Inspect them before materialisation:
+
+```bash
+aec-bench task lifecycle list-variants hydraulic-interaction-lifecycle-review
+aec-bench task lifecycle materialize hydraulic-interaction-lifecycle-review \
+  --variant tailwater_revision \
+  --output artefacts/lifecycles/hydraulic-review-tailwater
+```
+
+## Conditional work
+
+A checkpoint can declare a bounded set of conditional operations. The actor chooses from task-owned operations, but the host enforces the operation budget and prerequisites.
+
+Conditional evidence requests also exist as an experimental staged-evidence capability. No registered lifecycle currently uses them. Do not treat the contract alone as a supported task workflow.
+
+One lifecycle cannot mix conditional evidence requests with conditional operations in the current host implementation.
+
+## Execution evidence
+
+Lifecycle execution records keep session identity, resolved model, agent harness, execution mode, memory visibility, status, usage, and SHA-256-bound artefacts. A final `TrialRecord` references this evidence; it does not copy lifecycle state into a second authority.
+
+Persistent-context and fresh-context execution are explicit choices. Fresh sessions can receive only the evidence allowed by their memory visibility policy. The resolved model and agent harness stay stable across one lifecycle execution.
+
+Prime Lab can export a registered public lifecycle variant as a local-only Prime package:
+
+```bash
+aec-bench prime export-lifecycle \
+  --name hydraulic-review \
+  --package artefacts/lifecycles/hydraulic-review-tailwater \
+  --output-dir prime-rl/environments \
+  --aec-bench-root /absolute/path/to/aec-bench
+```
+
+The generated package keeps absolute references to the materialised lifecycle and an editable local AEC-Bench checkout. It does not support hosted execution, training, continual learning, or transfer claims.
+
+See [Prime Lab](/docs/advanced/prime-lab) for package and hosted-evaluation limits, and [Review and Reporting](/docs/evaluation/reviewing) for evidence interpretation.

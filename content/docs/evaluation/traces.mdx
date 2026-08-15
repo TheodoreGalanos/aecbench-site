@@ -5,19 +5,19 @@ description: A trace is the per-turn trajectory plus the TrialRecord that preser
 
 ## The trajectory
 
-During execution, an agent harness can append to `/workspace/trajectory.jsonl`. The file starts with a format header, then records structured entries for messages, tool calls, tool results, and run metadata:
+During execution, an agent harness can append to `/workspace/trajectory.jsonl`. The file contains one `TrajectoryEntry` JSON object per non-blank line. There is no separate format header:
 
 ```jsonl
-{"version": 1, "format": "aec-bench-trajectory"}
-{"step": 0, "role": "system", "content": "You are a senior electrical engineer..."}
-{"step": 0, "role": "user", "content": "Calculate voltage drop..."}
-{"step": 1, "role": "assistant", "content": "I'll compute R and X contributions..."}
-{"step": 1, "role": "tool_call", "tool_name": "python", "command": "python calc.py"}
-{"step": 1, "role": "tool_result", "tool_name": "python", "stdout": "V_drop = 5.2V", "exit_code": 0, "duration_ms": 142}
-{"step": 2, "role": "assistant", "content": "Writing result to output.jsonl..."}
+{"step": 0, "role": "system", "content": "You are a senior electrical engineer...", "timestamp": "2026-08-15T01:02:03.000Z"}
+{"step": 0, "role": "user", "content": "Calculate voltage drop...", "timestamp": "2026-08-15T01:02:03.001Z"}
+{"step": 1, "role": "assistant", "content": "I'll compute R and X contributions...", "call_type": "main", "timestamp": "2026-08-15T01:02:04.000Z"}
+{"step": 1, "role": "tool_call", "tool_name": "python", "command": "python calc.py", "call_type": "main", "timestamp": "2026-08-15T01:02:05.000Z"}
+{"step": 1, "role": "tool_result", "tool_name": "python", "stdout": "V_drop = 5.2V", "stderr": "", "exit_code": 0, "duration_ms": 142, "call_type": "main", "timestamp": "2026-08-15T01:02:05.142Z"}
 ```
 
-Each entry carries `step` and `role`. Text entries usually carry `content`; tool entries can carry `tool_name`, `command`, `arguments`, `stdout`, `stderr`, `exit_code`, `duration_ms`, `media`, and optional `metadata`. The schema is deliberately small so traces stay easy to parse.
+Each entry carries `step` and `role`. Text entries usually carry `content`.
+
+Tool entries can carry `tool_name`, `command`, `arguments`, `stdout`, `stderr`, `exit_code`, `duration_ms`, `media`, and structured `metadata`. Current optional context fields are `call_type`, `output_summary`, `timestamp`, and `meta_harness`.
 
 ## The trial record
 
@@ -41,10 +41,14 @@ class TrialRecord(StrictModel):
     timing: TimingRecord             # wall-clock per phase
     cost: CostRecord | None          # tokens, advisor calls, estimated USD
     adaptation: AdaptationProvenance | None
+    lifecycle_execution: LifecycleExecutionRecord | None
+    lifecycle_provenance: LifecycleTrialProvenance | None
+    episode_artifact: ArtifactReference | None
+    meta_harness_provenance: MetaHarnessTrialProvenance | None
     completeness: Completeness       # complete | partial
 ```
 
-Everything needed to reproduce the run is pinned by hash:
+The record captures the main inputs needed to reproduce the run:
 
 - **Task reference**: `task_id` plus `task_revision`
 - **Agent reference**: harness name, resolved model, optional harness revision, and effective configuration
@@ -59,10 +63,12 @@ Trial records have two states:
 
 | State | Meaning |
 |-------|---------|
-| `partial` | Written during execution. Some provenance fields may be missing. |
-| `complete` | Sealed after evaluation with required provenance. Eligible for the ledger. |
+| `partial` | Some required provenance is missing. The record can still support diagnostics. |
+| `complete` | Sealed after evaluation with the required provenance for its run type. |
 
 Complete records must include `agent.adapter_revision`, `environment.tool_versions`, and `inputs.input_files`. Partial records are useful for debugging, but they should not back a leaderboard number.
+
+Lifecycle records also require paired execution and provenance fields. Episode and meta-harness artefacts must be included in `outputs.artifacts` when their references are present.
 
 ## Cost tracking
 
@@ -70,6 +76,7 @@ Each trial optionally records token usage and an estimated USD cost:
 
 ```python
 class CostRecord(StrictModel):
+    model_calls: int | None
     tokens_in: int | None
     tokens_out: int | None
     cache_read_tokens: int | None
@@ -84,7 +91,7 @@ These fields support cost-efficiency views and make advisor-heavy runs visible d
 
 ## The ledger
 
-Completed trial records are append-only. Once written to the ledger, a trial record should not be modified. New information attaches through new records or review artifacts that reference the original `trial_id`.
+Ledger trial records are append-only. Once written, a trial record should not be modified. New information attaches through new records or review artefacts that reference the original `trial_id`.
 
 ## Imported Prime rollouts
 

@@ -1,0 +1,116 @@
+---
+title: Review and Reporting
+description: How optional LLM review, structured human review, reporting, and holdout protection sit alongside automated benchmark rewards.
+---
+
+Automated verification supplies the score. Review and reporting preserve disagreement,
+uncertainty, and provenance without changing that reward.
+
+## Optional post-verifier LLM review
+
+`run` and `run-local` can call an LLM reviewer after the deterministic verifier. The reviewer inspects the materialised task-review profile, output, artefacts, trace, source authority, and contradiction evidence:
+
+```bash
+uv run aec-bench run --config experiment.yaml \
+  --reviewer-model gpt-4.1-mini
+
+uv run aec-bench run-local tasks/electrical/voltage-drop \
+  --model gpt-4.1-mini \
+  --harness direct \
+  --reviewer-model gpt-4.1-mini
+```
+
+Use `--reviewer-models-config PATH` for multiple or custom endpoints. Add `--fail-on-reviewer-error` only when an incomplete reviewer stage must fail the run.
+
+The stage writes request, per-model review, evaluation, and summary artefacts beside the run. On import, its summary is stored under `EvaluationResult.breakdown["llm_reviewer"]`. It does not change `reward` and it does not create a human `Annotation`.
+
+## Structured review
+
+Human judgement is recorded separately as data attached to a trial:
+
+```python
+class Annotation(StrictModel):
+    reviewer_id: str
+    reviewer_discipline: str | None
+    timestamp: datetime
+    judgment: Judgment
+    categories: list[str]
+    notes: str | None
+```
+
+An annotation can pass, fail, or defer. It does not overwrite the **automated reward**.
+Keeping both values makes verifier-reviewer disagreement visible and auditable.
+Human annotations are not the same records as optional LLM reviewer findings.
+
+Use structured categories for recurring issues such as:
+
+- incorrect engineering method;
+- right answer for the wrong reason;
+- ambiguous task wording;
+- verifier tolerance or parser defect;
+- missing or contradictory evidence; and
+- unsupported professional claim.
+
+Free-form notes explain the judgement but should not replace the machine-readable
+category.
+
+## Calibration
+
+Reviewer calibration should use a shared sample with known disagreements. Track:
+
+- agreement before adjudication;
+- category-level confusion;
+- discipline and experience where relevant;
+- changes to the rubric or verifier; and
+- the revision under which each annotation was made.
+
+When a rubric changes, retain earlier annotations against their original revision.
+Re-reviewing creates a new record rather than silently replacing history.
+
+## Reporting
+
+Every reported metric derives from identified trial, evaluation, and review records and filters.
+
+Different audiences need different projections:
+
+| Audience | Useful view |
+|---|---|
+| Engineers | Task evidence, verifier details, traces, and reviewer notes |
+| Researchers | Aggregate metrics, uncertainty, exclusions, and experiment identity |
+| Decision makers | Scope, headline results, limitations, and material failure modes |
+| Public readers | Reproducible aggregate claims without private task material |
+
+## Holdout protection
+
+Reviewers may see holdout-sensitive evidence that must not enter public reports,
+training data, model-visible feedback, or task-generation prompts.
+
+Keep these planes separate:
+
+- full private review evidence;
+- allowlisted public aggregates;
+- task-author feedback;
+- model-visible development feedback; and
+- training-visible examples.
+
+An annotation derived from a sealed target remains **holdout-sensitive** even when its
+text does not quote the target. Categories and aggregate publication rules must be
+chosen before the holdout is opened.
+
+## Continuous improvement
+
+Review can trigger changes to:
+
+- task instructions and fixtures;
+- verifier logic and tolerances;
+- task taxonomy;
+- agent-harness observability; or
+- public documentation.
+
+Those changes produce new versions and new evidence. Historical trial records remain
+immutable, so benchmark improvement does not rewrite the result that exposed the
+problem.
+
+See [Scoring](/docs/evaluation/scoring) for the verifier contract,
+[Traces](/docs/evaluation/traces) for execution evidence, and
+[Classification](/docs/evaluation/classification) for automated behavioural analysis.

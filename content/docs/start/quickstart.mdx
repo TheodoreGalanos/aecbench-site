@@ -1,59 +1,57 @@
 ---
 title: Quickstart
-description: The quickstart is a short path from a fresh checkout to generating a task, running a local trial, and evaluating the imported ledger.
+description: The quickstart is a short path from a fresh install to generating a task, running a local trial, and evaluating the imported ledger.
 ---
 
-This walkthrough uses the source checkout because it is the current public setup
-path while the package release is being prepared.
+This walkthrough uses the published package for the shortest path to a local trial.
+Use the source checkout when you are changing aec-bench itself.
 
 ## Prerequisites
 
 - Python 3.13 or later
-- [uv](https://docs.astral.sh/uv/) for dependency management
 - An LLM provider key for the model you run, unless you only generate and validate tasks
 
 ## Install
 
 ```bash
-git clone https://github.com/TheodoreGalanos/aec-bench.git
-cd aec-bench
-uv sync --dev
-uv run aec-bench --help
+pip install "aec-bench[local-agents]"
+aec-bench --help
 ```
 
-In a source checkout, run commands through `uv run` so the local package code and
-dependencies stay aligned.
+The base package is provider-free. The `local-agents` extra adds the model-backed harnesses used in this walkthrough. Contributors who are changing aec-bench itself should use the [source installation](/docs/start/installation#from-source) and run commands through `uv run`.
 
 ## Generate
 
 List the built-in templates and generate one deterministic task instance:
 
 ```bash
-uv run aec-bench generate list-templates --discipline electrical
+aec-bench generate list-templates --discipline ground
 
-uv run aec-bench generate task voltage-drop \
+aec-bench generate task terzaghi-bearing-capacity \
   --instances 1 \
   --difficulty easy \
   --seed 42 \
+  --start-index 0 \
+  --visibility public \
   --output tasks/generated
 ```
 
-Generated instances are normal task directories: instruction, task config, verifier files, and provenance linking the instance back to its template and seed.
+Generated instances are normal task directories: instruction, task config, verifier files, and generation provenance. Deterministic identity binds the template source digest, seed, stable instance index, difficulty, and visibility.
 
 ## Validate
 
 Before treating a task as benchmark material, validate its structure and verifier:
 
 ```bash
-uv run aec-bench task validate \
-  tasks/generated/electrical/cable-sizing/voltage-drop/sydney-suburban-residential-lighting-00
+aec-bench task validate \
+  tasks/generated/ground/shallow-foundations/terzaghi-bearing-capacity/perth-coastal-medium-dense-sand-00
 ```
 
-For template work, validate the source template rather than only the generated instance:
+In a source checkout, validate the source template rather than only the generated instance:
 
 ```bash
 uv run aec-bench generate validate-template \
-  src/aec_bench/templates/builtin/electrical/voltage_drop
+  src/aec_bench/templates/builtin/ground/terzaghi_bearing_capacity
 ```
 
 ## Run
@@ -61,11 +59,11 @@ uv run aec-bench generate validate-template \
 Run one task locally with a real model. The local runner copies the task into a temporary workspace, executes the selected harness, verifies the result, and imports the trial unless you opt out.
 
 ```bash
-export ANTHROPIC_API_KEY="..."
+export OPENAI_API_KEY="..."
 
-uv run aec-bench run-local \
-  tasks/generated/electrical/cable-sizing/voltage-drop/sydney-suburban-residential-lighting-00 \
-  --model claude-sonnet-4-20250514 \
+aec-bench run-local \
+  tasks/generated/ground/shallow-foundations/terzaghi-bearing-capacity/perth-coastal-medium-dense-sand-00 \
+  --model gpt-4.1-mini \
   --harness direct
 ```
 
@@ -76,21 +74,8 @@ Use `--harness rlm` for a recursive-language-model harness, or `--keep-workspace
 The local runner imports the trial under the `local` experiment id unless you opt out:
 
 ```bash
-uv run aec-bench evaluate --experiment local
-uv run aec-bench evaluate --experiment local --report report.html
+aec-bench evaluate --experiment local
+aec-bench evaluate --experiment local --report report.html
 ```
 
-For a repeatable benchmark slice, freeze tasks into a dataset, generate an experiment config, then run that config:
-
-```bash
-uv run aec-bench dataset create \
-  --name electrical-v1 \
-  --version 1.0.0 \
-  --domain electrical
-
-uv run aec-bench dataset config electrical-v1@1.0.0 \
-  --model claude-sonnet-4-20250514 \
-  --output experiment.yaml
-
-uv run aec-bench run --config experiment.yaml
-```
+For a repeatable benchmark slice, freeze tasks into a dataset and run the resulting experiment through a configured backend. See [Datasets](/docs/advanced/datasets) and [Backends](/docs/advanced/backends).

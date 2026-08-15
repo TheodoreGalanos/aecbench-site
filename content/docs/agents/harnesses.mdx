@@ -5,7 +5,9 @@ description: Agent harnesses define how a model attempts a task, from a single d
 
 An agent harness is the strategy used to drive a model during a task. It answers practical questions: does the model get one call or many, can it use tools, does it keep persistent state, and is the output assembled by a structured workflow?
 
-AECBench currently ships four built-in agent harnesses: `direct`, `tool_loop`, `rlm`, and `lambda-rlm`. They share an internal `Adapter` interface, so the benchmark runner can schedule, execute, score, and compare them through the same trial pipeline. That does not mean every harness is equally suitable for every task. A task with mandatory source lookup or shell execution will usually need a tool-capable harness.
+aec-bench exposes six local harness names: `direct`, `tool_loop`, `pydantic_ai`, `rlm`, `lambda-rlm`, and `prime-agent`. `pydantic_ai` selects the PydanticAI-backed tool loop. `prime-agent` launches the separately installed Prime Agent executable. The other names select repository-owned execution strategies.
+
+They share an internal `Adapter` boundary, so the benchmark runner can schedule, execute, score, and compare them through the same trial pipeline. That does not mean every harness is suitable for every task. A task with mandatory source lookup or shell execution usually needs a tool-capable harness.
 
 ## The protocol
 
@@ -53,8 +55,10 @@ class AdapterResult:
 |---------|-------|-------|----------|
 | **Direct** | 1 | none | Classification, extraction, simple generation |
 | **Tool Loop** | N | Whitelist | Shell execution, search, general tool use |
+| **PydanticAI** | N | Whitelist | Explicit alias for the PydanticAI-backed tool loop |
 | **RLM** | Recursive | Python REPL | Iterative analysis, long-context work |
 | **Lambda-RLM** | Structured phases | Template pipeline | Reports, scopes, and known document workflows |
+| **Prime Agent** | External process | Prime runtime | Artefact tasks through the upstream Prime Agent executable |
 
 ## Direct
 
@@ -87,6 +91,8 @@ Tool Loop enforces the task's tool whitelist. A request for a tool that was not 
 
 The optional advisor tool is configured separately. When enabled, it is an explicit harness capability, not a task-declared tool.
 
+Select `pydantic_ai` when you need the explicit public alias for this PydanticAI-backed path. It uses the same bounded tool-loop strategy and output contract.
+
 A typical turn sequence for the voltage-drop task:
 
 ```
@@ -98,7 +104,7 @@ assistant: [writes /workspace/output.jsonl]
 
 ## RLM (Recursive Language Model)
 
-RLM is based on [Recursive Language Models](https://arxiv.org/abs/2512.24601) (Zhang, Kraska, Khattab, 2025). In AECBench, it gives the model a sandboxed Python REPL, persistent scratchpad, helper functions, and optional compaction for long runs.
+RLM is based on [Recursive Language Models](https://arxiv.org/abs/2512.24601) (Zhang, Kraska, Khattab, 2025). In aec-bench, it gives the model a sandboxed Python REPL, persistent scratchpad, helper functions, and optional compaction for long runs.
 
 ```toml
 # rlm.toml
@@ -166,6 +172,25 @@ Current Lambda-RLM runs can use:
 
 Lambda-RLM trades free-form exploration for repeatable extraction and composition. It is a poor fit for open-ended tasks where the agent must decide the workflow from scratch.
 
+## Prime Agent
+
+Prime Agent is an external-process harness. aec-bench stages the task, starts the upstream executable in JSON mode, and then uses the normal output, verifier, evaluation, and ledger-import path.
+
+```bash
+pip install aec-bench
+# Install upstream Prime Agent separately so prime-agent is on PATH.
+
+aec-bench run-local tasks/<task> \
+  --harness prime-agent \
+  --model anthropic/<model-id>
+```
+
+Each trial uses isolated Prime configuration and session directories. Ambient skills, extensions, prompt templates, themes, and context files are disabled. Provider credentials can still be inherited by the process.
+
+Prime Agent executes model-generated code with the current user's operating-system permissions. Trial isolation improves reproducibility; it is not a security sandbox. Use an externally contained execution path for untrusted task packages.
+
+The ACP integration also supports bounded sessions for selected [Interactive Worlds](/docs/core/interactive-worlds) and finite lifecycles. That path needs the `prime-agent` extra. See [Prime Agent](/docs/agents/prime-agent) for those boundaries.
+
 ## Tools
 
 Task-declared tools use the `ToolSpec` contract:
@@ -209,7 +234,6 @@ The evaluation pipeline treats any `failure_kind` as a structural failure. The r
 Runs can emit a structured JSONL trajectory, usually at `/workspace/trajectory.jsonl` inside the staged workspace. Entries are validated as `TrajectoryEntry` records:
 
 ```jsonl
-{"version": 1, "format": "aec-bench-trajectory"}
 {"role": "system", "step": 0, "content": "..."}
 {"role": "user", "step": 1, "content": "Calculate voltage drop..."}
 {"role": "assistant", "step": 2, "content": "I'll run the calculation..."}
@@ -217,4 +241,4 @@ Runs can emit a structured JSONL trajectory, usually at `/workspace/trajectory.j
 {"role": "tool_result", "step": 2, "tool_name": "bash", "stdout": "V_drop = 5.2V", "exit_code": 0}
 ```
 
-Because trajectory entries are flushed during execution, a crashed run can still leave a readable partial trace. Trajectories feed trace inspection and behavioural classification (see [Evaluation](/docs/evaluation/scoring)).
+Each non-empty line is one `TrajectoryEntry`. There is no format header. Because entries are flushed during execution, a crashed run can still leave a readable partial trace. Trajectories feed trace inspection and behavioural classification (see [Evaluation](/docs/evaluation/scoring)).

@@ -1,4 +1,4 @@
 {
   "title": "Core",
-  "pages": ["architecture", "contracts", "tasks", "templates"]
+  "pages": ["architecture", "contracts", "tasks", "templates", "lifecycles", "interactive-worlds", "contributing"]
 }

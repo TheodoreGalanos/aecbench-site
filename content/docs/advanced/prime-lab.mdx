@@ -11,13 +11,13 @@ aec-bench classifies tasks into conservative Prime lanes:
 
 | AEC-Bench task shape | Prime environment shape | Status |
 |----------------------|-------------------------|--------|
-| Plain tasks without workspace or tool requirements | `SingleTurnEnv` package | Local and hosted eval, and hosted training |
+| Plain single-turn tasks | `SingleTurnEnv` package | Local and hosted eval, and hosted training |
 | Tasks with tools, workspace manifests, Compose files, or RLM/lambda-RLM policy | Stateful workspace package | Local and hosted eval, and hosted training |
 | A task package that mixes plain and stateful tasks | Stateful workspace package for every selected task | Local and hosted eval, and hosted training |
 | Materialised public evidence lifecycles | Persistent `StatefulToolEnv` package | Local eval only |
 | Multi-environment training suites | Difficulty-filtered environment views with Prime buffer ratios | Generated through `prime train-config` |
 
-The key invariant is that the original task verifier still decides reward. Prime changes the evaluation substrate, not the task's definition of correctness.
+The original task verifier still decides reward; Prime changes only the evaluation substrate.
 
 General task exports accept public tasks only. They record each task's content revision and visibility, and keep verifier files outside the actor workspace.
 
@@ -50,11 +50,11 @@ uv run aec-bench prime export \
   --harness-mode auto
 ```
 
-Generated packages default to `prime-rl/environments/`. They are local build artefacts and should be regenerated from source tasks rather than edited by hand.
+Generated packages default to `prime-rl/environments/`. They are local build artefacts; regenerate them from source tasks when changes are required.
 
 With the default `--harness-mode auto`, plain tasks use the single-turn environment. If any selected task needs the stateful workspace, every task in that generated package uses the stateful environment.
 
-Generated environments accept `split`, `difficulty`, `num_examples`, `seed`, and `harness`. Selection applies difficulty, deterministic split, seeded shuffle, then `num_examples`. Training and evaluation slices do not overlap when enough tasks exist; very small slices remain intact for smoke tests.
+Generated environments accept `split`, `difficulty`, `num_examples`, `seed`, and `harness`. Selection applies difficulty, deterministic split, seeded shuffle, then `num_examples`. Training and evaluation slices are disjoint when enough tasks exist; very small slices remain intact for smoke tests.
 
 ## Smoke test
 
@@ -81,7 +81,7 @@ uv run aec-bench prime export-lifecycle \
 
 Repeat `--package` to include more lifecycles. The generated package keeps absolute references to the source packages and checks their content hashes before each rollout. One rollout owns one complete lifecycle and one persistent conversation; the task lifecycle verifier remains the sole reward authority.
 
-Lifecycle exports are local only. They do not support Hub push, hosted execution, training, continual learning, or transfer claims. Use the general `prime export` path for supported hosted task evaluation and training.
+Lifecycle exports support local evaluation only. These exports do not support continual-learning or transfer claims. Use the general `prime export` path for hosted task evaluation and training.
 
 ## Push
 
@@ -97,7 +97,7 @@ uv run aec-bench prime push \
 
 Private visibility is the safe default while validating reward behaviour and task selection.
 
-Do not push a package created by `prime export-lifecycle`; that lane is explicitly local only.
+Push packages created by the general `prime export` path. Keep `prime export-lifecycle` packages local.
 
 ## Hosted eval
 
@@ -132,11 +132,11 @@ uv run aec-bench prime eval \
   --difficulty medium
 ```
 
-Use `--env-arg KEY=VALUE` for additional `load_environment(...)` arguments that are not first-class CLI flags yet.
+Use `--env-arg KEY=VALUE` for additional `load_environment(...)` arguments beyond the current first-class CLI flags.
 
 ## Adapter eval
 
-Prime evaluates base models and hosted-training adapters through the same environment boundary. The adapter used for inference must be a deployed Prime inference adapter, not a raw training checkpoint id.
+Prime evaluates base models and hosted-training adapters through the same environment boundary. Adapter inference requires a deployed Prime inference adapter; a training checkpoint id identifies a different record.
 
 List available adapter deployments:
 
@@ -164,7 +164,7 @@ uv run aec-bench prime eval \
   --eval-name aec-electrical-adapter-medium
 ```
 
-aec-bench composes the Prime model string as `<base-model>:<adapter-id>`. To avoid mixing checkpoint ids and deployment ids, resolve the adapter directly from a hosted training run:
+aec-bench composes the Prime model string as `<base-model>:<adapter-id>`. To keep checkpoint ids and deployment ids distinct, resolve the adapter directly from a hosted training run:
 
 ```bash
 uv run aec-bench prime eval \
@@ -233,8 +233,8 @@ block with that difficulty passed to `load_environment(...)`. The ratio flags
 are mutually exclusive with repeated `--difficulty`, which still means one
 environment view that allows multiple difficulties. `--online-difficulty-filtering`
 adds Prime's adaptive buffer thresholds; retaining some easy and hard examples
-helps noisy AEC reward surfaces avoid collapsing into only already-solved
-examples or only zero-signal failures.
+helps keep noisy AEC reward buffers balanced across already-solved examples and
+zero-signal failures.
 
 Launch training through Prime:
 
@@ -242,7 +242,7 @@ Launch training through Prime:
 uv run aec-bench prime train train.toml --yes
 ```
 
-Before scaling a training run, run a one-example hosted eval and inspect reward, stop conditions, and tool-call metrics. Small evals are smoke tests, not benchmark claims.
+Before scaling a training run, run a one-example hosted eval and inspect reward, stop conditions, and tool-call metrics. Treat small evals as smoke tests; benchmark claims require the full evaluation controls.
 
 After training finishes, use `aec-bench prime adapters` to find the deployed inference adapter before running adapter evals. Training checkpoint ids and deployed inference adapter ids are different Prime records.
 
@@ -255,7 +255,7 @@ uv run aec-bench import-prime-eval <prime-eval-id> \
   --experiment prime-eval-medium-stateful
 ```
 
-The importer writes one `TrialRecord` per Prime sample plus local artefacts under the ledger: `conversation.jsonl`, the raw `prime_sample.json`, and `output.md` when the rollout called `submit_answer` with submitted content. It does not replace Prime's hosted result; it materialises the result locally so the rest of aec-bench can inspect it.
+The importer writes one `TrialRecord` per Prime sample plus local artefacts under the ledger: `conversation.jsonl`, the raw `prime_sample.json`, and `output.md` when the rollout called `submit_answer` with submitted content. It preserves Prime's hosted result and materialises the result locally so the rest of aec-bench can inspect it.
 
 Provider completion, truncation, and errors are mapped independently from reward. A sample can have a reward and still be partial or failed, so use the imported status and stop condition together with the verifier score.
 
@@ -275,12 +275,12 @@ Use the same import-and-report path for base and adapter evals. For comparison r
 
 ## What to inspect
 
-For stateful AEC-Bench exports, inspect more than mean reward:
+For stateful AEC-Bench exports, inspect mean reward together with:
 
 - Whether the rollout calls `submit_answer`
 - Whether file and command tools are actually used when expected
 - Runtime errors versus verifier disagreement
-- Per-example reward rows, so one task does not hide the aggregate
+- Per-example reward rows alongside the aggregate
 - Token budget and max-turn behaviour for RLM-style tasks
 
 The Prime path should remain explicit: select the task slice, export it, smoke it, run a small hosted eval, import the hosted rollouts, inspect behaviour, then scale.

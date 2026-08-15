@@ -23,7 +23,7 @@ uv run aec-bench init my-bench
 uv run aec-bench init --update-skills
 ```
 
-`--update-skills` refreshes the packaged skills in `.claude/skills/` and `.agents/skills/` without rebuilding the rest of an existing project.
+`--update-skills` refreshes the packaged skills in `.claude/skills/` and `.agents/skills/` while preserving the rest of an existing project.
 
 ### `config`
 
@@ -63,7 +63,7 @@ Useful options:
 
 | Flag | Purpose |
 |------|---------|
-| `--template PATH` | Generate from a local template directory instead of a built-in name |
+| `--template PATH` | Generate from the template in a local directory |
 | `--instances N` | Number of instances to create |
 | `--difficulty easy,medium` | Comma-separated difficulty filter |
 | `--seed N` | Reproducible sampling seed |
@@ -164,7 +164,7 @@ Run an experiment manifest:
 uv run aec-bench run --config experiment.yaml --tasks-root tasks
 ```
 
-For a config-backed run, the manifest owns the model, harness, backend, and repetitions. CLI overrides are limited to `--tasks-root`, `--dry-run`, `--no-verify`, and the reviewer options.
+For a config-backed run, the manifest owns the model, harness, backend, and repetitions. The accepted CLI overrides are `--tasks-root`, `--dry-run`, `--no-verify`, and the reviewer options.
 
 For an inline run, supply a task path and model:
 
@@ -180,7 +180,7 @@ The inline form also accepts `--tasks-root`, `--dry-run`, `--no-verify`, and rev
 
 ### `run-local`
 
-Run one task without Docker or Harbor:
+Run one task through the local runner:
 
 ```bash
 uv run aec-bench run-local tasks/electrical/voltage-drop \
@@ -270,7 +270,7 @@ uv run aec-bench meta-harness process "Create a diagnostic task." --brief brief.
 uv run aec-bench meta-harness autonomous --task-text "Create a diagnostic task." --brief brief.json --world world.json --max-iterations 3
 ```
 
-The command group is pauseable: missing briefs, worlds, task runs, operation plans, and governance decisions become `awaiting_*` states rather than fabricated defaults. Use `--emit-run-plan` on `intake-models`, `world-models`, `review-models`, and `operation-models` to validate endpoint configuration before calling providers.
+The command group is pauseable: briefs, worlds, task runs, operation plans, and governance decisions that require input enter `awaiting_*` states. Use `--emit-run-plan` on `intake-models`, `world-models`, `review-models`, and `operation-models` to validate endpoint configuration before calling providers.
 
 It also exposes provider-free comparison and evidence-lifecycle surfaces:
 
@@ -291,7 +291,7 @@ uv run aec-bench meta-harness lifecycle-status \
   --run-dir lifecycle-run
 ```
 
-Use the lifecycle commands to control checkpoints or run typed ablation and calibration-freeze studies. They do not replace the task verifier.
+Use the lifecycle commands to control checkpoints or run typed ablation and calibration-freeze studies; the task verifier remains authoritative.
 
 See [Meta-Harness Runtime](/docs/advanced/meta-harness-runtime) for the two-loop process and governance boundaries.
 
@@ -344,10 +344,9 @@ uv run aec-bench swarm run swarm.yaml
 uv run aec-bench swarm history
 ```
 
-The CLI lists `status`, `resume`, and `stop`, but they are not operational
-process controls. `status` reads the flat event log, while `resume` and `stop`
-only print messages. Keep `swarm run` attached and do not rely on those commands
-to stop paid work or resume a run.
+The CLI lists `status`, `resume`, and `stop` as informational commands. `status`
+reads the flat event log, while `resume` and `stop` print messages. Keep `swarm run`
+attached for process supervision; these commands cannot stop paid work or resume a run.
 
 See [Evolution](/docs/advanced/evolution) and [Swarm](/docs/advanced/swarm).
 
@@ -388,4 +387,4 @@ The CLI uses conventional exit codes:
 | `1` | User error, missing file, validation failure, or runtime failure depending on command |
 | `2+` | Typer/Click argument parsing and command invocation failures |
 
-When scripting, prefer `--json` where supported and branch on the returned `status`, `data`, and `errors` fields rather than only the numeric process code.
+When scripting, prefer `--json` where supported. Branch on the returned `status`, `data`, and `errors` fields for detailed control, and use the numeric process code for the overall outcome.

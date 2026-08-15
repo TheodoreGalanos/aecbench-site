@@ -9,7 +9,7 @@ Use the source checkout when you are changing aec-bench itself.
 ## Prerequisites
 
 - Python 3.13 or later
-- An LLM provider key for the model you run, unless you only generate and validate tasks
+- An LLM provider key for model-backed runs; generation and validation are provider-free
 
 ## Install
 
@@ -47,7 +47,7 @@ aec-bench task validate \
   tasks/generated/ground/shallow-foundations/terzaghi-bearing-capacity/perth-coastal-medium-dense-sand-00
 ```
 
-In a source checkout, validate the source template rather than only the generated instance:
+In a source checkout, also validate the source template:
 
 ```bash
 uv run aec-bench generate validate-template \
@@ -56,7 +56,7 @@ uv run aec-bench generate validate-template \
 
 ## Run
 
-Run one task locally with a real model. The local runner copies the task into a temporary workspace, executes the selected harness, verifies the result, and imports the trial unless you opt out.
+Run one task locally with a real model. The local runner copies the task into a temporary workspace, executes the selected harness, verifies the result, and imports the trial by default.
 
 ```bash
 export OPENAI_API_KEY="..."
@@ -71,7 +71,7 @@ Use `--harness rlm` for a recursive-language-model harness, or `--keep-workspace
 
 ## Evaluate
 
-The local runner imports the trial under the `local` experiment id unless you opt out:
+By default, the local runner imports the trial under the `local` experiment id:
 
 ```bash
 aec-bench evaluate --experiment local

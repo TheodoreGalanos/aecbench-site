@@ -7,7 +7,7 @@ An agent harness is the strategy used to drive a model during a task. It answers
 
 aec-bench exposes six local harness names: `direct`, `tool_loop`, `pydantic_ai`, `rlm`, `lambda-rlm`, and `prime-agent`. `pydantic_ai` selects the PydanticAI-backed tool loop. `prime-agent` launches the separately installed Prime Agent executable. The other names select repository-owned execution strategies.
 
-They share an internal `Adapter` boundary, so the benchmark runner can schedule, execute, score, and compare them through the same trial pipeline. That does not mean every harness is suitable for every task. A task with mandatory source lookup or shell execution usually needs a tool-capable harness.
+They share an internal `Adapter` boundary, so the benchmark runner can schedule, execute, score, and compare them through the same trial pipeline. Harness suitability depends on the task's required capabilities. A task with mandatory source lookup or shell execution usually needs a tool-capable harness.
 
 ## The protocol
 
@@ -62,7 +62,7 @@ class AdapterResult:
 
 ## Direct
 
-Direct makes one model call and returns one response. It is the right baseline for tasks where the instruction contains enough context for the model to answer without external files or computation.
+Direct makes one model call and returns one response. It is the right baseline for self-contained tasks.
 
 ```python
 result = direct_adapter.execute(
@@ -87,7 +87,7 @@ model = "claude-sonnet-4"
 max_turns = 12
 ```
 
-Tool Loop enforces the task's tool whitelist. A request for a tool that was not declared fails the run with `undeclared_tool_request` (`AdapterFailureKind.UNDECLARED_TOOL_REQUEST` in Python). This makes tool access part of the benchmark contract instead of something the model can invent mid-run.
+Tool Loop enforces the task's tool whitelist. A request for a tool that was not declared fails the run with `undeclared_tool_request` (`AdapterFailureKind.UNDECLARED_TOOL_REQUEST` in Python). This makes tool access part of the benchmark contract.
 
 The optional advisor tool is configured separately. When enabled, it is an explicit harness capability, not a task-declared tool.
 
@@ -125,11 +125,11 @@ Key features:
 - **Compaction**: when context approaches `compaction_threshold_pct`, older turns can be summarised while preserving variables, scratchpad entries, and template progress.
 - **Guardrails**: `token_budget`, `max_iterations`, `max_subcall_depth`, and optional budget caps keep long runs bounded.
 
-Use RLM when the model needs to inspect documents in chunks, run calculations, preserve intermediate state, or recover from partial progress without starting over.
+Use RLM when the model needs to inspect documents in chunks, run calculations, preserve intermediate state, or resume from partial progress.
 
 ## Lambda-RLM
 
-Lambda-RLM is a structured report workflow rather than a free-form tool loop. It is designed for tasks where the output shape is known before the run starts: scopes, compliance reports, design notes, fee proposals, and other templated technical documents.
+Lambda-RLM follows a fixed, structured report workflow. It is designed for tasks where the output shape is known before the run starts: scopes, compliance reports, design notes, fee proposals, and other templated technical documents.
 
 The high-level phases are:
 
@@ -241,4 +241,4 @@ Runs can emit a structured JSONL trajectory, usually at `/workspace/trajectory.j
 {"role": "tool_result", "step": 2, "tool_name": "bash", "stdout": "V_drop = 5.2V", "exit_code": 0}
 ```
 
-Each non-empty line is one `TrajectoryEntry`. There is no format header. Because entries are flushed during execution, a crashed run can still leave a readable partial trace. Trajectories feed trace inspection and behavioural classification (see [Evaluation](/docs/evaluation/scoring)).
+The first non-empty line is a `TrajectoryEntry`, and each later non-empty line uses the same schema. Because entries are flushed during execution, a crashed run can still leave a readable partial trace. Trajectories feed trace inspection and behavioural classification (see [Evaluation](/docs/evaluation/scoring)).

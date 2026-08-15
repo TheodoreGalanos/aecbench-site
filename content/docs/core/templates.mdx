@@ -100,7 +100,7 @@ description = "Circuit type"
 values = ["single_phase", "three_phase"]
 ```
 
-Supported parameter types include `float`, `int`, and `enum`. Templates can also use archetype-derived values so generated cases remain realistic rather than random-but-implausible.
+Supported parameter types include `float`, `int`, and `enum`. Templates can also use archetype-derived values so generated cases follow realistic parameter correlations.
 
 ## Archetypes
 
@@ -143,8 +143,7 @@ The built-in convention is:
 | `hard` | Wider context, hidden values, richer unit handling, or more opportunities for wrong assumptions |
 
 The visibility setting can be `all_given`, `partial`, or `scenario_only`.
-`scenario_only` marks a task that relies on rendered scenario context instead
-of exposing all raw parameters. The template still declares which parameters
+`scenario_only` presents inputs through rendered scenario context. The template still declares which parameters
 remain visible, while the engine and verifier retain the exact sampled values.
 
 ## `instruction.md`
@@ -196,7 +195,7 @@ def compute(
     }
 ```
 
-Good engines are pure functions over sampled parameters. They should not call model APIs, inspect the generated prompt, depend on local machine state, or rely on unstated intent or prose-only judgement.
+Good engines are pure functions over sampled parameters. Deterministic constants and lookup values belong in the content-bound template source. Model APIs, rendered prompts, local machine state, unstated intent, and prose-only judgement remain outside the engine.
 
 ## Generating instances
 
@@ -230,7 +229,7 @@ uv run aec-bench generate suite --config suite.toml --dry-run
 uv run aec-bench generate suite --config suite.toml
 ```
 
-Each generated instance records its template source digest, seed, stable instance index, difficulty, visibility, and sampled values. Those fields define deterministic identity, so repeated generation does not depend on wall-clock time.
+Each generated instance records its template source digest, seed, stable instance index, difficulty, visibility, and sampled values. Those fields define deterministic identity across repeated generations, regardless of when each instance is materialised.
 
 ## Built-in template scope
 
@@ -239,7 +238,7 @@ The built-in templates are strongest when the engineering contract is explicit:
 - Deterministic calculations with numeric or categorical inputs
 - Stable formulae, embedded lookup tables, or clearly bounded reductions of a design method
 - Outputs with concrete tolerances
-- Verifiers that can score mechanically without relying on unstated intent or prose-only judgement
+- Verifiers that score mechanically from explicit rules
 
 Tasks are deferred rather than templated when they depend on open-ended document review, hidden standards tables, iterative solvers without a reduced contract, or broad design judgement that has not been made explicit.
 

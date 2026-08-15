@@ -3,7 +3,7 @@ title: Adaptive Harnesses
 description: How aec-bench separates the fixed execution kernel, agent-harness configuration, and execution program for governed comparison and repair.
 ---
 
-Most package users do not need to manage kernel fingerprints. Select an agent harness and use the normal run commands. This page is for researchers and maintainers who need governed candidate comparison, replayable repair, or experimental isolation across execution structures.
+Most package users can select an agent harness and use the normal run commands; kernel fingerprints are for governed adaptive experiments. This page is for researchers and maintainers who need governed candidate comparison, replayable repair, or experimental isolation across execution structures.
 
 Adaptive harness experiments separate three objects that are easy to blur together:
 
@@ -11,20 +11,20 @@ Adaptive harness experiments separate three objects that are easy to blur togeth
 - the selected agent-harness configuration; and
 - the program that schedules task attempts.
 
-The compact notation is **K / Hx / px**. These are library contracts, not names for
-research phases or claims that the system has learned a better harness.
+The compact notation is **K / Hx / px**. These identify three library contracts;
+learned-harness claims require separate evidence.
 
 ## Fixed kernel
 
 The **fixed kernel** (`K`) is the versioned code allowed to execute in an adaptive run. Its identity records the kernel version and a digest of the executable source it owns.
 
-Documentation, research notes, task results, and unrelated library modules are not part of the kernel only because they share a checkout. If executable kernel code changes, its identity changes. A candidate configuration or program cannot silently change it.
+Kernel membership follows executable ownership, independent of a shared checkout. Executable kernel changes produce a new identity, and candidates remain bound to the recorded identity.
 
 ## Harness instance
 
 The **Harness instance** (`Hx`) is the content-addressed configuration of the agent
 harness used for a candidate. It selects declared agent bindings and their bounded
-runtime settings without importing arbitrary code.
+runtime settings while executable code remains in the fixed kernel.
 
 Typical fields include:
 
@@ -34,8 +34,8 @@ Typical fields include:
 - declared capabilities and output requirements; and
 - the kernel reference against which the instance was validated.
 
-An `Hx` change is therefore an explicit experimental treatment. It is not a hidden
-environment variable or an in-place mutation of the incumbent run.
+An `Hx` change is therefore an explicit experimental treatment recorded separately
+from the incumbent run.
 
 ## Execution program
 
@@ -49,7 +49,7 @@ A program can express bounded patterns such as:
 - a coalesced batch operation; or
 - a final output-commit step.
 
-Programs do not contain import hooks, provider clients, or arbitrary Python.
+Programs contain validated task-operation graphs composed from fixed-kernel primitives.
 
 ## K / Hx / px
 
@@ -65,9 +65,8 @@ fixed K
   -> imported TrialRecord and receipts
 ```
 
-Within a comparison, changing `Hx` should not change `px`; changing `px` should not
-change `Hx`; neither should mutate `K`. The task snapshot, verifier, seeds, repetitions,
-and shared budget must also remain explicit.
+Vary either `Hx` or `px` in one comparison while holding the other and `K` fixed. The
+task snapshot, verifier, seeds, repetitions, and shared budget must also remain explicit.
 
 ## Compilation and execution
 
@@ -80,12 +79,12 @@ The compiler fails closed before execution when a candidate:
 - cannot bind every execution dependency to the frozen identities.
 
 Successful compilation produces an immutable run bundle. Harbor remains the execution
-substrate: adaptive machinery does not bypass normal task packaging, workspace
-isolation, verifier execution, output collection, or trial import.
+substrate, and adaptive runs continue through normal task packaging, workspace
+isolation, verifier execution, output collection, and trial import.
 
 ## Evidence and authority
 
-Candidate code may propose a configuration or program, but it does not own acceptance.
+The host owns acceptance; candidate code may propose a configuration or program.
 The host records:
 
 - proposal and compilation identities;
@@ -95,9 +94,8 @@ The host records:
 - task outcomes and infrastructure failures; and
 - the authority decision that allowed any promotion or repair.
 
-Task failure and evidence-system failure remain distinct. Missing receipts, broken
-imports, or unavailable infrastructure cannot be scored as evidence that one candidate
-is worse.
+Task failure and evidence-system failure remain distinct. Candidate comparison requires
+complete receipts, valid imports, and available infrastructure.
 
 ## Repair and optimisation
 
@@ -108,6 +106,5 @@ Repair and optimisation are separate uses of the same contracts:
 - **optimisation** compares a frozen proposal set even when the incumbent is already
   valid.
 
-Neither path demonstrates learning merely because it can select, patch, or compare
-candidates. Claims about learned policies or transfer require separate, preregistered
-evidence.
+Claims about learned policies or transfer require separate, preregistered evidence
+beyond candidate selection, patching, or comparison.

@@ -28,7 +28,7 @@ backend = "modal"
 
 All paths are relative to the project root. Omitted keys fall back to the defaults above.
 
-The `aec-bench config` CLI manages the per-user JSON defaults for paths. Project TOML can also set `compute.backend`, but the current `run` command does not use that loaded value as its backend default. Set `compute.backend` in `experiment.yaml`, or pass `--backend` for an inline run.
+The `aec-bench config` CLI manages per-user JSON path defaults. Project TOML stores path defaults and may contain `compute.backend`; config-backed runs select the backend from `experiment.yaml`, and inline runs use `--backend`.
 
 ## `task.toml` — per task
 
@@ -111,19 +111,19 @@ disable_verification: false
 
 The `model` field supports `$ENV_VAR` expansion. The manifest parser accepts `harness` as the public synonym for the internal `adapter` field; generated YAML may still contain `adapter`.
 
-The current runner applies resolved dataset task IDs, patterns, domain, and difficulty as intersections. It does not enforce `lifecycle_filter`, and an unresolved dataset reference falls through to the other selectors. Run `dataset validate` first and inspect the dry-run plan before a dataset-backed experiment.
+The current runner applies resolved dataset task IDs, patterns, domain, and difficulty as intersections. `lifecycle_filter` is currently informational, and the other selectors determine the task set when a dataset reference is unresolved. Run `dataset validate` first and inspect the dry-run plan before a dataset-backed experiment.
 
-`compute.timeout_override` is a sibling of `resource_limits`, not a member of that mapping. It overrides the per-task trial timeout.
+`compute.timeout_override` sits alongside `resource_limits` and overrides the per-task trial timeout.
 
 The optional `reviewer` block runs after deterministic verification:
 
 | Option | Meaning |
 |--------|---------|
 | `models` | One or more reviewer endpoints. Each can set `base_url`, `base_url_env`, `api_key_env`, `temperature`, `max_tokens`, and `stream_mode`. |
-| `required` | Controls whether an enabled reviewer with no configured models causes an error or a skipped stage. |
+| `required` | Controls whether an enabled reviewer requires at least one configured model. |
 | `fail_on_error` | Controls whether a reviewer execution error fails the run. |
 
-Reviewer findings do not replace verifier rewards or human annotations.
+Reviewer findings are separate from verifier rewards and human annotations.
 
 ## Harness configs
 
@@ -280,7 +280,7 @@ The `templates.include` entries match each template's logical `discipline/name` 
 
 ## Dataset manifest
 
-Dataset manifests are **generated** by `aec-bench dataset create`, not hand-written. The structure is still worth knowing for tooling:
+Create dataset manifests with `aec-bench dataset create`. The generated structure is useful for tooling:
 
 ```json
 {

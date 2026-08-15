@@ -26,11 +26,11 @@ class AdvisorResponse:
     reasoning: str              # why this suggestion
 ```
 
-The advisor returns guidance only. It does not write output files or invoke tools. The agent decides what to do with the response.
+The advisor returns guidance; the agent retains control of output files, tools, and action selection.
 
 ## Configuration
 
-Advisor settings live in the harness config, not the task:
+Advisor settings belong to the harness config:
 
 ```toml
 [advisor]
@@ -86,13 +86,13 @@ AdvisorResponse(
 )
 ```
 
-A fallback response means the trial continues without useful guidance; the zero confidence indicates the advice should be ignored.
+A zero-confidence fallback lets the trial continue under the agent's own judgement.
 
 ## When to use it
 
 The advisor pays off when the base model is fast and cheap but stumbles on strategic choices, such as a Haiku executor with Sonnet as the coach. Two signals that it is worth wiring up:
 
 - Your agent consistently makes **early wrong-direction choices** that ripple into the rest of the trial
-- The cheap model is **competent at execution** but chooses poorly; raising its ceiling matters more than raising its throughput
+- The cheap model **executes competently** and benefits most from better strategic choices
 
-For a strong base model, the advisor is usually overkill. Spend the tokens on longer turn budgets. For a weak base model, the advisor can lift a task's success rate at a fraction of the cost of upgrading the executor.
+For a strong base model, spend the tokens on longer turn budgets. For a weak base model, the advisor can lift a task's success rate at a fraction of the cost of upgrading the executor.

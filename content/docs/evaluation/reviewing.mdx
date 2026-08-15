@@ -4,7 +4,7 @@ description: How optional LLM review, structured human review, reporting, and ho
 ---
 
 Automated verification supplies the score. Review and reporting preserve disagreement,
-uncertainty, and provenance without changing that reward.
+uncertainty, and provenance while the automated reward remains fixed.
 
 ## Optional post-verifier LLM review
 
@@ -20,9 +20,9 @@ uv run aec-bench run-local tasks/electrical/voltage-drop \
   --reviewer-model gpt-4.1-mini
 ```
 
-Use `--reviewer-models-config PATH` for multiple or custom endpoints. Add `--fail-on-reviewer-error` only when an incomplete reviewer stage must fail the run.
+Use `--reviewer-models-config PATH` for multiple or custom endpoints. Add `--fail-on-reviewer-error` to make an incomplete reviewer stage fail the run.
 
-The stage writes request, per-model review, evaluation, and summary artefacts beside the run. On import, its summary is stored under `EvaluationResult.breakdown["llm_reviewer"]`. It does not change `reward` and it does not create a human `Annotation`.
+The stage writes request, per-model review, evaluation, and summary artefacts beside the run. On import, its summary is stored under `EvaluationResult.breakdown["llm_reviewer"]`. `reward` remains the verifier value, and human review uses `Annotation`.
 
 ## Structured review
 
@@ -38,9 +38,9 @@ class Annotation(StrictModel):
     notes: str | None
 ```
 
-An annotation can pass, fail, or defer. It does not overwrite the **automated reward**.
+An annotation can pass, fail, or defer. The automated reward remains the verifier result.
 Keeping both values makes verifier-reviewer disagreement visible and auditable.
-Human annotations are not the same records as optional LLM reviewer findings.
+Human annotations and optional LLM reviewer findings use separate record types.
 
 Use structured categories for recurring issues such as:
 
@@ -51,8 +51,8 @@ Use structured categories for recurring issues such as:
 - missing or contradictory evidence; and
 - unsupported professional claim.
 
-Free-form notes explain the judgement but should not replace the machine-readable
-category.
+Use the machine-readable category for classification and free-form notes for
+explanation.
 
 ## Calibration
 
@@ -65,7 +65,7 @@ Reviewer calibration should use a shared sample with known disagreements. Track:
 - the revision under which each annotation was made.
 
 When a rubric changes, retain earlier annotations against their original revision.
-Re-reviewing creates a new record rather than silently replacing history.
+Re-reviewing creates a new record and preserves history.
 
 ## Reporting
 
@@ -78,7 +78,7 @@ Different audiences need different projections:
 | Engineers | Task evidence, verifier details, traces, and reviewer notes |
 | Researchers | Aggregate metrics, uncertainty, exclusions, and experiment identity |
 | Decision makers | Scope, headline results, limitations, and material failure modes |
-| Public readers | Reproducible aggregate claims without private task material |
+| Public readers | Reproducible aggregate claims from allowlisted public material |
 
 ## Holdout protection
 
@@ -93,9 +93,9 @@ Keep these planes separate:
 - model-visible development feedback; and
 - training-visible examples.
 
-An annotation derived from a sealed target remains **holdout-sensitive** even when its
-text does not quote the target. Categories and aggregate publication rules must be
-chosen before the holdout is opened.
+Holdout sensitivity follows provenance: every annotation derived from a sealed target
+remains **holdout-sensitive**, including summaries and paraphrases. Choose categories
+and aggregate publication rules before opening the holdout.
 
 ## Continuous improvement
 
@@ -108,8 +108,8 @@ Review can trigger changes to:
 - public documentation.
 
 Those changes produce new versions and new evidence. Historical trial records remain
-immutable, so benchmark improvement does not rewrite the result that exposed the
-problem.
+immutable, and benchmark improvements produce new evidence linked to the result that
+exposed the problem.
 
 See [Scoring](/docs/evaluation/scoring) for the verifier contract,
 [Traces](/docs/evaluation/traces) for execution evidence, and

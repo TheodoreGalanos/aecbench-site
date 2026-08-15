@@ -3,7 +3,7 @@ title: Evolution
 description: Evolution is a closed-loop system that mutates an agent workspace, mainly its system prompt and skill library, based on trial failures.
 ---
 
-Evolution improves the workspace an agent reads. The base model does not change; prompts and skills change under version control, then each candidate workspace is evaluated against tasks.
+Evolution improves the workspace an agent reads. Evolution holds the base model fixed; prompts and skills change under version control, then each candidate workspace is evaluated against tasks.
 
 Use single-workspace evolution when you want a controlled hill-climb. Use [Swarm](/docs/advanced/swarm) when you want multiple agents exploring a quality-diversity frontier.
 
@@ -70,9 +70,9 @@ uv run aec-bench evolve run --config evolution.yaml --tasks-root tasks
 uv run aec-bench evolve history workspaces/voltage-drop-evo
 ```
 
-Pass `--tasks-root` for task-backed evolution. Without it, `evolve run` does not evaluate the tasks selected in the YAML file, and its output is not benchmark evidence.
+Pass `--tasks-root` to bind the YAML selectors to runnable tasks. Task-backed benchmark evidence requires this binding; other runs exercise the evolution workflow and produce diagnostic output.
 
-Rollback is non-destructive: it restores an older tag as a new workspace version rather than deleting history.
+Rollback restores an older tag as a new workspace version and preserves history.
 
 ```bash
 uv run aec-bench evolve rollback workspaces/voltage-drop-evo evo-20260404-1220-2
@@ -80,7 +80,7 @@ uv run aec-bench evolve rollback workspaces/voltage-drop-evo evo-20260404-1220-2
 
 ## Mutations
 
-The evolver emits structured workspace edits, not free-form rewriting:
+The evolver emits these structured workspace edits:
 
 ```python
 @dataclass(frozen=True)
@@ -103,7 +103,7 @@ The default strategy is hill-climbing: mutate from the best-scoring workspace se
 
 Evolution delegates solving through the same harness boundary as normal experiments. A candidate workspace can be evaluated locally during development and on a larger backend when the loop needs scale.
 
-The invariant is that the task verifier remains the reward authority. Evolution may change how the agent reasons, but it must not change what counts as correct for the task.
+The task verifier remains the reward authority. Evolution changes prompts and skills while the base model and task correctness stay fixed.
 
 ## When to use it
 

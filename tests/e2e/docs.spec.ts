@@ -52,13 +52,31 @@ test.describe('Documentation', () => {
   });
 
   test('renders the architecture flow diagram', async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 900 });
     await page.goto('/docs/core/architecture');
     await expect(page.getByTestId('benchmark-run-flow')).toBeVisible();
     await expect(page.getByTestId('core-domains')).toBeVisible();
+    await expect(
+      page.getByText(
+        'aec-bench supports artefact tasks and Interactive Worlds through shared authoring, evaluation, evidence, and reporting boundaries.',
+        { exact: true },
+      ),
+    ).toHaveCount(0);
     await expect(
       page.getByRole('img', {
         name: /benchmark run flow from define task through aggregate and report/i,
       }),
     ).toBeVisible();
+
+    const desktopFlow = page.getByTestId('core-domains-desktop');
+    const evaluationBox = await desktopFlow.getByText('Evaluation & task verification', { exact: true }).boundingBox();
+    const evidenceBox = await desktopFlow.getByText('Trial & evidence records', { exact: true }).boundingBox();
+    const reportsBox = await desktopFlow.getByText('CLI, TUI, web & reports', { exact: true }).boundingBox();
+
+    expect(evaluationBox).not.toBeNull();
+    expect(evidenceBox).not.toBeNull();
+    expect(reportsBox).not.toBeNull();
+    expect(evaluationBox!.y + evaluationBox!.height).toBeLessThan(evidenceBox!.y);
+    expect(evidenceBox!.y + evidenceBox!.height).toBeLessThan(reportsBox!.y);
   });
 });

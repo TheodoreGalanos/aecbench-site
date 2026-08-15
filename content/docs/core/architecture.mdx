@@ -6,7 +6,7 @@ description: aec-bench supports artefact tasks and Interactive Worlds through sh
 import { BenchmarkRunFlow } from '@/components/docs/benchmark-run-flow';
 import { CoreDomains } from '@/components/docs/core-domains';
 
-aec-bench has two execution families. They share experiment identity, agent and provider configuration, resource limits, evaluation, provenance, and reporting. They do not force different task types through one low-level runtime.
+aec-bench has two execution families. They share experiment identity, agent and provider configuration, resource limits, evaluation, provenance, and reporting. Each task family retains its own low-level runtime.
 
 <CoreDomains />
 
@@ -25,29 +25,29 @@ An artefact task gives an agent an instruction and an execution environment. The
 | **Score** | The task verifier supplies task-owned reward and diagnostic evidence; evaluation validates it and interprets validity |
 | **Aggregate** | The result enters the append-only ledger and becomes available to reports and review tools |
 
-Templates and suites produce deterministic task instances before this flow starts. Generated identity binds the template source digest, seed, stable instance index, difficulty, and visibility. The time at which the task was materialised does not change its identity.
+Templates and suites produce deterministic task instances before this flow starts. Generated identity binds the template source digest, seed, stable instance index, difficulty, and visibility. This identity remains stable regardless of when the instance is materialised.
 
 See [Tasks](/docs/core/tasks) and [Templates](/docs/core/templates) for the authoring path.
 
 ## Interactive Worlds
 
-An Interactive World repeatedly shows an actor-visible observation and accepts an action that changes task-owned state. This is a better fit when the benchmark needs causal decisions over time instead of one final workspace submission.
+An Interactive World repeatedly shows an actor-visible observation and accepts an action that changes task-owned state. Interactive Worlds suit causal decisions over time; artefact tasks cover a final workspace submission.
 
 The boundary is deliberately small:
 
 - the world owns state, observations, action meaning, transitions, domain termination, and evaluation;
 - the episode host owns decision correlation, recording, accepted-step advancement, limits, and truncation; and
-- evaluation runs outside the live transition.
+- evaluation runs after the live transition completes.
 
 The current catalogue contains wastewater pump-station stewardship and dam-seepage monitoring. Both use the same episode host, but each defines its own state, actions, persistence, and provider integration.
 
-Persistence, recovery, host controls, branching, rollouts, staged evidence, and provider integration are optional capabilities. A new world does not acquire them only because the pump-station world uses them.
+Persistence, recovery, host controls, branching, rollouts, staged evidence, and provider integration are optional capabilities. Add these capabilities when the world requires them.
 
 See [Interactive Worlds](/docs/core/interactive-worlds) for the contributor-facing model.
 
 ## Finite lifecycles
 
-A finite lifecycle is a third coordination shape, not a third task execution family. It declares a bounded sequence of evidence stages before execution. The task owns each stage's objective, visible evidence, required result, and verifier rules. The host owns release, progression, failure, and finalisation.
+A finite lifecycle is a third coordination shape within the existing task execution families. It declares a bounded sequence of evidence stages before execution. The task owns each stage's objective, visible evidence, required result, and verifier rules. The host owns release, progression, failure, and finalisation.
 
 Use a lifecycle when the work has known stages and controlled evidence release. Use an Interactive World when actions change an ongoing causal state. Use an artefact task when one workspace or submission is sufficient.
 
@@ -58,17 +58,17 @@ See [Finite Lifecycles](/docs/core/lifecycles).
 | Concern | Owner | Boundary |
 |---------|-------|----------|
 | Task meaning | Task, template, lifecycle, or world | Keeps engineering inputs, actions, and verifier rules together |
-| Orchestration | Harness, lifecycle host, or episode host | Applies limits and records identity without interpreting task semantics |
-| Agent execution | Agent harness and provider integration | Translates model and tool protocols without selecting benchmark policy |
+| Orchestration | Harness, lifecycle host, or episode host | Applies limits and records identity; task owners retain task semantics |
+| Agent execution | Agent harness and provider integration | Translates model and tool protocols; task and evaluation owners retain benchmark policy |
 | Evaluation | Evaluation | Owns reward, validity, breakdowns, behavioural analysis, and review evidence; task verifiers supply task-owned evidence |
 | Durable evidence | Ledger and producing domain | Stores immutable trial, dataset, and content-addressed evidence records |
-| Presentation | CLI, TUI, web, and reports | Projects established results without defining a second metric |
+| Presentation | CLI, TUI, web, and reports | Projects metrics defined by evaluation |
 
 ### Local and remote execution
 
-`run-local` executes one artefact task without Harbor. Production local execution selects from a fixed set of agent-harness builders; it does not expose a mutable adapter registry.
+`run-local` executes one artefact task on the local host. Production local execution selects from a fixed set of agent-harness builders.
 
-`run` lowers an experiment to the one Harbor dispatch-and-import workflow. Docker, Modal, Morph, e2b, and Daytona are Harbor environment backends. They are not separate benchmark runtimes.
+`run` lowers an experiment to the one Harbor dispatch-and-import workflow. Docker, Modal, Morph, e2b, and Daytona are Harbor environment backends.
 
 Prime is separate from Harbor. Prime Lab exports public artefact tasks into packages for hosted evaluation and training. Its finite-lifecycle export is local-only and keeps references to the source packages and checkout. Prime Agent runs the upstream executable directly for local artefact tasks or through bounded ACP sessions for supported Interactive Worlds.
 
@@ -80,18 +80,18 @@ See [Execution Backends](/docs/advanced/backends), [Prime Lab](/docs/advanced/pr
 
 `OutputRecord` separates normal termination from host truncation and records the final reason. `CostRecord` owns model calls, token and cache use, advisor use, and estimated cost. Attached artefacts use SHA-256-bound `ArtifactReference` values.
 
-`trajectory.jsonl` is an ordered stream of validated entries. It has no format header. Provider transcripts remain separate only when their producing boundary needs the exact representation.
+`trajectory.jsonl` contains one validated entry per non-empty line, starting with the first line. Provider transcripts remain separate only when their producing boundary needs the exact representation.
 
-Accepted trial evidence and published datasets are immutable. Internal source code, temporary workspaces, and service objects are not append-only records.
+Accepted trial records are append-only; published dataset versions are immutable.
 
 ## Dependency direction
 
-Dependencies follow ownership instead of a permanent numbered hierarchy:
+Dependencies follow ownership:
 
-- task definitions and task worlds do not import providers;
-- shared world-runtime code does not import a concrete world;
-- orchestration can depend on task and execution boundaries without taking over task semantics;
-- evaluation consumes verifier evidence, while persistence does not define evaluation policy; and
+- task definitions and task worlds remain provider-neutral;
+- shared world-runtime code remains independent of concrete worlds;
+- orchestration can depend on task and execution boundaries while task owners retain task semantics;
+- evaluation owns policy and consumes verifier evidence, while persistence stores the resulting records; and
 - CLI, TUI, web, and reports compose lower-level capabilities.
 
 Pydantic models sit at untrusted, external, persisted, or cross-process boundaries. Normal Python values are enough inside one owner.

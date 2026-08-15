@@ -5,7 +5,7 @@ description: A trace is the per-turn trajectory plus the TrialRecord that preser
 
 ## The trajectory
 
-During execution, an agent harness can append to `/workspace/trajectory.jsonl`. The file contains one `TrajectoryEntry` JSON object per non-blank line. There is no separate format header:
+During execution, an agent harness can append to `/workspace/trajectory.jsonl`. The file starts with a `TrajectoryEntry`, and every non-blank line uses that schema:
 
 ```jsonl
 {"step": 0, "role": "system", "content": "You are a senior electrical engineer...", "timestamp": "2026-08-15T01:02:03.000Z"}
@@ -55,7 +55,7 @@ The record captures the main inputs needed to reproduce the run:
 - **Input record**: instruction, optional system prompt, and input file references
 - **Environment snapshot**: runtime image, compute backend, and tool versions when available
 
-If any of these change later, the new run should produce a different record rather than mutating the old one.
+If any of these change later, the new run should produce a different record and preserve the old record.
 
 ## Completeness
 
@@ -66,7 +66,7 @@ Trial records have two states:
 | `partial` | Some required provenance is missing. The record can still support diagnostics. |
 | `complete` | Sealed after evaluation with the required provenance for its run type. |
 
-Complete records must include `agent.adapter_revision`, `environment.tool_versions`, and `inputs.input_files`. Partial records are useful for debugging, but they should not back a leaderboard number.
+Complete records must include `agent.adapter_revision`, `environment.tool_versions`, and `inputs.input_files`. Partial records are useful for debugging. Reserve leaderboard claims for complete records.
 
 Lifecycle records also require paired execution and provenance fields. Episode and meta-harness artefacts must be included in `outputs.artifacts` when their references are present.
 
@@ -91,7 +91,7 @@ These fields support cost-efficiency views and make advisor-heavy runs visible d
 
 ## The ledger
 
-Ledger trial records are append-only. Once written, a trial record should not be modified. New information attaches through new records or review artefacts that reference the original `trial_id`.
+Ledger trial records are append-only. Once written, a trial record remains immutable. New information attaches through new records or review artefacts that reference the original `trial_id`.
 
 ## Imported Prime rollouts
 

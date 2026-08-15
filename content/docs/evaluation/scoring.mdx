@@ -42,7 +42,7 @@ The optional `details.json` carries the per-dimension breakdown:
 
 ## Reward rollup
 
-`reward.json` is the authoritative trial reward. Artefact ingestion does not recompute the reward from `details.json`; it reads the reward, validates it, and stores `details.json` as `EvaluationResult.breakdown`.
+`reward.json` is the authoritative trial reward. Artefact ingestion reads and validates this reward, then stores `details.json` as `EvaluationResult.breakdown`.
 
 For tasks that need rubric-style scoring, verifier code or judge pipelines can call the rubric scorer before writing artefacts. The scorer normalises each dimension to `score / max_score`, clamps it to `[0, 1]`, and combines dimensions with a rollup strategy:
 
@@ -51,7 +51,7 @@ For tasks that need rubric-style scoring, verifier code or judge pipelines can c
 | `weighted_mean` (default) | `sum(normalised * weight) / sum(weight)` | Balanced judgement across fields |
 | `min` | Worst dimension wins | A single wrong field should fail the task |
 
-Rubric rewards round to 4 decimals and must land in `[0.0, 1.0]`. If a verifier writes `reward.json` directly without a rubric, that value is used as-is after validation.
+Rubric rewards round to 4 decimals and must land in `[0.0, 1.0]`. If a verifier writes `reward.json` directly, that value is used as-is after validation.
 
 ## Validity gates
 
@@ -90,7 +90,7 @@ class EvaluationResult(StrictModel):
     stewardship: StewardshipEvaluation | None  # optional interactive-world evaluation
 ```
 
-`stewardship` carries the integrity gates, metrics, and evidence identities for supported stewardship worlds. It is absent from ordinary artefact-task results.
+`stewardship` carries the integrity gates, metrics, and evidence identities for supported stewardship worlds. The field is reserved for supported stewardship-world results.
 
 ## Error taxonomy
 
@@ -103,7 +103,7 @@ class ErrorTag(StrictModel):
     source: ErrorSource        # mechanical | human | judge
 ```
 
-Tasks define their own categories; there is no fixed taxonomy. `source` tracks whether the classification came from the runner, a reviewer, or an automated judge.
+Tasks define their own categories. `source` tracks whether the classification came from the runner, a reviewer, or an automated judge.
 
 ## Annotations
 
@@ -119,7 +119,7 @@ class Annotation(StrictModel):
     notes: str | None
 ```
 
-These do not overwrite the automated reward. They sit alongside it, so disagreement between a reviewer and a verifier stays visible on the record.
+`Annotation` records sit alongside the automated reward, so disagreement between a reviewer and a verifier stays visible on the record.
 
 ## Conditional evidence
 
@@ -127,8 +127,8 @@ Conditional evidence is experimental, and no registered lifecycle uses it. Evide
 
 ## Descriptive holdout results
 
-Holdout summaries describe results under a frozen condition; they do not define a second score. Keep full holdout records private and publish only allowlisted aggregates.
+Holdout summaries describe results under a frozen condition; the task verifier remains the single score authority. Keep full holdout records private and publish only allowlisted aggregates.
 
 ## Determinism
 
-Mechanical verifier scoring should be deterministic: the same agent output should produce the same reward. When human review or judge-based classification is used, record the extra uncertainty in `confidence`, `annotations`, and `error_taxonomy` rather than hiding it inside an unexplained reward. See [Classification](/docs/evaluation/classification).
+Mechanical verifier scoring should be deterministic: the same agent output should produce the same reward. When human review or judge-based classification is used, record the extra uncertainty explicitly in `confidence`, `annotations`, and `error_taxonomy`. See [Classification](/docs/evaluation/classification).

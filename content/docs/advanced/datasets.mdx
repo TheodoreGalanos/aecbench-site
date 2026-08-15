@@ -51,9 +51,9 @@ Hashes apply at two levels:
 1. **Task hash** — SHA-256 over the task directory's sorted file paths and contents, excluding `__pycache__` directories and `.pyc` files.
 2. **Dataset hash** — SHA-256 over the sorted `task_id:content_hash` pairs for all included tasks.
 
-`dataset create` writes both fields as raw 64-character lowercase hexadecimal digests. The values do not include a `sha256:` prefix.
+`dataset create` writes both fields as exactly 64 lowercase hexadecimal characters.
 
-If a verifier changes, the task hash changes. If a task is added, removed, or changed, the dataset hash changes. Dataset name, version, description, creation time, and source metadata are not part of the dataset content hash.
+If a verifier changes, the task hash changes. If a task is added, removed, or changed, the dataset hash changes. Only the sorted `task_id:content_hash` pairs contribute to the dataset content hash.
 
 ## Creating a dataset
 
@@ -99,7 +99,7 @@ uv run aec-bench dataset config electrical-v1@1.0.0 \
 uv run aec-bench run --config experiment.yaml
 ```
 
-This validation is a separate required gate. The current `run` selector uses task IDs from a dataset that it can resolve, but it does not compare the live task hashes with the manifest. If the dataset reference cannot be resolved, selection falls through to the other task filters instead of failing closed.
+This validation is a separate required gate. `dataset validate` owns live task-hash comparison, while the current `run` selector uses task IDs from a dataset that it can resolve. If the dataset reference is unresolved, the other task filters determine selection.
 
 Manual experiment manifests can also reference a dataset:
 
@@ -109,7 +109,7 @@ tasks:
   difficulties: ["medium", "hard"]
 ```
 
-When the dataset resolves, additional filters are intersections on top of its task IDs, not replacements.
+When the dataset resolves, additional filters intersect with its task IDs.
 
 ## Inspecting and moving datasets
 
@@ -122,7 +122,7 @@ uv run aec-bench dataset export electrical-v1@1.0.0 --output electrical-v1.tar.g
 uv run aec-bench dataset import electrical-v1.tar.gz
 ```
 
-`dataset validate` exits non-zero if files are missing or drifted from the recorded hashes. Run it explicitly before `aec-bench run`; the run command does not perform this check for you.
+`dataset validate` owns the hash-integrity check and exits non-zero when files are missing or drifted from the recorded hashes. Run it explicitly before `aec-bench run`.
 
 ## Versioning policy
 
@@ -130,8 +130,8 @@ Use semver-like discipline:
 
 | Change | Bump |
 |--------|------|
-| Add tasks without changing existing task content | minor |
+| Add tasks while preserving existing task content | minor |
 | Change task instructions, verifiers, fixtures, or environment | major |
 | Edit non-scoring metadata only | patch |
 
-The practical rule is simple: if a previous reward is no longer comparable, create a new major dataset version.
+The practical rule is simple: whenever reward comparability changes, create a new major dataset version.

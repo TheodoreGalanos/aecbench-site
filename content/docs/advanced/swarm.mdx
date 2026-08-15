@@ -3,7 +3,7 @@ title: Swarm
 description: Swarm runs multi-agent quality-diversity evolution over agent workspaces, sharing discoveries through a common archive.
 ---
 
-`aec-bench swarm` runs several evolution agents in parallel. Each agent mutates its own workspace, while a shared quality-diversity archive preserves different high-performing strategies instead of collapsing everything into one hill-climb.
+`aec-bench swarm` runs several evolution agents in parallel. Each agent mutates its own workspace, while a shared quality-diversity archive preserves different high-performing strategies across the search.
 
 ## When to use it
 
@@ -12,7 +12,7 @@ Use swarm when:
 - A single evolution run keeps converging on one local strategy.
 - You want diversity across cost, verification depth, tool use, exploration, deliberation, and reward.
 - You have enough budget for parallel evaluation.
-- You can review archive entries rather than blindly promoting the single top score.
+- You can review archive entries before promoting a candidate.
 
 Use [Evolution](/docs/advanced/evolution) for a simpler one-workspace loop.
 
@@ -75,19 +75,19 @@ _swarm_runs/
 └── summary.json
 ```
 
-`events.jsonl` records observed events. The other files are separately persisted snapshots; the public CLI cannot rebuild the full archive, graveyard, or lineage from the event log.
+`events.jsonl` records observed events and supports event-log history. Full state lives in the separately persisted archive, graveyard, and lineage snapshots.
 
-The current output layout is flat, not one directory per run ID. A later run in the same workspace uses the same snapshot paths and appends to the same event log. Use a separate workspace when runs must remain isolated.
+The current output layout uses one flat state directory. A later run in the same workspace uses the same snapshot paths and appends to the same event log. Use a separate workspace when runs must remain isolated.
 
 ## Current control limitations
 
-The CLI lists `status`, `resume`, and `stop`, but they are not operational controls yet:
+The CLI lists `status`, `resume`, and `stop` as informational commands:
 
-- `status` replays the single `events.jsonl` in `--state-dir`. It does not inspect a live process, and its `run-id` argument does not select or filter a run.
-- `resume` checks for an event log and prints a message. It does not rebuild a manager or restart agents.
-- `stop` prints a message. It does not signal a running swarm or wait for in-flight evaluations.
+- `status` replays the single `events.jsonl` in `--state-dir`; its `run-id` argument is currently informational.
+- `resume` checks for an event log and prints a message.
+- `stop` prints a message.
 
-Do not use these commands for process supervision. Interrupting `swarm run` stops the foreground process, but it is not a graceful checkpointed stop and the CLI cannot resume that run. `history` is also only a read-only event-log view; it is not a per-run control surface with the current flat output layout.
+Process supervision uses the attached `swarm run` process. Interrupting it stops the foreground process, but it is not a graceful checkpointed stop and the current CLI cannot resume the run. `history` provides a read-only view of the shared event log.
 
 ## How coordination works
 
@@ -104,7 +104,7 @@ The manager updates a shared archive and gives agents archive context before sub
 
 ## Behaviour descriptors
 
-The quality-diversity archive indexes candidates by behaviour, not just reward:
+The quality-diversity archive indexes candidates by behaviour and reward:
 
 | Descriptor | What it captures |
 |------------|------------------|
@@ -133,6 +133,6 @@ Costs depend heavily on adapter, model, task length, and verification behaviour.
 
 ## Pivot heartbeat
 
-If an agent records too many non-improving evaluations, the manager injects a pivot instruction. The point is to avoid spending the remaining budget on tiny variants of a stuck strategy.
+If an agent records too many non-improving evaluations, the manager injects a pivot instruction to direct the remaining budget towards materially different strategies.
 
-Use pivoting as a guardrail, not as proof of quality. Archive entries still need normal inspection and evaluation before being treated as benchmark-relevant improvements.
+Use pivoting as a guardrail. Normal inspection and evaluation establish whether an archive entry is a benchmark-relevant improvement.

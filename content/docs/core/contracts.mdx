@@ -5,7 +5,7 @@ description: Contracts define the validated data that crosses task, execution, e
 
 import { ContractsFlow } from '@/components/docs/contracts-flow';
 
-Contracts sit at real trust boundaries: imported task material, provider results, cross-process calls, and persisted evidence. They do not require every internal Python value to become a Pydantic model.
+Contracts sit at real trust boundaries: imported task material, provider results, cross-process calls, and persisted evidence. Ordinary Python values remain suitable inside one owner.
 
 The common artefact-task path connects four contracts:
 
@@ -30,9 +30,9 @@ task/
     └── verify.py
 ```
 
-`TaskDefinition` does not try to model every task output. Task-specific meaning remains with the task and its verifier.
+Task-specific output meaning remains with the task and its verifier.
 
-Executable Interactive Worlds use a registered world definition and profile instead of pretending to be a static `TaskDefinition`. Both task families can enter the same experiment, evaluation, evidence, and reporting layers.
+Executable Interactive Worlds use a registered world definition and profile; static artefact tasks use `TaskDefinition`. Both task families can enter the same experiment, evaluation, evidence, and reporting layers.
 
 ### Lifecycle and visibility
 
@@ -44,7 +44,7 @@ Task catalogue status and evidence progression are separate concepts.
 | **Visibility** | `public`, `holdout` | Whether task material can enter public or protected surfaces |
 | **Evidence lifecycle** | task-owned checkpoints | Which evidence stage is active during one bounded run |
 
-Visibility is explicit. A missing visibility value is unknown; it is not silently treated as public.
+Visibility is explicit. A missing visibility value remains unknown and blocks publication.
 
 ## AgentOutput — what came back
 
@@ -71,7 +71,7 @@ The harness reports completion and location. Evaluation owns parsing and scoring
 - attributable human annotations; and
 - registered task-specific evaluation extensions.
 
-Invalid or unparseable output cannot receive a positive reward. Reports consume the stored result; they do not recalculate a competing score.
+A positive reward requires valid, parseable output. Reports use the stored result as the scoring authority.
 
 The verifier remains task-owned. It can retain detailed evidence in a task-specific artefact while the shared result carries the normalised outcome.
 
@@ -98,7 +98,7 @@ class TrialRecord(StrictModel):
 
 Optional provenance can bind a finite lifecycle, Interactive World episode, or meta-harness study to the same trial.
 
-Both complete and partial records can enter the append-only ledger. A complete record must carry the provenance needed for its execution family. A partial record remains visibly partial; import code must not manufacture missing evidence.
+Both complete and partial records can enter the append-only ledger. A complete record must carry the provenance needed for its execution family. Import code records the available evidence and marks the record partial when required provenance is absent.
 
 Once accepted, a trial record is immutable. Temporary workspaces and internal builders remain replaceable implementation.
 
@@ -119,7 +119,7 @@ class OutputRecord(StrictModel):
     final_reason: NonEmptyStr | None
 ```
 
-A result cannot be both terminated and truncated. Provider completion, truncation, and error facts determine execution status independently of reward.
+Termination and truncation are mutually exclusive. Provider completion, truncation, and error facts determine execution status independently of reward.
 
 ### Artefact integrity
 
@@ -133,7 +133,7 @@ class ArtifactReference(StrictModel):
     media_type: NonEmptyStr
 ```
 
-The SHA-256 value must match the referenced bytes. A path alone is not evidence integrity.
+The SHA-256 value must match the referenced bytes.
 
 ### Cost tracking
 
@@ -144,11 +144,11 @@ The SHA-256 value must match the referenced bytes. A path alone is not evidence 
 - advisor calls and advisor tokens; and
 - estimated cost in USD.
 
-Open-ended provider metadata can retain diagnostics, but reports do not reconstruct aggregate usage from it.
+Open-ended provider metadata can retain diagnostics. Reports use `CostRecord` for aggregate usage.
 
 ## Trajectory entries
 
-`trajectory.jsonl` is an ordered stream of `TrajectoryEntry` values. Each non-empty line is one validated entry. There is no format header.
+`trajectory.jsonl` contains one validated `TrajectoryEntry` per non-empty line, starting with the first line.
 
 Entries can carry the role, content, tool or command details, output, timing, media, and structured metadata for one step. Each object must match the current entry schema.
 
@@ -158,7 +158,7 @@ Provider transcripts remain separate when an external or sealed workflow require
 
 `EvidenceLifecycleSpec` declares an ordered set of checkpoints. The task owns instructions, released evidence, submissions, and verification. The host owns the active checkpoint and accepted progression.
 
-Lifecycle run records keep session identity, execution mode, memory visibility, status, usage, and content-bound artefacts. The final trial references that evidence rather than copying it into a second state model.
+Lifecycle run records keep session identity, execution mode, memory visibility, status, usage, and content-bound artefacts. The final trial references that evidence, while lifecycle state remains in its producing record.
 
 See [Finite Lifecycles](/docs/core/lifecycles).
 
@@ -166,7 +166,7 @@ See [Finite Lifecycles](/docs/core/lifecycles).
 
 A registered world definition binds an exact executable build and profile to task-owned state, observation, action, transition, and evaluation functions. The episode host adds decisions, recording, limits, termination, and truncation.
 
-A world episode can enter a trial through one verified episode artefact. Shared trial fields do not duplicate task-owned snapshots, transitions, or replay facts.
+A world episode can enter a trial through one verified episode artefact. Shared trial fields reference task-owned snapshots, transitions, and replay facts through that artefact.
 
 See [Interactive Worlds](/docs/core/interactive-worlds).
 

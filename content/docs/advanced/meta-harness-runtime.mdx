@@ -3,7 +3,7 @@ title: Meta-Harness Runtime
 description: The meta-harness runtime turns task prose, run evidence, reviewer judgement, operations, and governance into a pauseable process for evolving benchmark worlds.
 ---
 
-The meta-harness runtime builds task-world descriptions and helps diagnose benchmark failures. It connects task prose, run evidence, verifier output, reviewer notes, operation plans, and governance decisions without treating a missing decision as success.
+The meta-harness runtime builds task-world descriptions and helps diagnose benchmark failures. It connects task prose, run evidence, verifier output, reviewer notes, operation plans, and governance decisions while preserving missing decisions as explicit waiting states.
 
 The runtime is a **pauseable process runner**. When a stage needs an artefact that is not available, it returns an `awaiting_*` state and the packet needed to continue. Model-backed stages are optional. A bounded autonomous supervisor can resolve waiting states when providers or queued artefacts are available, but it stops at explicit limits and governance gates.
 
@@ -16,9 +16,9 @@ The supported public entry point is `aec-bench meta-harness`.
 | **operation loop** | Inspect a task world and run evidence, then apply a declared operation or record a bounded proposal | Derived world, operation history, or proposal |
 | **governance loop** | Decide whether a proposal is local to one run or changes the world schema or generator | Run directive, rejection, or `world_generation_request` |
 
-The operation loop can be deterministic or agentic. Deterministic operations use declared handles such as projection, difference, subset, or product. An agentic proposal is appropriate when the evidence shows a real issue but the available handles cannot apply a safe deterministic change.
+The operation loop can be deterministic or agentic. Deterministic operations use declared handles such as projection, difference, subset, or product. An agentic proposal is appropriate when the evidence shows a real issue that needs a change beyond the declared deterministic handles.
 
-Governance is the only boundary that can approve schema or generator change. An operation agent can identify pressure on the world, but it cannot silently mutate future task definitions. Governance either keeps the action local to the current run or emits a fresh `world_generation_request`.
+Governance is the only boundary that can approve schema or generator change. An operation agent identifies pressure on the world and routes proposed definition changes to governance. Governance either keeps the action local to the current run or emits a fresh `world_generation_request`.
 
 ## Process shape
 
@@ -55,11 +55,11 @@ prose
 | `accepted_for_run` | Governance accepted a run-only directive |
 | `accepted_for_world_generation` | Governance approved a schema or generator repair and emitted a new request |
 
-These states make task construction and verifier debugging inspectable. Missing model output remains missing; the runtime does not insert a fake default to advance the process.
+These states make task construction and verifier debugging inspectable. Missing model output keeps the process in a waiting state until real output is available.
 
 ## Authority
 
-`aec-bench meta-harness` coordinates the process. Evaluation stays separate from operations and governance, and agents can propose changes but cannot approve them. Run evidence also remains separate from world definitions.
+`aec-bench meta-harness` coordinates the process. Evaluation stays separate from operations and governance, agents propose changes, and governance owns approval. Run evidence also remains separate from world definitions.
 
 ## Start with recipe and compare
 
@@ -73,7 +73,7 @@ uv run aec-bench meta-harness recipe \
 
 The command writes a scriptable workspace for the brief, baseline and candidate worlds, task-run evidence, model endpoint configuration, and comparison output. Existing world, run, or experiment files can be supplied when they already exist.
 
-After both evidence sets are complete, compare them without a model call:
+After both evidence sets are complete, compare them deterministically:
 
 ```bash
 uv run aec-bench meta-harness compare \
@@ -105,7 +105,7 @@ Use `autonomous` only when queued artefacts or model endpoints can resolve waiti
 
 By default, automation can accept `run_only` directives. `world_schema` and `world_generator` changes require human governance.
 
-The supervisor's selection signal combines verifier reward, logic-profile certification, reviewer completion, evidence completeness, and penalties for unresolved waits or governance churn. A higher pass rate is not enough when the task became easier or the verifier became looser.
+The supervisor's selection signal combines verifier reward, logic-profile certification, reviewer completion, evidence completeness, and penalties for unresolved waits or governance churn. A higher score is comparable only when task difficulty and verifier strictness remain stable.
 
 ## Evidence lifecycles
 
@@ -127,12 +127,12 @@ uv run aec-bench meta-harness harbor-task \
   --output operation-task
 ```
 
-The package contains `job.yaml`, `agent/input.json`, `agent/output.md`, `agent_result.json`, and `result.json`. This command only writes the package. It does not dispatch or import a trial, and there is no separate meta-harness backend or public task-run resolver API. Supply completed task-run JSON to `process` or `autonomous` through `--task-run`.
+The package contains `job.yaml`, `agent/input.json`, `agent/output.md`, `agent_result.json`, and `result.json`. `harbor-task` writes this package as the external-execution hand-off. External execution produces completed task-run JSON, which `process` or `autonomous` accepts through `--task-run`; these are the supported public hand-off surfaces.
 
 ## Verifier and reviewer authority
 
-The task verifier remains the source of task-owned scoring evidence. Evaluation owns the result. The meta-harness helps classify cases where a score alone does not explain whether the agent, parser, tolerance, or evidence schema failed.
+The task verifier remains the source of task-owned scoring evidence. Evaluation owns the result. The meta-harness helps attribute failures to agent behaviour, parsing, tolerance settings, or the evidence schema.
 
-The reviewer does not replace explicit checks. It can support a run-only note, a verifier-schema proposal, or a world-generation repair, but governance still owns any change to future task definitions. Trial records and benchmark claims remain subject to the normal provenance and repeatability controls.
+Explicit checks remain authoritative. The reviewer can support a run-only note, a verifier-schema proposal, or a world-generation repair, while governance owns any change to future task definitions. Trial records and benchmark claims remain subject to the normal provenance and repeatability controls.
 
-Use this runtime when a benchmark failure should improve the task world or its evidence boundary, rather than only score one run.
+Use this runtime when a benchmark failure should inform improvements to the task world or its evidence boundary.

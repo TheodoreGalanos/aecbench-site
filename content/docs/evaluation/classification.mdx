@@ -5,7 +5,7 @@ description: Classification tags assistant turns with behavioural bond types and
 
 ## The bond taxonomy
 
-Each assistant turn in a trajectory can be tagged with one of four bond types. The chemistry language is only an analogy; the stored values are lowercase strings:
+Each assistant turn in a trajectory can be tagged with one of four bond types. The chemistry language is an analogy; the stored values are lowercase strings:
 
 | Bond | Chemical analogue | Behavioural shape | Typical signals |
 |------|-------------------|-------------------|-----------------|
@@ -14,7 +14,7 @@ Each assistant turn in a trajectory can be tagged with one of four bond types. T
 | `deliberation` | Metallic | Deep reasoning | causal chains, committed plans, step-by-step logic |
 | `exploration` | Van der Waals | Hypothesising | hedging, alternatives, branching, open questions |
 
-High-reward traces are used to build reference transition patterns and, where useful, an ideal bond sequence. The common shape is `deliberation -> execution -> verification`, but the reference can be learned from the selected traces rather than hard-coded.
+High-reward traces are used to build reference transition patterns and, where useful, an ideal bond sequence. The common shape is `deliberation -> execution -> verification`, but the selected traces can define the reference directly.
 
 ## Turn classification
 
@@ -33,7 +33,7 @@ The loader prefers structured `trajectory.jsonl` and falls back to `conversation
 
 ## Structural scoring
 
-Individual turn tags are only part of the picture. The sequence of bonds is what characterises a run. Two metrics compare a trajectory against a reference built from high-reward trials:
+A run is characterised by its individual turn tags and their sequence. Two metrics compare a trajectory against a reference built from high-reward trials:
 
 - **Transition matrix similarity**: cosine similarity between the observed transition matrix and the reference matrix. Captures which bonds tend to follow which.
 - **Sequence edit distance**: how many insertions, deletions, and substitutions separate the observed bond sequence from the reference sequence.
@@ -54,7 +54,7 @@ class ConfidenceMetadata(StrictModel):
 
 Two standard statistical tools are useful when classifications are being calibrated against human labels:
 
-- **Cohen's kappa** measures inter-rater agreement above chance. Values above 0.8 indicate strong agreement; below 0.6 means the classification should not be trusted.
+- **Cohen's kappa** measures inter-rater agreement above chance. Values above 0.8 indicate strong agreement; values below 0.6 require recalibration before use.
 - **Wilson confidence interval** gives a binomial interval for a success rate. It behaves better than the normal approximation on small samples.
 
 ## Judgment readiness
@@ -63,9 +63,9 @@ Automated behavioural judgment should only affect aggregate analysis when the ca
 
 | Gate | Threshold | Why |
 |------|-----------|-----|
-| Annotator count | `>= 2` | Single-rater classifications cannot produce agreement stats |
+| Annotator count | `>= 2` | Agreement statistics require at least two raters |
 | Inter-rater agreement | `>= 0.8` | Low agreement means raters or the classifier are inconsistent |
-| CI width | &lt; 0.2 | Wide intervals mean the sample isn't decisive |
-| Calibration sample size | `>= 12` | Fewer than a dozen trials cannot resist one odd run |
+| CI width | &lt; 0.2 | Wide intervals indicate an inconclusive sample |
+| Calibration sample size | `>= 12` | At least 12 trials reduce the influence of one outlier |
 
-If any gate fails, keep the classification as analysis evidence but do not roll it into aggregate claims.
+If any gate fails, keep the classification as analysis evidence. Reserve aggregate claims for classifications that pass every gate.

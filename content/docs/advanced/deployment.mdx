@@ -9,7 +9,7 @@ The public `aec-bench run` flow is synchronous. The command returns after Harbor
 
 ## Where Harbor sits
 
-Harbor is the execution boundary around the task, agent harness, and verifier. It does not replace any of them.
+Harbor is the execution boundary around the task, agent harness, and verifier. Each component retains its role inside that boundary.
 
 | Layer | Responsibility |
 |-------|----------------|
@@ -49,7 +49,7 @@ A live run follows one sequence:
 6. Run the optional post-verifier reviewer.
 7. Validate and import the completed trials into the ledger.
 
-Start the sequence through the AEC-Bench command rather than invoking the generated Harbor config yourself:
+Start the sequence through the supported AEC-Bench command:
 
 ```bash
 uv run aec-bench run --config experiment.yaml
@@ -71,13 +71,13 @@ compute:
 
 Harbor service configuration stays with Harbor and the selected provider. The public manifest records the benchmark choice: backend, concurrency, and optional timeout override.
 
-Use a dry run to inspect the selected tasks and exact trial plan without dispatching a job:
+Use a dry run for planning: inspect the selected tasks and exact trial plan.
 
 ```bash
 uv run aec-bench run --config experiment.yaml --dry-run
 ```
 
-A dry run proves planning only. It does not test provider access, environment creation, agent execution, verifier execution, or import.
+A dry run proves planning only. A live run exercises provider access, environment creation, agent execution, verifier execution, and import.
 
 ## Import an existing job
 
@@ -87,14 +87,14 @@ Use `aec-bench import` when a completed Harbor job directory already exists:
 uv run aec-bench import jobs/<harbor-job-id>
 ```
 
-The importer reads the Harbor results and trial artefacts, validates their task and execution records, and writes `TrialRecord` records. Re-importing identical records reports duplicates. If the same trial identity resolves to different ledger content, the import fails instead of overwriting the existing record.
+The importer reads the Harbor results and trial artefacts, validates their task and execution records, and writes `TrialRecord` records. Re-importing identical records reports duplicates. A conflicting trial identity fails the import and preserves the existing record.
 
-Provider completion, agent failure, verifier evidence, and reviewer evidence remain distinct in the imported record. Do not treat a present result file or a completed provider job as proof that the task passed.
+Provider completion, agent failure, verifier evidence, and reviewer evidence remain distinct in the imported record. A complete, valid trial with verifier evidence establishes whether the task passed.
 
 ## Operational boundaries
 
 - Harbor creates the execution environment and runs the generated job; AEC-Bench owns planning and ledger import.
-- `aec-bench run` does not provide a detached job queue. Keep the calling process alive until Harbor returns.
-- AEC-Bench does not add a second retry or pre-emption policy around Harbor.
+- `aec-bench run` is attached. Keep the calling process alive until Harbor returns.
+- AEC-Bench adds no retry or pre-emption policy around Harbor; any such policy belongs to Harbor or the selected provider.
 - Trial provenance records the task, agent, environment, output, timing, and evaluation evidence needed for later analysis.
 - Complete, valid trial records are the basis for comparison and leaderboard aggregation.

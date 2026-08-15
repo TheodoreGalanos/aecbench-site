@@ -3,7 +3,7 @@ title: Library Catalogue
 description: The library catalogue is the versioned JSON export that lets the website display current public templates and proposed seed tasks from the aec-bench library.
 ---
 
-The catalogue is the public data bridge between the Python library and this site. It contains built templates and proposed seed tasks without exposing local run artefacts or internal task directories.
+The catalogue is the public data bridge between the Python library and this site. It contains built templates and proposed seed tasks.
 
 ## Export
 
@@ -38,7 +38,7 @@ The current upstream library export contains 352 built templates and 284 propose
 
 ## Schema
 
-The v1 export has top-level metadata, counts, templates, and seeds. This shortened example omits the per-discipline count map:
+The v1 export has top-level metadata, counts, templates, and seeds. This shortened example shows its metadata and aggregate totals:
 
 ```json
 {
@@ -73,7 +73,7 @@ Each entry includes:
 
 ## Generation identity
 
-The catalogue describes public template families. Each generated task has its own deterministic provenance: template source digest, seed, stable instance index, difficulty, and visibility. Keep those fields with the generated task so a catalogue refresh cannot silently change the identity of an existing instance.
+The catalogue describes public template families. Each generated task has its own deterministic provenance: template source digest, seed, stable instance index, difficulty, and visibility. Keep those fields with the generated task to preserve the identity of an existing instance across catalogue refreshes.
 
 ## Site sync
 
@@ -107,7 +107,7 @@ The catalogue is for public library documentation. It should describe:
 - Engineering discipline, category, standards, inputs, outputs, and difficulty
 - Reproducible generation and benchmark metadata
 
-It should not include local run outputs, private customer material, scratch workspaces, or task families that are intentionally kept outside the public benchmark surface.
+Limit the catalogue to the public benchmark surface. Keep local run outputs, private customer material, scratch workspaces, and intentionally excluded task families outside it.
 
 ## Versioning
 

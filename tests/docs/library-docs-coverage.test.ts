@@ -58,7 +58,7 @@ describe('library documentation coverage', () => {
     expect(architecture).not.toContain('seven domains');
     expect(worlds).toContain('rejection that leaves state unchanged');
     expect(worlds).toContain('Domain termination and host truncation are separate');
-    expect(lifecycles).toContain('Only one stage is active at a time');
+    expect(lifecycles).toContain('One stage is active at a time');
     expect(lifecycles).toContain('task lifecycle run-smoke');
   });
 
@@ -109,7 +109,7 @@ describe('library documentation coverage', () => {
     expect(cli).toContain('aec-bench prime export-lifecycle');
     expect(cli).not.toContain('--legacy-script');
     expect(cli).not.toContain('generate dataset');
-    expect(swarm).toContain('not operational controls yet');
+    expect(swarm).toContain('as informational commands');
     expect(swarm).toContain('`stop` prints a message');
   });
 
@@ -151,9 +151,9 @@ describe('library documentation coverage', () => {
     const datasets = readDoc('advanced/datasets.mdx');
 
     expect(datasets).toContain('sorted `task_id:content_hash` pairs');
-    expect(datasets).toContain('raw 64-character lowercase hexadecimal');
+    expect(datasets).toContain('exactly 64 lowercase hexadecimal characters');
     expect(datasets).toContain('dataset validate electrical-v1@1.0.0');
-    expect(datasets).toContain('does not compare the live task hashes');
+    expect(datasets).toContain('`dataset validate` owns live task-hash comparison');
     expect(datasets).not.toContain('"content_hash": "sha256:');
   });
 

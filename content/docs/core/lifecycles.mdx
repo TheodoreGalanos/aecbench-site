@@ -18,13 +18,13 @@ The task owns stage meaning. The lifecycle host owns progression.
 | Required submission fields | Stage advancement and failure |
 | Completion meaning and verifier rules | Finalisation and durable run state |
 
-Only one stage is active at a time. A structurally invalid result leaves the current stage and all earlier submissions unchanged. A structurally valid result is archived and completes the active stage, but this does not mean that the answer is correct. The actor cannot activate the next stage itself.
+One stage is active at a time. A structurally invalid result leaves the current stage and earlier submissions unchanged. The host archives a structurally valid result and activates the next stage; the task verifier separately determines correctness.
 
-The host marks the lifecycle complete only after it archives the terminal result. The task verifier separately checks correctness and supplies task-owned evidence.
+The host marks the lifecycle complete only after it archives the terminal result.
 
 ## Package shape
 
-`EvidenceLifecycleSpec` is the current ordered staged-evidence subtype, not the minimum contract for every finite lifecycle. It declares a lifecycle identity and ordered checkpoints. Each checkpoint names:
+`EvidenceLifecycleSpec` is the current ordered staged-evidence contract. Other finite lifecycles can define a different contract. It declares a lifecycle identity and ordered checkpoints. Each checkpoint names:
 
 - its instruction;
 - the evidence release visible at that stage;
@@ -57,7 +57,7 @@ aec-bench task lifecycle verify artefacts/lifecycles/hydraulic-review \
   --run-dir artefacts/lifecycle-runs/hydraulic-review-smoke
 ```
 
-`run-smoke` is a deterministic local proof of the package and host boundary. It does not prove a model or hosted provider integration.
+`run-smoke` proves the deterministic local package and host boundary. Model and hosted-provider integration require a separate run.
 
 Some lifecycle families expose public semantic variants. Inspect them before materialisation:
 
@@ -72,13 +72,13 @@ aec-bench task lifecycle materialize hydraulic-interaction-lifecycle-review \
 
 A checkpoint can declare a bounded set of conditional operations. The actor chooses from task-owned operations, but the host enforces the operation budget and prerequisites.
 
-Conditional evidence requests also exist as an experimental staged-evidence capability. No registered lifecycle currently uses them. Do not treat the contract alone as a supported task workflow.
+Conditional evidence requests remain an experimental staged-evidence capability. Current registered workflows use fixed evidence releases or conditional operations.
 
-One lifecycle cannot mix conditional evidence requests with conditional operations in the current host implementation.
+Choose either conditional evidence requests or conditional operations within one lifecycle in the current host implementation.
 
 ## Execution evidence
 
-Lifecycle execution records keep session identity, resolved model, agent harness, execution mode, memory visibility, status, usage, and SHA-256-bound artefacts. A final `TrialRecord` references this evidence; it does not copy lifecycle state into a second authority.
+Lifecycle execution records keep session identity, resolved model, agent harness, execution mode, memory visibility, status, usage, and SHA-256-bound artefacts. A final `TrialRecord` references this evidence, while lifecycle state remains authoritative in the execution record.
 
 Persistent-context and fresh-context execution are explicit choices. Fresh sessions can receive only the evidence allowed by their memory visibility policy. The resolved model and agent harness stay stable across one lifecycle execution.
 
@@ -92,6 +92,6 @@ aec-bench prime export-lifecycle \
   --aec-bench-root /absolute/path/to/aec-bench
 ```
 
-The generated package keeps absolute references to the materialised lifecycle and an editable local AEC-Bench checkout. It does not support hosted execution, training, continual learning, or transfer claims.
+The generated package keeps absolute references to the materialised lifecycle and an editable local AEC-Bench checkout. It supports local evaluation only and does not support continual-learning or transfer claims.
 
 See [Prime Lab](/docs/advanced/prime-lab) for package and hosted-evaluation limits, and [Review and Reporting](/docs/evaluation/reviewing) for evidence interpretation.

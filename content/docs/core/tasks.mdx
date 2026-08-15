@@ -13,7 +13,7 @@ Within the artefact-task family, aec-bench uses the word "task" at three levels:
 | **Template** | A parameterised task family that can produce many concrete scenarios | template metadata and renderers |
 | **Runnable task instance** | A concrete problem with a prompt, runtime, and verifier | `task.toml` + `instruction.md` |
 
-Public benchmark reports should count a specific dataset or release, not the whole repository tree. The repository contains catalogue seeds, templates, generated instances, and development task families; those are useful assets, but they are not one interchangeable benchmark count.
+Public benchmark reports should count a specific dataset or release. Report catalogue seeds, templates, generated instances, and development task families as separate inventory measures.
 
 ## Anatomy of a task
 
@@ -35,7 +35,7 @@ tasks/electrical/voltage-drop/
         └── golden_fail.md
 ```
 
-The loader requires `task.toml`, `instruction.md`, and a verifier entry point. A missing environment `Dockerfile` is a promotion warning, not a load failure; add one before Harbor execution. `solution/` and golden fixtures are strongly recommended for review, but they are not part of the agent prompt.
+The loader requires `task.toml`, `instruction.md`, and a verifier entry point. A missing environment `Dockerfile` produces a promotion warning; add one before Harbor execution. `solution/` and golden fixtures are review aids kept outside the agent prompt.
 
 ### The prompt
 
@@ -69,7 +69,7 @@ Calculate the following:
 
 ### The configuration
 
-`task.toml` describes metadata, timeouts, and runtime limits — not the problem itself. The loader combines this file with `instruction.md` and produces a `TaskDefinition` contract.
+`task.toml` contains metadata, timeouts, and runtime limits. `instruction.md` contains the problem. The loader combines both files and produces a `TaskDefinition` contract.
 
 ```toml title="task.toml"
 version = "1.0"
@@ -148,7 +148,7 @@ Each field is scored independently with configurable tolerances. Numerical field
 
 ### Golden fixtures
 
-Most verifiers ship with test fixtures — a `golden_pass.md` that should score 1.0 and a `golden_fail.md` that should score less. These are used to test the verifier itself, not the agent.
+Most verifiers ship with test fixtures — a `golden_pass.md` that should score 1.0 and a `golden_fail.md` that should score less. These test the verifier itself.
 
 ```markdown title="fixtures/golden_pass.md (excerpt)"
 ## Step 2: Voltage Drop
@@ -170,11 +170,11 @@ Tasks use four catalogue states: `proposed` → `active` → `deprecated` → `r
 
 Separately, tasks can be **public** (appears in reports and leaderboard) or **holdout** (runs but results are hidden). Holdout tasks are used for anti-contamination testing — if a model scores suspiciously well on holdout tasks it hasn't seen, that's a red flag.
 
-Lifecycle values express catalogue policy; they are not an execution sandbox. Validate the exact task or dataset selection before a run. The current filesystem loader does not prove publication eligibility only because a directory can be loaded.
+Lifecycle values express catalogue policy. Validate the exact task or dataset selection before a run. Publication eligibility requires review and promotion checks beyond a successful filesystem load.
 
 ## Task categories
 
-Categories describe the type of work a task demands. They are free-form strings, not a closed enum. Use the category that best describes the *primary* demand, and keep more specific descriptors in `tags`.
+Categories describe the type of work a task demands. They are free-form strings. Use the category that best describes the *primary* demand, and keep more specific descriptors in `tags`.
 
 | Category | What the agent does |
 |----------|-------------------|
@@ -190,7 +190,7 @@ Each task is rated `easy`, `medium`, or `hard`. Ratings should be calibrated by 
 
 | Difficulty | Characteristics | Calibrated against |
 |------------|----------------|-------------------|
-| **Easy** | Single-step, all parameters given, clear formula | Junior engineer, no references needed |
+| **Easy** | Single-step, all parameters given, clear formula | Junior engineer working from the supplied inputs |
 | **Medium** | Multi-step, some judgement, may need standard lookups | Intermediate engineer |
 | **Hard** | Complex analysis, multiple variables, judgement critical | Senior engineer |
 
@@ -206,8 +206,7 @@ There are three common ways work enters the benchmark:
 
 ## Container extensions
 
-Tasks can declare common container capabilities instead of duplicating
-Dockerfiles:
+Tasks can reuse common container capabilities:
 
 ```toml
 [environment]
@@ -237,7 +236,6 @@ description = "Generate a chart from computed data."
 returns_image = true
 ```
 
-The unified entrypoint records tool output as text and does not yet provide
-general multimodal self-review. Treat `returns_image = true` as an artefact and
-verifier capability unless the selected agent-harness path explicitly supports
-image input.
+The unified entrypoint records tool output as text. General multimodal self-review
+requires an agent-harness path with explicit image-input support. Treat
+`returns_image = true` as an artefact and verifier capability for other paths.

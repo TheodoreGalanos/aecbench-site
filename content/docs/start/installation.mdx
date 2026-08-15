@@ -10,7 +10,7 @@ description: Install the provider-free aec-bench package, then add only the exec
 - **OS:** macOS, Linux, or Windows through WSL
 - **Memory:** 4 GB RAM minimum, 8 GB recommended for larger generated suites
 
-Docker, Modal, Morph Cloud, Prime, and Harbor are optional. You only need them when you select the matching execution or training path.
+Docker, Modal, Morph Cloud, Prime, and Harbor are optional. Install or configure the tool that matches your selected execution or training path.
 
 ## Install the Package
 
@@ -21,7 +21,7 @@ pip install aec-bench
 aec-bench --help
 ```
 
-Optional commands remain visible in `--help`. If a feature is not installed, the command reports the extra that provides it.
+Optional commands remain visible in `--help`. When a command needs an optional extra, it reports the required extra.
 
 ## Optional Extras
 
@@ -81,7 +81,7 @@ aec-bench generate list-templates --discipline ground
 aec-bench library export --stdout --pretty
 ```
 
-These commands use no provider credentials. Follow the [Quickstart](/docs/start/quickstart) when you are ready to run a local model-backed trial.
+These commands are provider-free. Follow the [Quickstart](/docs/start/quickstart) when you are ready to run a local model-backed trial.
 
 ## Project Layout
 
@@ -97,7 +97,7 @@ docs/                   # Architecture and library guides
 workspaces/             # Evolution workspaces
 ```
 
-Generated artefacts, local runs, Prime packages, and evolution swarm state are intentionally local outputs. Commit curated tasks, templates, source, tests, and docs rather than transient run artefacts.
+Generated artefacts, local runs, Prime packages, and evolution swarm state are intentionally local outputs. Commit curated tasks, templates, source, tests, and docs. Keep transient run artefacts local.
 
 ## Next Steps
 

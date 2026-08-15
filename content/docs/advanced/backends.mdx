@@ -3,9 +3,9 @@ title: Backends
 description: A Harbor execution backend places each trial in a container or sandbox on the selected compute platform.
 ---
 
-`aec-bench run` uses one execution path. It builds a Harbor job, dispatches the job through Harbor, waits for completion, and imports the results into the ledger. `--backend` selects the Harbor execution environment; it does not select a separate aec-bench runner.
+`aec-bench run` uses one execution path. It builds a Harbor job, dispatches the job through Harbor, waits for completion, and imports the results into the ledger. `--backend` selects the Harbor execution environment; all backend values use the same aec-bench runner.
 
-Use `aec-bench run-local` when you need an in-process development path without Harbor or Docker.
+Use `aec-bench run-local` when you need an in-process development path on the local host.
 
 ## Execution paths
 
@@ -14,7 +14,7 @@ Use `aec-bench run-local` when you need an in-process development path without H
 | `aec-bench run` | Harbor environment | Dispatches the job and imports the completed Harbor job directory |
 | `aec-bench run-local` | Local host process | Runs one task and imports the local result unless `--no-import` is set |
 
-Both paths use the selected agent harness and the task-owned verifier. The environment changes where the trial runs, not what counts as a correct answer.
+Both paths use the selected agent harness and the same task-owned verifier, which defines correctness in every environment.
 
 ## Available Harbor environments
 
@@ -58,7 +58,7 @@ compute:
 
 `n_concurrent_trials` configures the local Harbor orchestrator. `timeout_override` applies an agent timeout override to the generated Harbor job.
 
-Use `--dry-run` to validate task selection and inspect the trial plan without invoking Harbor:
+Use `--dry-run` for planning: validate task selection and inspect the trial plan.
 
 ```bash
 uv run aec-bench run --config experiment.yaml --dry-run
@@ -83,7 +83,7 @@ uv run aec-bench run tasks/electrical/voltage-drop \
   --backend morph
 ```
 
-Harbor still owns task staging, agent invocation, artefact collection, and verifier invocation. The Morph provider binding only owns the environment operations.
+Harbor still owns task staging, agent invocation, artefact collection, and verifier invocation. The Morph provider binding owns the environment operations.
 
 ## Local development
 
@@ -95,6 +95,6 @@ uv run aec-bench run-local tasks/electrical/voltage-drop \
   --harness direct
 ```
 
-This path does not provide container isolation. Use a Harbor environment when the task must run inside a controlled container or remote sandbox.
+`run-local` executes on the host. Use a Harbor environment when the task must run inside a controlled container or remote sandbox.
 
-There is no public custom-backend registration API in the installed library. A new execution platform must be integrated at the Harbor environment composition boundary and added to the supported CLI values.
+The installed library exposes the fixed backend set above. Add a new execution platform at the Harbor environment composition boundary and register it as a supported CLI value.

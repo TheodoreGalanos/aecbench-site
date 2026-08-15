@@ -1,6 +1,6 @@
 ---
 title: Configuration
-description: Agent configuration covers provider credentials, experiment agent entries, harness parameters, and custom internal adapter registration.
+description: Agent configuration covers provider credentials, experiment agent entries, harness parameters, and the fixed local composition boundary.
 ---
 
 ## Providers
@@ -69,7 +69,7 @@ agents:
 
 ## Harness parameters
 
-Each harness takes different knobs. In experiment manifests, `parameters` are passed to the execution layer and become `request.configuration` for the internal adapter.
+Each harness accepts different settings. In an experiment manifest, `parameters` are passed to the selected harness.
 
 **Direct**: simple generation settings such as output token budget:
 
@@ -126,56 +126,61 @@ max_parallel_workers = 4
 
 RLM and Lambda-RLM configuration files live in the staged task workspace. The experiment manifest selects the harness and model; the workspace TOML controls the harness-specific runtime behaviour.
 
-## Custom Internal Adapters
+### Lambda-RLM extraction review
 
-Public documentation calls these agent harnesses, but the Python execution protocol is still named `Adapter`. Any class matching that protocol can be registered:
+Lambda-RLM can record extraction confidence and deterministic self-consistency
+before deciding whether a section needs review. Set `extract.k_candidates` above
+one to fan out candidate extractions, then select a `review.trigger`:
 
-```python
-from aec_bench.adapters.base import AdapterRequest, AdapterResult
+| Trigger | Behaviour |
+|---------|-----------|
+| `always` | Review every section; this is the compatibility default |
+| `never` | Skip review for an explicit ablation |
+| `uncertainty` | Review when joint uncertainty crosses its configured threshold |
+| `consistency` | Review when mean candidate consistency falls below its threshold |
+| `both` | Require both uncertainty and consistency conditions |
 
-class MyAdapter:
-    def __init__(self, model_name: str, workspace: str, **kwargs):
-        self.model_name = model_name
-        self.workspace = workspace
+```toml
+[extract]
+k_candidates = 3
+keep_candidates_artifact = true
 
-    def execute(self, request: AdapterRequest) -> AdapterResult:
-        # your strategy here
-        ...
+[uncertainty]
+review_joint_threshold = 1.0
 
-    def adapter_name(self) -> str:
-        return "my_adapter"
-
-    def resolved_model(self) -> str:
-        return self.model_name
+[review]
+enabled = true
+trigger = "both"
+consistency_threshold = 0.7
 ```
 
-Register against a `LocalAdapterRegistry` with a builder function:
+If the selected trigger needs evidence that was not collected—for example,
+`consistency` with `k_candidates = 1`—the harness falls back to `always` and
+records the reason in its trajectory. Candidate payloads, confidence,
+consistency, uncertainty, and the resulting review decision remain observable
+without becoming task or evaluation logic.
 
-```python
-from aec_bench.adapters.local_registry import LocalAdapterRegistry
+## Local harness composition
 
-registry = LocalAdapterRegistry()
-registry.register(
-    "my_adapter",
-    lambda model_name, workspace, **kwargs: MyAdapter(model_name, workspace, **kwargs),
-)
-```
+Public documentation calls these agent harnesses, while the Python execution boundary is named `Adapter`. Production local execution selects from one fixed builder set:
 
-Once registered, the adapter kind is addressable from an experiment config through the public `harness` field:
+| Public name | Implementation path |
+|-------------|---------------------|
+| `direct` | One provider call |
+| `tool_loop` | PydanticAI-backed bounded tool loop |
+| `pydantic_ai` | Public alias for the PydanticAI tool loop |
+| `rlm` | Recursive Language Model runtime |
+| `lambda-rlm` | Structured extraction and report workflow |
+| `prime-agent` | External Prime Agent process |
 
-```yaml
-agents:
-  - name: my-experimental-agent
-    harness: my_adapter
-    model: claude-sonnet-4
-```
+The installed package does not expose a mutable `LocalAdapterRegistry`. Add production harnesses in source and update the fixed builder set.
 
-### What a good adapter does
+Every harness must preserve the same core responsibilities:
 
-- **Respects the whitelist**: only call tools present in `request.tools`.
-- **Writes to `request.output_path`**: producing that file is the adapter's job.
-- **Records a transcript**: capture model turns, tool calls, and tool results.
-- **Reports token usage**: populate `usage_input_tokens` and `usage_output_tokens` when available.
-- **Classifies failures**: set `failure_kind` so downstream reports can group errors.
+- respect task-declared capabilities;
+- write to the requested output path;
+- retain useful execution evidence;
+- report model and advisor usage when available; and
+- classify provider, tool, timeout, truncation, and missing-output failures without turning them into success.
 
-The contract is deliberately thin. Keeping it thin is what lets the same task compare cleanly across many harnesses.
+This boundary stays thin so the same task can be compared across current harnesses without moving task or scoring policy into provider code.

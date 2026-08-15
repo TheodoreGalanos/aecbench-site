@@ -1,6 +1,6 @@
 ---
 title: Swarm
-description: Swarm runs multi-agent quality-diversity evolution over agent workspaces, sharing discoveries through an event-sourced archive.
+description: Swarm runs multi-agent quality-diversity evolution over agent workspaces, sharing discoveries through a common archive.
 ---
 
 `aec-bench swarm` runs several evolution agents in parallel. Each agent mutates its own workspace, while a shared quality-diversity archive preserves different high-performing strategies instead of collapsing everything into one hill-climb.
@@ -55,15 +55,13 @@ heartbeat:
   pivot_after: 5
 ```
 
-## Run and inspect
+## Run
 
 ```bash
 uv run aec-bench swarm run swarm.yaml
-uv run aec-bench swarm status <run-id> --state-dir workspaces/my-swarm/_swarm_runs
-uv run aec-bench swarm history --state-dir workspaces/my-swarm/_swarm_runs
-uv run aec-bench swarm resume <run-id> --state-dir workspaces/my-swarm/_swarm_runs
-uv run aec-bench swarm stop <run-id>
 ```
+
+`swarm run` is a foreground command. Keep its process attached until the agents finish or the recorded spend reaches the configured maximum.
 
 Swarm state is written under the workspace's `_swarm_runs/` directory:
 
@@ -72,10 +70,24 @@ _swarm_runs/
 ├── events.jsonl
 ├── archive.json
 ├── graveyard.json
-└── lineage.json
+├── lineage.json
+├── notes.json
+└── summary.json
 ```
 
-The event log is the source of truth. Snapshot files can be reconstructed from it.
+`events.jsonl` records observed events. The other files are separately persisted snapshots; the public CLI cannot rebuild the full archive, graveyard, or lineage from the event log.
+
+The current output layout is flat, not one directory per run ID. A later run in the same workspace uses the same snapshot paths and appends to the same event log. Use a separate workspace when runs must remain isolated.
+
+## Current control limitations
+
+The CLI lists `status`, `resume`, and `stop`, but they are not operational controls yet:
+
+- `status` replays the single `events.jsonl` in `--state-dir`. It does not inspect a live process, and its `run-id` argument does not select or filter a run.
+- `resume` checks for an event log and prints a message. It does not rebuild a manager or restart agents.
+- `stop` prints a message. It does not signal a running swarm or wait for in-flight evaluations.
+
+Do not use these commands for process supervision. Interrupting `swarm run` stops the foreground process, but it is not a graceful checkpointed stop and the CLI cannot resume that run. `history` is also only a read-only event-log view; it is not a per-run control surface with the current flat output layout.
 
 ## How coordination works
 
@@ -107,7 +119,7 @@ Two workspaces can have the same reward and still be worth keeping if they solve
 
 ## Budget behaviour
 
-The budget pool is shared across agents. At the wind-down threshold, agents are told to make remaining evaluations count. Near the final threshold, the manager stops starting new evals and lets in-flight evals complete.
+The budget pool is shared across agents. At the wind-down threshold, agents receive a warning to focus their remaining evaluations. At the final threshold, they receive a stronger warning. Agents retire only after recorded spend reaches the configured maximum, so concurrently running evaluations can take total spend past that value.
 
 Start small:
 

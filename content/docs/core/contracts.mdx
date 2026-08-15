@@ -1,136 +1,83 @@
 ---
 title: Contracts
-description: Contracts are the Pydantic models that define the shape of data crossing every boundary in aec-bench.
+description: Contracts define the validated data that crosses task, execution, evaluation, provider, and evidence boundaries in aec-bench.
 ---
 
 import { ContractsFlow } from '@/components/docs/contracts-flow';
 
-The central run path connects `TaskDefinition`, `AgentOutput`, `EvaluationResult`, and `TrialRecord`:
+Contracts sit at real trust boundaries: imported task material, provider results, cross-process calls, and persisted evidence. They do not require every internal Python value to become a Pydantic model.
+
+The common artefact-task path connects four contracts:
 
 <ContractsFlow />
 
+Interactive Worlds and finite lifecycles use additional task-owned records during execution, then attach their verified evidence to the same reportable trial boundary.
+
 ## TaskDefinition — what to solve
 
-A `TaskDefinition` is the complete description of a benchmark problem. It carries the prompt, the environment the agent runs in, and the script that scores the output.
+A `TaskDefinition` is the validated description of one artefact or workspace task. It carries task identity, lifecycle, visibility, instruction, environment, verifier, tools, limits, and metadata.
 
-Here's a real example — a voltage drop calculation task:
+The task directory supplies the public files:
 
-```toml title="tasks/electrical/voltage-drop/task.toml"
-version = "1.0"
-
-[metadata]
-difficulty = "easy"
-category = "reasoning"
-tags = ["electrical", "buildings-electrical", "deterministic", "AS-NZS-3008"]
-
-[agent]
-timeout_sec = 600.0
-
-[verifier]
-timeout_sec = 120.0
-
-[environment]
-extensions = []
-build_timeout_sec = 600.0
-cpus = 1
-memory_mb = 2048
-storage_mb = 5120
-allow_internet = true
+```text
+task/
+├── task.toml
+├── instruction.md
+├── environment/
+│   └── Dockerfile
+└── tests/
+    ├── test.sh
+    └── verify.py
 ```
 
-The `instruction.md` alongside it contains the actual prompt:
+`TaskDefinition` does not try to model every task output. Task-specific meaning remains with the task and its verifier.
 
-```markdown title="tasks/electrical/voltage-drop/instruction.md"
-You are a senior electrical engineer specializing in building services.
-
-## Problem
-
-Calculate the voltage drop for a three-phase cable circuit using the
-impedance method, and determine whether it complies with the maximum
-allowable voltage drop limit.
-
-## Given
-
-| Parameter | Value | Unit |
-|-----------|-------|------|
-| Load current | 45 | A |
-| Cable length (one way) | 80 | m |
-| Cable resistance (R) | 0.524 | ohm/km |
-| ...
-```
-
-Every task has three key pieces:
-
-- **Instruction** — the self-contained prompt sent to the agent
-- **Environment** — a declared runtime environment with tools, fixtures, and resource limits
-- **Verifier** — a Python script that computes ground truth and scores the agent's output
+Executable Interactive Worlds use a registered world definition and profile instead of pretending to be a static `TaskDefinition`. Both task families can enter the same experiment, evaluation, evidence, and reporting layers.
 
 ### Lifecycle and visibility
 
-Tasks have two independent axes that control when and where they appear:
+Task catalogue status and evidence progression are separate concepts.
 
-| | `public` | `holdout` |
-|---|---|---|
-| **`active`** | Standard benchmark task | Runs but hidden from reports (anti-contamination) |
-| **`deprecated`** | Still runnable, shown as superseded | Rarely used |
+| Axis | Values | Meaning |
+|------|--------|---------|
+| **Task lifecycle** | `proposed`, `active`, `deprecated`, `retired` | Whether a task is ready and supported |
+| **Visibility** | `public`, `holdout` | Whether task material can enter public or protected surfaces |
+| **Evidence lifecycle** | task-owned checkpoints | Which evidence stage is active during one bounded run |
 
-`proposed` tasks aren't runnable yet. `retired` tasks are archived permanently.
+Visibility is explicit. A missing visibility value is unknown; it is not silently treated as public.
 
 ## AgentOutput — what came back
 
-When an agent harness finishes executing, it returns an `AgentOutput` — a minimal envelope that says what the agent produced and where to find it:
+An agent harness returns a minimal `AgentOutput` envelope:
 
 ```python
 class AgentOutput(StrictModel):
     status: AgentOutputStatus   # completed | partial | failed | empty
-    output_path: NonEmptyStr    # where the result file lives
-    output_format: NonEmptyStr  # "jsonl", "markdown", "json"
-    error_message: str | None   # what went wrong (if anything)
+    output_path: NonEmptyStr
+    output_format: NonEmptyStr
+    error_message: str | None = None
 ```
 
-The harness reports status and location; parsing the output file is the evaluation pipeline's job.
+The harness reports completion and location. Evaluation owns parsing and scoring the task-specific output.
 
 ## EvaluationResult — how it scored
 
-The evaluation pipeline reads the agent's output file, runs the task's verifier script, and produces an `EvaluationResult`:
+`EvaluationResult` owns the normalised reward and the evidence needed to interpret it:
 
-```python
-class EvaluationResult(StrictModel):
-    reward: float                # 0.0 to 1.0
-    validity: ValidityCheck      # did the output parse correctly?
-    breakdown: dict | None       # per-field scores
-    error_taxonomy: list | None  # classified errors
-    confidence: ConfidenceMetadata | None
-    annotations: list | None     # human review verdicts
-```
+- mechanical validity;
+- per-field or task-specific breakdowns;
+- error taxonomy;
+- confidence metadata;
+- attributable human annotations; and
+- registered task-specific evaluation extensions.
 
-The `reward` is a normalised score from 0.0 to 1.0. The supporting fields add diagnostic detail:
+Invalid or unparseable output cannot receive a positive reward. Reports consume the stored result; they do not recalculate a competing score.
 
-**Validity** checks whether the output was structurally sound before scoring:
+The verifier remains task-owned. It can retain detailed evidence in a task-specific artefact while the shared result carries the normalised outcome.
 
-```python
-class ValidityCheck(StrictModel):
-    output_parseable: bool    # could we read the file at all?
-    schema_valid: bool        # did it match the expected format?
-    verifier_completed: bool  # did the scoring script finish?
-    errors: list[str]         # what went wrong
-```
+## TrialRecord — the reportable record
 
-**Breakdown** gives per-field scores. For the voltage drop task, this looks like:
-
-```json
-{
-  "voltage_drop_v": 0.95,
-  "voltage_drop_pct": 1.0,
-  "compliance": 1.0
-}
-```
-
-**One strict rule:** if the output isn't parseable, the reward is always 0.0. No partial credit for unreadable output.
-
-## TrialRecord — the permanent record
-
-A `TrialRecord` captures everything about one agent run — enough provenance to reproduce it from scratch.
+`TrialRecord` is the canonical envelope for one trial. This trimmed view shows the common fields:
 
 ```python
 class TrialRecord(StrictModel):
@@ -138,99 +85,96 @@ class TrialRecord(StrictModel):
     experiment_id: NonEmptyStr
     dataset_id: str | None
     timestamp: datetime
-
-    # What was tested
-    task: TaskReference              # task_id + content hash
-    agent: AgentReference            # harness, model, configuration
-
-    # How it ran
-    environment: EnvironmentSnapshot # runtime image, compute backend
-    inputs: InputRecord              # instruction, system prompt, files
-
-    # What happened
-    outputs: OutputRecord            # agent output + trajectory paths
-    evaluation: EvaluationResult     # the score
-
-    # Metadata
-    timing: TimingRecord             # wall-clock times per phase
-    cost: CostRecord | None          # tokens + estimated USD
-    adaptation: AdaptationProvenance | None
-    completeness: Completeness       # complete | partial
+    task: TaskReference
+    agent: AgentReference
+    environment: EnvironmentSnapshot
+    inputs: InputRecord
+    outputs: OutputRecord
+    evaluation: EvaluationResult
+    timing: TimingRecord
+    cost: CostRecord | None
+    completeness: Completeness      # complete | partial
 ```
 
-Trial records are **immutable and append-only**. Once written to the ledger, they are never modified. This is the core reproducibility guarantee.
+Optional provenance can bind a finite lifecycle, Interactive World episode, or meta-harness study to the same trial.
 
-A `complete` trial must include full provenance — harness revision, tool versions, and input file hashes. Partial records are allowed during execution but cannot be promoted to the official ledger.
+Both complete and partial records can enter the append-only ledger. A complete record must carry the provenance needed for its execution family. A partial record remains visibly partial; import code must not manufacture missing evidence.
 
-### Trajectory entries
+Once accepted, a trial record is immutable. Temporary workspaces and internal builders remain replaceable implementation.
 
-A `TrajectoryEntry` records one event within an agent run. These entries are written to `trajectory.jsonl` so evaluators and trace viewers can inspect how a result was produced, not just the final answer.
+### Output state
+
+`OutputRecord` keeps completion facts separate:
 
 ```python
-class TrajectoryEntry(StrictModel):
-    step: int
-    role: str                 # assistant | tool_call | tool_result | system | user
-    content: str | None
-    tool_name: str | None
-    command: str | None
-    arguments: dict | None
-    stdout: str | None
-    stderr: str | None
-    exit_code: int | None
-    duration_ms: int | None
-    media: list[str] | None
-    timestamp: str | None
+class OutputRecord(StrictModel):
+    agent_output: AgentOutput | None
+    raw_output_path: str | None
+    conversation_path: str | None
+    trajectory_path: str | None
+    agent_result: dict[str, Any] | None
+    artifacts: list[ArtifactReference] | None
+    terminated: bool
+    truncated: bool
+    final_reason: NonEmptyStr | None
 ```
+
+A result cannot be both terminated and truncated. Provider completion, truncation, and error facts determine execution status independently of reward.
+
+### Artefact integrity
+
+Evidence attached to a trial uses a content-bound reference:
+
+```python
+class ArtifactReference(StrictModel):
+    kind: NonEmptyStr
+    path: NonEmptyStr
+    sha256: NonEmptyStr
+    media_type: NonEmptyStr
+```
+
+The SHA-256 value must match the referenced bytes. A path alone is not evidence integrity.
 
 ### Cost tracking
 
-Every trial optionally records token usage and cost:
+`CostRecord` is the aggregate usage authority. It can record:
 
-```python
-class CostRecord(StrictModel):
-    tokens_in: int | None
-    tokens_out: int | None
-    cache_read_tokens: int | None
-    cache_write_tokens: int | None
-    estimated_cost_usd: float | None
-```
+- model calls;
+- input, output, and cache tokens;
+- advisor calls and advisor tokens; and
+- estimated cost in USD.
 
-This feeds into the leaderboard's cost-efficiency analysis — how much does it cost a model to achieve a given score?
+Open-ended provider metadata can retain diagnostics, but reports do not reconstruct aggregate usage from it.
 
-## ExperimentManifest — what to run
+## Trajectory entries
 
-An experiment defines which tasks to run, with which agent harnesses, how many times:
+`trajectory.jsonl` is an ordered stream of `TrajectoryEntry` values. Each non-empty line is one validated entry. There is no format header.
 
-```yaml title="experiment.yaml"
-experiment_id: claude-vs-gpt-electrical
-name: Claude vs GPT on electrical tasks
-repetitions: 3
+Entries can carry the role, content, tool or command details, output, timing, media, and structured metadata for one step. Each object must match the current entry schema.
 
-tasks:
-  dataset: electrical-v1@1.0.0
-  difficulties:
-    - easy
-    - medium
+Provider transcripts remain separate when an external or sealed workflow requires their exact representation.
 
-agents:
-  - name: claude-sonnet
-    harness: tool_loop
-    model: $ANTHROPIC_MODEL
-  - name: gpt-4.1
-    harness: tool_loop
-    model: gpt-4.1
+## Finite lifecycle contracts
 
-compute:
-  backend: modal
-```
+`EvidenceLifecycleSpec` declares an ordered set of checkpoints. The task owns instructions, released evidence, submissions, and verification. The host owns the active checkpoint and accepted progression.
 
-The `TaskSelector` supports filtering by dataset, domains, difficulties, and glob patterns. The `model` field supports `$ENV_VAR` references so model names can stay deployment-specific.
+Lifecycle run records keep session identity, execution mode, memory visibility, status, usage, and content-bound artefacts. The final trial references that evidence rather than copying it into a second state model.
+
+See [Finite Lifecycles](/docs/core/lifecycles).
+
+## Interactive World contracts
+
+A registered world definition binds an exact executable build and profile to task-owned state, observation, action, transition, and evaluation functions. The episode host adds decisions, recording, limits, termination, and truncation.
+
+A world episode can enter a trial through one verified episode artefact. Shared trial fields do not duplicate task-owned snapshots, transitions, or replay facts.
+
+See [Interactive Worlds](/docs/core/interactive-worlds).
 
 ## Design rules
 
-A few principles that apply across all contracts:
-
-- **No extra fields** — `StrictModel` rejects any field not in the schema. This catches typos and version mismatches early.
-- **Non-empty strings** — the `NonEmptyStr` type prevents accidental blank values. A task with an empty `instruction` fails validation at load time, not at runtime.
-- **Relative paths** — all file paths in contracts are relative to the task directory. No absolute paths leak into the data model.
-- **Validators over conventions** — invariants like "unparseable output = reward 0.0" are enforced by Pydantic model validators, not by documentation.
+- Validate untrusted, external, persisted, and cross-process data before use.
+- Use strict models for repository-owned boundary documents.
+- Use lenient models only when an external producer can add fields.
+- Keep task-specific payload meaning with the task owner.
+- Add a hash only when it protects a named integrity claim.
+- Add an ID only for durable identity, correlation, replay, or stale-action detection.

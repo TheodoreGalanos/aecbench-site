@@ -1,83 +1,100 @@
 ---
 title: Deployment
-description: Harbor is the orchestration path aec-bench uses to dispatch experiment trials and import completed results into the ledger.
+description: Harbor is the execution path aec-bench uses to dispatch experiment trials and import completed results into the ledger.
 ---
 
-For normal experiment runs, aec-bench builds a Harbor job config from the experiment manifest, invokes the Harbor CLI, detects the produced job directory, and imports completed results into the ledger.
+For normal experiment runs, aec-bench builds a Harbor job config from the experiment manifest, invokes the Harbor CLI, locates the produced job directory, and imports its trial results into the ledger.
 
-## Where it sits
+The public `aec-bench run` flow is synchronous. The command returns after Harbor finishes and the import step completes.
 
-Harbor is the orchestration layer around compute backends, not a harness type and not a replacement for the task verifier:
+## Where Harbor sits
 
-| Layer | Responsibility | Examples |
-|-------|---------------|----------|
-| **Compute backend** | Executes a single trial | Modal, Docker, e2b, Daytona |
-| **Orchestration** | Schedules, queues, retries jobs across many trials | **Harbor** |
-| **Ingestion** | Reads back results and writes trial records to the ledger | `aec-bench import` |
+Harbor is the execution boundary around the task, agent harness, and verifier. It does not replace any of them.
 
-## The job config
+| Layer | Responsibility |
+|-------|----------------|
+| **AEC-Bench planner** | Selects tasks and expands agents and repetitions into a trial plan |
+| **Agent harness** | Controls how the model receives the task and uses tools |
+| **Harbor environment** | Runs the trial on Modal, Docker, E2B, Daytona, or Morph |
+| **Harbor orchestrator** | Starts the planned trials with the configured local concurrency |
+| **AEC-Bench importer** | Validates completed results and writes `TrialRecord` records to the ledger |
 
-aec-bench builds a Harbor job config from your experiment manifest and submits it by invoking the Harbor CLI:
+For environment selection and local execution, see [Backends](/docs/advanced/backends).
+
+## Install execution support
+
+Install the Harbor extra before using `aec-bench run`:
 
 ```bash
-uv run harbor run -c job.yaml
+pip install "aec-bench[execution]"
 ```
 
-The per-trial config that Harbor receives looks like this:
+Morph also needs its provider extra:
 
-```python
-HarborTrialConfig(
-    task=HarborTaskConfig(path="tasks/electrical/voltage-drop"),
-    agent=HarborAgentConfig(
-        name="solver-v1",
-        model_name="au.anthropic.claude-sonnet-4-6",
-    ),
-    environment=HarborEnvironmentConfig(type="docker"),
-    job_id="exp-20260412-001",
-)
+```bash
+pip install "aec-bench[execution,morph]"
 ```
 
-Harbor resolves paths, stages tasks onto its compute, and runs the entrypoint agent plus verifier. The per-trial contract is unchanged: same task, same harness selection, same verifier artifacts.
+Keep provider credentials in environment variables or the provider's authentication store. Do not put them in the experiment manifest.
+
+## Dispatch and import
+
+A live run follows one sequence:
+
+1. Validate the manifest and selected backend.
+2. Resolve the selected tasks and build the complete trial plan.
+3. Write a generated Harbor job config.
+4. Invoke `uv run harbor run -c <generated-config>`.
+5. Locate the new Harbor job directory.
+6. Run the optional post-verifier reviewer.
+7. Validate and import the completed trials into the ledger.
+
+Start the sequence through the AEC-Bench command rather than invoking the generated Harbor config yourself:
+
+```bash
+uv run aec-bench run --config experiment.yaml
+```
+
+The command reports the job directory, imported trial count, and duplicate count. A failed Harbor command stops the workflow before import.
 
 ## Configuration
 
-The experiment manifest selects the compute environment that Harbor should use:
+The experiment manifest selects the Harbor environment and local orchestration concurrency:
 
 ```yaml
 compute:
   backend: modal
   resource_limits:
     n_concurrent_trials: 4
+  timeout_override: 600
 ```
 
-Harbor-specific service configuration lives with the Harbor CLI/runtime, not inside the public experiment manifest. Keep service credentials in environment variables or the Harbor auth store rather than committed YAML.
+Harbor service configuration stays with Harbor and the selected provider. The public manifest records the benchmark choice: backend, concurrency, and optional timeout override.
 
-## Bringing results back
-
-Harbor writes each completed trial into a job directory with `result.json` plus agent outputs and trajectory artifacts. aec-bench ingests these with the standard import command:
+Use a dry run to inspect the selected tasks and exact trial plan without dispatching a job:
 
 ```bash
-uv run aec-bench import jobs/exp-20260412-001
+uv run aec-bench run --config experiment.yaml --dry-run
 ```
 
-The importer walks the directory, validates each `result.json` against the Harbor result contract, reads verifier artifacts, and converts the result into an aec-bench `TrialRecord`.
+A dry run proves planning only. It does not test provider access, environment creation, agent execution, verifier execution, or import.
 
-From the ledger's perspective, comparable trial records have the same shape even if they arrived through different execution paths.
+## Import an existing job
 
-## When to use Harbor
+Use `aec-bench import` when a completed Harbor job directory already exists:
 
-Direct local execution and small backend runs are fine for single-user work. Harbor starts paying off when:
+```bash
+uv run aec-bench import jobs/<harbor-job-id>
+```
 
-- **Multiple teams submit to shared compute**: queuing and priority matter
-- **Runs are long-lived**: detach, go home, come back to finished results
-- **Jobs need retries or preemption handling** centrally rather than per-experiment
-- **Compute sits behind an organisational boundary**: VPN, private fleet, tiered access
+The importer reads the Harbor results and trial artefacts, validates their task and execution records, and writes `TrialRecord` records. Re-importing identical records reports duplicates. If the same trial identity resolves to different ledger content, the import fails instead of overwriting the existing record.
 
-If none of those apply, staying on a direct backend is simpler and avoids the extra moving part.
+Provider completion, agent failure, verifier evidence, and reviewer evidence remain distinct in the imported record. Do not treat a present result file or a completed provider job as proof that the task passed.
 
-## Operational notes
+## Operational boundaries
 
-- **Determinism still applies.** Harbor does not change trial semantics. The same task revision and harness configuration should produce the same reward whether run locally or via Harbor.
-- **Provenance travels with results.** `TrialRecord` provenance captures task, agent, environment, input, output, timing, and evaluation evidence.
-- **Import is idempotent.** Re-importing a finished job directory should not duplicate records; `trial_id` is unique per trial.
-- **Failures surface at import.** A failed Harbor trial can be represented as a partial record with diagnostic errors, while complete records remain the only safe basis for leaderboard aggregation.
+- Harbor creates the execution environment and runs the generated job; AEC-Bench owns planning and ledger import.
+- `aec-bench run` does not provide a detached job queue. Keep the calling process alive until Harbor returns.
+- AEC-Bench does not add a second retry or pre-emption policy around Harbor.
+- Trial provenance records the task, agent, environment, output, timing, and evaluation evidence needed for later analysis.
+- Complete, valid trial records are the basis for comparison and leaderboard aggregation.

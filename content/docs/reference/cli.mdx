@@ -3,7 +3,7 @@ title: CLI
 description: The aec-bench CLI is the command-line interface for generating tasks, running experiments, exporting environments, and inspecting results.
 ---
 
-The command surface is grouped by lifecycle: setup, generation, execution, analysis, review, evolution, datasets, and integrations.
+The command surface is grouped by function: setup, generation, execution, analysis, review, evolution, datasets, and integrations.
 
 ```bash
 uv run aec-bench --version
@@ -20,7 +20,10 @@ Scaffold a project directory:
 
 ```bash
 uv run aec-bench init my-bench
+uv run aec-bench init --update-skills
 ```
+
+`--update-skills` refreshes the packaged skills in `.claude/skills/` and `.agents/skills/` without rebuilding the rest of an existing project.
 
 ### `config`
 
@@ -64,7 +67,9 @@ Useful options:
 | `--instances N` | Number of instances to create |
 | `--difficulty easy,medium` | Comma-separated difficulty filter |
 | `--seed N` | Reproducible sampling seed |
+| `--start-index N` | First stable instance index |
 | `--tool-mode MODE` | Override the template's tool mode |
+| `--visibility public|holdout` | Write explicit registry visibility into each task |
 | `--dry-run` | Show the plan without writing task instances |
 
 ### `generate validate-template`
@@ -85,7 +90,14 @@ uv run aec-bench generate suite --config suite.toml --dry-run
 uv run aec-bench generate suite --config suite.toml --validate-only
 ```
 
-`generate dataset` is retained as a deprecated alias; prefer `generate suite` for generation and `dataset create` for freezing.
+### `generate dockerfiles`
+
+Generate Dockerfiles for tasks that declare container extensions:
+
+```bash
+uv run aec-bench generate dockerfiles tasks --dry-run
+uv run aec-bench generate dockerfiles tasks
+```
 
 ## Tasks and Datasets
 
@@ -96,6 +108,31 @@ Check a task directory:
 ```bash
 uv run aec-bench task validate tasks/electrical/voltage-drop
 ```
+
+### `task genome` and decomposition
+
+Extract one task genome, scan a task or template tree, and derive normalised template decompositions:
+
+```bash
+uv run aec-bench task genome <task-path>
+uv run aec-bench task genome-batch tasks --output-dir task_genomes
+uv run aec-bench task genome-template-batch src/aec_bench/templates/builtin
+uv run aec-bench task decomposition-template-batch task_genomes/templates
+```
+
+Single-task and task-tree extraction support heuristic, evidence, and LLM modes. Template extraction is heuristic.
+
+### Evidence lifecycles and Interactive Worlds
+
+Inspect finite evidence lifecycles and the installed pump-station world:
+
+```bash
+uv run aec-bench task lifecycle list
+uv run aec-bench task lifecycle materialize <template-id> --output <package-dir>
+uv run aec-bench task pump-station-world --help
+```
+
+See [Finite Lifecycles](/docs/core/lifecycles) and [Interactive Worlds](/docs/core/interactive-worlds) for their separate execution contracts.
 
 ### `dataset`
 
@@ -124,10 +161,22 @@ uv run aec-bench dataset results electrical-v1@1.0.0
 Run an experiment manifest:
 
 ```bash
-uv run aec-bench run --config experiment.yaml
+uv run aec-bench run --config experiment.yaml --tasks-root tasks
 ```
 
-Common overrides include task roots, model, harness, backend, repetitions, and `--dry-run`. The CLI still accepts `--adapter` as an alias for `--harness`.
+For a config-backed run, the manifest owns the model, harness, backend, and repetitions. CLI overrides are limited to `--tasks-root`, `--dry-run`, `--no-verify`, and the reviewer options.
+
+For an inline run, supply a task path and model:
+
+```bash
+uv run aec-bench run tasks/electrical/voltage-drop \
+  --model gpt-4.1-mini \
+  --harness direct \
+  --backend docker \
+  --repetitions 3
+```
+
+The inline form also accepts `--tasks-root`, `--dry-run`, `--no-verify`, and reviewer options. The CLI accepts `--adapter` as an alias for `--harness`. Use `--reviewer-model MODEL` or `--reviewer-models-config PATH` to enable the optional post-verifier LLM reviewer.
 
 ### `run-local`
 
@@ -144,11 +193,15 @@ Useful options:
 | Flag | Purpose |
 |------|---------|
 | `--output DIR` | Save local run output in a specific directory |
+| `--timeout SECONDS` | Set the whole local run timeout |
 | `--keep-workspace` | Preserve the temporary workspace for debugging |
-| `--legacy-script` | Use the older standalone script runner instead of the library adapter |
+| `--no-verify` | Skip verifier execution after the agent run |
 | `--no-import` | Do not import the local result into the ledger |
 | `--no-normalise` | Skip canonical-reference normalisation before verification |
 | `--constitutional-model MODEL` | Override the constitutional inference model for RLM tasks that declare one |
+| `--reviewer-model MODEL` | Enable the optional post-verifier LLM reviewer with one model |
+| `--reviewer-models-config PATH` | Enable the reviewer with JSON or YAML endpoint configuration |
+| `--fail-on-reviewer-error` | Fail the run if the reviewer stage cannot complete |
 
 ### `import`, `import-local`, and `import-prime-eval`
 
@@ -204,9 +257,48 @@ uv run aec-bench remediate --help
 
 Use remediation when the verifier can point to a concrete gap and the original task artefacts are still available.
 
+### `meta-harness`
+
+Run the meta-harness process for task-world construction, verifier/schema debugging, reviewer interpretation, operation planning, and governed repair loops:
+
+```bash
+uv run aec-bench meta-harness logic-evaluate --world world.json --run task-run.json
+uv run aec-bench meta-harness review --world world.json --run task-run.json
+uv run aec-bench meta-harness operation-orchestrate --brief brief.json --world world.json --emit-request
+uv run aec-bench meta-harness harbor-task --brief brief.json --world world.json --plan operation-plan.json --output operation-task
+uv run aec-bench meta-harness process "Create a diagnostic task." --brief brief.json --world world.json
+uv run aec-bench meta-harness autonomous --task-text "Create a diagnostic task." --brief brief.json --world world.json --max-iterations 3
+```
+
+The command group is pauseable: missing briefs, worlds, task runs, operation plans, and governance decisions become `awaiting_*` states rather than fabricated defaults. Use `--emit-run-plan` on `intake-models`, `world-models`, `review-models`, and `operation-models` to validate endpoint configuration before calling providers.
+
+It also exposes provider-free comparison and evidence-lifecycle surfaces:
+
+```bash
+uv run aec-bench meta-harness recipe \
+  --task-text "Compare a candidate harness with the baseline." \
+  --output comparison-recipe
+uv run aec-bench meta-harness compare --help
+uv run aec-bench meta-harness example --output comparison-example
+uv run aec-bench meta-harness lifecycle-start \
+  --package lifecycle-package \
+  --run-dir lifecycle-run
+uv run aec-bench meta-harness lifecycle-submit \
+  --package lifecycle-package \
+  --run-dir lifecycle-run
+uv run aec-bench meta-harness lifecycle-status \
+  --package lifecycle-package \
+  --run-dir lifecycle-run
+```
+
+Use the lifecycle commands to control checkpoints or run typed ablation and calibration-freeze studies. They do not replace the task verifier.
+
+See [Meta-Harness Runtime](/docs/advanced/meta-harness-runtime) for the two-loop process and governance boundaries.
+
 ## Interactive Surfaces
 
 ```bash
+uv sync --extra tui --extra webui --dev
 uv run aec-bench tui
 uv run aec-bench web
 ```
@@ -240,7 +332,7 @@ Single-workspace evolution:
 
 ```bash
 uv run aec-bench evolve init workspaces/my-ws --name voltage-drop-evo --harness rlm
-uv run aec-bench evolve run --config evolution.yaml
+uv run aec-bench evolve run --config evolution.yaml --tasks-root tasks
 uv run aec-bench evolve history workspaces/my-ws
 uv run aec-bench evolve rollback workspaces/my-ws evo-20260404-1220-2
 ```
@@ -249,11 +341,13 @@ Multi-agent QD swarm evolution:
 
 ```bash
 uv run aec-bench swarm run swarm.yaml
-uv run aec-bench swarm status <run-id>
-uv run aec-bench swarm resume <run-id>
 uv run aec-bench swarm history
-uv run aec-bench swarm stop <run-id>
 ```
+
+The CLI lists `status`, `resume`, and `stop`, but they are not operational
+process controls. `status` reads the flat event log, while `resume` and `stop`
+only print messages. Keep `swarm run` attached and do not rely on those commands
+to stop paid work or resume a run.
 
 See [Evolution](/docs/advanced/evolution) and [Swarm](/docs/advanced/swarm).
 
@@ -265,6 +359,7 @@ Export AEC-Bench tasks as Prime/verifiers environments and run local or hosted e
 uv run aec-bench prime doctor
 uv run aec-bench prime adapters
 uv run aec-bench prime export --name aec-smoke --task electrical/voltage-drop
+uv run aec-bench prime export-lifecycle --name lifecycle-smoke --package artefacts/lifecycles/example
 uv run aec-bench prime push --name aec-smoke --task electrical/voltage-drop
 uv run aec-bench prime eval --remote-env owner/aec-smoke --hosted --model "Qwen/Qwen3.5-4B"
 uv run aec-bench prime eval --remote-env owner/aec-smoke --hosted --model "Qwen/Qwen3.5-4B" --adapter-from-run <training-run-id>
@@ -281,7 +376,7 @@ uv run aec-bench prime train train.toml
 uv run aec-bench prime smoke --name aec-smoke --task electrical/voltage-drop
 ```
 
-See [Prime Lab](/docs/advanced/prime-lab) for export lanes, deployed adapter discovery, adapter eval, hosted training, online difficulty filtering, and hosted rollout import.
+See [Prime Lab](/docs/advanced/prime-lab) for task and local lifecycle export lanes, deployed adapter discovery, adapter eval, hosted training, online difficulty filtering, and hosted rollout import.
 
 ## Exit Codes
 

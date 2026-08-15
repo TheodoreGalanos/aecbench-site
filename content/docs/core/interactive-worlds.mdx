@@ -1,0 +1,90 @@
+---
+title: Interactive Worlds
+description: Interactive Worlds benchmark repeated decisions against task-owned state, observations, actions, and evaluation.
+---
+
+An Interactive World is a causal task environment. The agent observes the current situation, takes one action, and receives the next observation. The action can change later evidence and the final evaluation.
+
+Use this model when a sequence of decisions matters. If one submitted file or bounded workspace is enough, use an [artefact task](/docs/core/tasks). If the stages are known in advance and the host controls evidence release, use a [finite lifecycle](/docs/core/lifecycles).
+
+## Minimum world contract
+
+A world contribution owns five things:
+
+| Part | Purpose |
+|------|---------|
+| **State** | One authoritative representation of the current engineering situation |
+| **Observation** | The explicit projection that the actor is allowed to see |
+| **Action** | A validated task-owned decision or request |
+| **Transition** | A deterministic accepted change or a rejection that leaves state unchanged |
+| **Evaluation** | The task-owned interpretation of final state, trajectory, and verified evidence |
+
+There is no required world base class or global action union. Ordinary dataclasses, enums, tuples, and validated boundary values are sufficient inside the task owner.
+
+The registered world definition binds this behaviour to an exact build and content-pinned profile. Registration happens once at the catalogue composition boundary.
+
+## World and episode ownership
+
+The world owns engineering meaning. The episode host owns the decision sequence around it.
+
+| World owner | Episode host |
+|-------------|--------------|
+| Domain state and valid actions | Current state for one episode |
+| Actor-visible observation | Opaque decision association |
+| Accepted transition or rejection | Recording and accepted-step advancement |
+| Domain termination | Limits and runtime truncation |
+| Evaluation inputs and rules | Evaluation invocation after the live transition |
+
+An invalid action does not change state. A stale decision is rejected by the host before it reaches task logic. Domain termination and host truncation are separate facts.
+
+Host controls use a separate authority surface from actor actions. This prevents an agent from acquiring operational authority only because it can act in the world.
+
+## Current examples
+
+The catalogue currently includes two worlds with different runtime needs:
+
+- **Wastewater pump-station stewardship** changes physical and stewardship state. It also has optional controls, durable recording, recovery, branching, rollouts, temporal evidence, and provider integrations.
+- **Dam-seepage monitoring** releases scheduled and requested evidence. The actor can submit a response at any time; evidence completeness affects the later evaluation. It does not use the pump station's persistence or host controls.
+
+Both worlds use the same episode host. Pump-station-specific capabilities are optional for other worlds.
+
+## Authoring path
+
+1. Define exact scenario inputs and one authoritative state.
+2. Project only actor-visible facts into the observation.
+3. Implement deterministic initialisation, transitions, rejection, and evaluation.
+4. Create an exact world build and profile loader.
+5. Register the definition once in the Interactive World catalogue.
+6. Prove deterministic behaviour, safe rejection, terminal handling, and boundary round trips.
+
+Keep episode IDs, step indexes, provider data, repository paths, and content digests out of domain state. They are execution or evidence metadata, not engineering facts.
+
+Evaluation runs after the live transition. A transition can emit task output and signal domain termination, but it does not persist files, call a model, advance the episode step, decide truncation, or score itself.
+
+## Optional capabilities
+
+Add a capability only when a current consumer needs it:
+
+| Capability | Owner |
+|------------|-------|
+| Host controls | Installed control boundary and task-owned control values |
+| Durable recovery | Recorder and task persistence edge |
+| Snapshots, branches, and rollouts | Explicit branch and rollout owners |
+| Staged evidence | Lifecycle owner |
+| Harbor or provider packaging | Outward task adapter |
+
+A minimum world needs none of these. Reuse the existing episode, actor, provider, and recording boundaries instead of creating a task-specific execution stack.
+
+## Inspecting the pump-station surface
+
+The pump-station CLI exposes its installed actor, host-control, verification, evaluation, and Harbor integration commands:
+
+```bash
+aec-bench task pump-station-world --help
+aec-bench task pump-station-world verify --help
+aec-bench task pump-station-world evaluate --help
+```
+
+These commands are specific to the advanced pump-station world. They are not required for the minimum world contract.
+
+See [Architecture](/docs/core/architecture) for the shared ownership model and [Scoring](/docs/evaluation/scoring) for evaluation authority.

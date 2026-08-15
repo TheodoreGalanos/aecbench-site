@@ -66,9 +66,11 @@ timeout: 1800
 Run it with:
 
 ```bash
-uv run aec-bench evolve run --config evolution.yaml
+uv run aec-bench evolve run --config evolution.yaml --tasks-root tasks
 uv run aec-bench evolve history workspaces/voltage-drop-evo
 ```
+
+Pass `--tasks-root` for task-backed evolution. Without it, `evolve run` does not evaluate the tasks selected in the YAML file, and its output is not benchmark evidence.
 
 Rollback is non-destructive: it restores an older tag as a new workspace version rather than deleting history.
 

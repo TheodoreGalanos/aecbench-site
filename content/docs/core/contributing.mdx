@@ -1,0 +1,124 @@
+---
+title: Contributing Tasks
+description: How to contribute source-backed, reproducible AEC benchmark tasks and verify their generated artefacts.
+---
+
+Contributions should make the engineering basis, benchmark transformation, and
+verification boundary inspectable. A task is not ready because its prompt reads
+plausibly; it is ready when another contributor can trace the source, regenerate the
+task, and reproduce the verifier result.
+
+## Contribution workflow
+
+1. Identify a bounded engineering decision or calculation.
+2. Record the **Source authority** and the exact clause, table, equation, or project
+   input used.
+3. Convert that source into an explicit task contract.
+4. Keep all scored assumptions visible to the participant.
+5. Implement deterministic fixtures and verifier checks.
+6. Generate representative instances and inspect both passing and failing outputs.
+7. Register the task or template only after its focused validation passes.
+
+Use [Tasks](/docs/core/tasks) for task anatomy and
+[Templates](/docs/core/templates) for parameterised generation.
+Use [Interactive Worlds](/docs/core/interactive-worlds) when actor decisions
+must change task-owned state over time. Do not add a world runtime only to wrap
+a normal artefact task or finite calculation.
+
+## Source authority
+
+A source reference must be specific enough for an independent reviewer to locate the
+same rule. Record:
+
+- title and issuing authority;
+- edition, revision, or effective date;
+- clause, table, figure, or equation;
+- units and applicability conditions; and
+- any benchmark-owned simplification.
+
+Do not copy proprietary source text into public fixtures unless redistribution is
+permitted. A citation is not permission to publish the underlying rulebook.
+
+## Contract boundary
+
+The task instruction must expose every input needed for the scored result. Avoid hidden
+defaults in verifier code, undocumented lookup values, and assumptions recoverable only
+from a contributor's local files.
+
+A good contribution distinguishes:
+
+- sourced engineering rules;
+- benchmark-owned scenario data;
+- deterministic calculations;
+- qualitative judgement that requires a rubric; and
+- statements that remain outside the benchmark's authority.
+
+## Verification
+
+Before opening a contribution:
+
+```bash
+uv run aec-bench generate validate-template path/to/template
+uv run aec-bench generate task --template path/to/template --instances 3 --seed 42
+uv run aec-bench task validate path/to/generated/task
+```
+
+Inspect at least one easy, medium, and hard instance where difficulty presets exist.
+Exercise failure fixtures as well as golden passing output. The verifier should reject:
+
+- missing required outputs;
+- invalid units or categories;
+- results outside declared tolerances;
+- unsupported source references; and
+- inconsistent intermediate and final values.
+
+`aec-bench init` installs the packaged contributor workflows under both
+`.claude/skills/` and `.agents/skills/`. Use `aec-bench init --update-skills`
+to refresh them without replacing project configuration. The installed skills
+cover task addition, template creation, local agent setup, verifier checks,
+task generation, experiment runs, and result review.
+
+## Maritime and class-society tasks
+
+Maritime contributions based on the **IACS Common Structural Rules** or another
+class-society ruleset need an especially explicit ruleset reference.
+
+Record:
+
+- the vessel and structural scope;
+- the exact ruleset, edition, part, chapter, section, and clause;
+- whether the task uses a formula directly or a benchmark-owned reduction;
+- every coefficient and unit conversion;
+- applicability limits; and
+- material that cannot be redistributed.
+
+Use class-society terminology precisely. Do not present a simplified benchmark check as
+class approval, plan approval, certification, or a complete rules-compliance
+assessment.
+
+### Source-backed maritime task checklist
+
+A source-backed maritime task should include:
+
+- a source manifest with the ruleset reference;
+- a short derivation or calculation note;
+- prompt-visible inputs and assumptions;
+- deterministic expected values;
+- tolerances justified by the calculation;
+- passing and failing fixtures; and
+- a verifier that reports which rule-derived check failed.
+
+Where the public task cannot contain the source material, preserve only the reference
+and benchmark-owned derived fixture. Keep any restricted source outside the repository
+and outside model-visible artefacts.
+
+## Review standard
+
+Reviewers should be able to answer:
+
+- Is the source authoritative for this calculation?
+- Does the task stay inside the source's applicability?
+- Can the expected result be reproduced independently?
+- Are all scored inputs visible?
+- Does the verifier test engineering substance rather than formatting alone?
+- Is the strongest public claim narrower than professional approval?

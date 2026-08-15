@@ -3,7 +3,9 @@ title: Tasks
 description: A task is a self-contained engineering problem — prompt, environment, and verifier — that an agent attempts and the system scores.
 ---
 
-aec-bench uses the word "task" at three levels:
+This page covers artefact and workspace tasks: work that ends in a submitted file or a bounded workspace. For repeated decisions against task-owned state, use an [Interactive World](/docs/core/interactive-worlds). For a known sequence of evidence stages, use a [finite lifecycle](/docs/core/lifecycles).
+
+Within the artefact-task family, aec-bench uses the word "task" at three levels:
 
 | Layer | What it means | Typical file |
 |-------|---------------|--------------|
@@ -33,7 +35,7 @@ tasks/electrical/voltage-drop/
         └── golden_fail.md
 ```
 
-The loader requires `task.toml`, `instruction.md`, an environment `Dockerfile`, and a verifier entry point. `solution/` and golden fixtures are strongly recommended for review, but they are not part of the agent prompt.
+The loader requires `task.toml`, `instruction.md`, and a verifier entry point. A missing environment `Dockerfile` is a promotion warning, not a load failure; add one before Harbor execution. `solution/` and golden fixtures are strongly recommended for review, but they are not part of the agent prompt.
 
 ### The prompt
 
@@ -113,7 +115,7 @@ Some tasks stage input files such as spreadsheets, drawings, code extracts, or r
 
 The verifier computes ground truth independently, reads the agent's output, and writes a reward (0.0–1.0) plus per-field details. For Harbor-backed runs, `tests/test.sh` is the entry point; it usually calls `tests/verify.py`.
 
-Here's the core scoring logic from the voltage drop verifier:
+The voltage-drop verifier uses this core scoring logic:
 
 ```python title="tests/verify.py"
 def compute_ground_truth() -> dict[str, float]:
@@ -138,6 +140,7 @@ def compute_ground_truth() -> dict[str, float]:
 ```
 
 The verifier writes two files under `/logs/verifier/`:
+
 - `reward.json` — the headline score: `{"reward": 0.67}`
 - `details.json` — per-field breakdown: `{"voltage_drop_v": 1.0, "voltage_drop_pct": 1.0, "compliance": 0.0}`
 
@@ -158,14 +161,16 @@ Vd% = 3.0400 / 400 x 100 = 0.7600%
 
 ## Task lifecycle
 
-Tasks move through four stages: `proposed` → `active` → `deprecated` → `retired`.
+Tasks use four catalogue states: `proposed` → `active` → `deprecated` → `retired`.
 
-- **Proposed** — draft task or source spec under review
-- **Active** — production benchmark task eligible for datasets and reports
+- **Proposed** — draft task or source spec under review; not ready for a published dataset
+- **Active** — reviewed benchmark task eligible for datasets and reports
 - **Deprecated** — superseded by a better version but still runnable for historical comparison
-- **Retired** — permanently archived and not runnable
+- **Retired** — archived and excluded from new benchmark selections
 
 Separately, tasks can be **public** (appears in reports and leaderboard) or **holdout** (runs but results are hidden). Holdout tasks are used for anti-contamination testing — if a model scores suspiciously well on holdout tasks it hasn't seen, that's a red flag.
+
+Lifecycle values express catalogue policy; they are not an execution sandbox. Validate the exact task or dataset selection before a run. The current filesystem loader does not prove publication eligibility only because a directory can be loaded.
 
 ## Task categories
 
@@ -186,8 +191,8 @@ Each task is rated `easy`, `medium`, or `hard`. Ratings should be calibrated by 
 | Difficulty | Characteristics | Calibrated against |
 |------------|----------------|-------------------|
 | **Easy** | Single-step, all parameters given, clear formula | Junior engineer, no references needed |
-| **Medium** | Multi-step, some judgment, may need standard lookups | Intermediate engineer |
-| **Hard** | Complex analysis, multiple variables, judgment critical | Senior engineer |
+| **Medium** | Multi-step, some judgement, may need standard lookups | Intermediate engineer |
+| **Hard** | Complex analysis, multiple variables, judgement critical | Senior engineer |
 
 ## Source specs, seeds, and generated instances
 
@@ -197,4 +202,42 @@ There are three common ways work enters the benchmark:
 
 **Seed runnable instances** are hand-authored tasks with a prompt, runtime, and custom verifier. These are useful when the task needs expert judgement, a bespoke source document, or a narrow real-world scenario.
 
-**Generated instances** come from parameterised templates. A template defines the problem structure with variable parameters, and the generator samples concrete values to create reproducible task instances. Generated `task.toml` files include generation metadata such as template name, seed, archetype, and difficulty. See [Templates](/docs/core/templates) for how this works.
+**Generated instances** come from parameterised templates. A template defines the problem structure with variable parameters, and the generator samples concrete values to create reproducible task instances. Generated `task.toml` files bind the template source digest, seed, stable instance index, difficulty, and visibility. See [Templates](/docs/core/templates) for how this works.
+
+## Container extensions
+
+Tasks can declare common container capabilities instead of duplicating
+Dockerfiles:
+
+```toml
+[environment]
+extensions = ["multimodal", "ocr"]
+```
+
+Common extensions add chart-generation dependencies, OCR tools, or a supported
+agent CLI. Generate or refresh derived Dockerfiles after changing extensions:
+
+```bash
+uv run aec-bench generate dockerfiles tasks/
+uv run aec-bench generate dockerfiles tasks/ --dry-run
+```
+
+Tasks with bespoke runtime requirements can continue to own a handwritten
+Dockerfile.
+
+## Image-returning tools
+
+Tool declarations can mark an output as an image:
+
+```toml
+[[environment.tools]]
+name = "create_chart"
+source = "tools/create_chart.py"
+description = "Generate a chart from computed data."
+returns_image = true
+```
+
+The unified entrypoint records tool output as text and does not yet provide
+general multimodal self-review. Treat `returns_image = true` as an artefact and
+verifier capability unless the selected agent-harness path explicitly supports
+image input.

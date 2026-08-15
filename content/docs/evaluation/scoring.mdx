@@ -1,9 +1,9 @@
 ---
 title: Scoring
-description: Scoring turns an agent's output into a validated reward by reading verifier artifacts into an EvaluationResult.
+description: Scoring turns an agent's output into a validated reward by reading verifier artefacts into an EvaluationResult.
 ---
 
-When a trial finishes, the execution backend runs the task's verifier against the agent output file. The verifier writes JSON artifacts, the runner parses them into an `EvaluationResult`, and that result is attached to the trial record.
+When a trial finishes, the execution backend runs the task's verifier against the agent output file. The verifier writes JSON artefacts, the runner parses them into an `EvaluationResult`, and that result is attached to the trial record.
 
 ## The verifier contract
 
@@ -42,9 +42,9 @@ The optional `details.json` carries the per-dimension breakdown:
 
 ## Reward rollup
 
-`reward.json` is the authoritative trial reward. Artifact ingestion does not recompute the reward from `details.json`; it reads the reward, validates it, and stores `details.json` as `EvaluationResult.breakdown`.
+`reward.json` is the authoritative trial reward. Artefact ingestion does not recompute the reward from `details.json`; it reads the reward, validates it, and stores `details.json` as `EvaluationResult.breakdown`.
 
-For tasks that need rubric-style scoring, verifier code or judge pipelines can call the rubric scorer before writing artifacts. The scorer normalises each dimension to `score / max_score`, clamps it to `[0, 1]`, and combines dimensions with a rollup strategy:
+For tasks that need rubric-style scoring, verifier code or judge pipelines can call the rubric scorer before writing artefacts. The scorer normalises each dimension to `score / max_score`, clamps it to `[0, 1]`, and combines dimensions with a rollup strategy:
 
 | Strategy | Behaviour | Used when |
 |----------|-----------|-----------|
@@ -65,9 +65,15 @@ class ValidityCheck(StrictModel):
     errors: list[str] = Field(default_factory=list)
 ```
 
-If `output_parseable=False`, a non-zero reward is invalid. The `EvaluationResult` cross-field validator rejects that combination; missing reward artifacts are ingested as `0.0` with `verifier_completed=False`.
+The reward gate is fail-closed:
 
-The other two flags are diagnostic. They do not force the reward by themselves, but they surface in reports and help distinguish "the agent was wrong" from "the agent did not produce anything usable".
+| Condition | Required result |
+|-----------|-----------------|
+| `output_parseable=False` or `schema_valid=False` | `reward` must be `0.0` |
+| A stewardship evaluation is present and `stewardship.valid=False` | `reward` must be `0.0` |
+| The reward artefact is missing | Ingestion records `reward=0.0` and `verifier_completed=False` |
+
+`verifier_completed` is otherwise diagnostic. It surfaces in reports with the parser and schema flags, so readers can distinguish "the agent was wrong" from "the agent did not produce anything usable".
 
 ## The full EvaluationResult
 
@@ -81,7 +87,10 @@ class EvaluationResult(StrictModel):
     error_taxonomy: list[ErrorTag] | None  # classified failures
     confidence: ConfidenceMetadata | None  # statistical metadata
     annotations: list[Annotation] | None   # human review verdicts
+    stewardship: StewardshipEvaluation | None  # optional interactive-world evaluation
 ```
+
+`stewardship` carries the integrity gates, metrics, and evidence identities for supported stewardship worlds. It is absent from ordinary artefact-task results.
 
 ## Error taxonomy
 
@@ -111,6 +120,14 @@ class Annotation(StrictModel):
 ```
 
 These do not overwrite the automated reward. They sit alongside it, so disagreement between a reviewer and a verifier stays visible on the record.
+
+## Conditional evidence
+
+Conditional evidence is experimental, and no registered lifecycle uses it. Evidence requests can change what an agent sees, but the task verifier still defines correctness and supplies reward evidence.
+
+## Descriptive holdout results
+
+Holdout summaries describe results under a frozen condition; they do not define a second score. Keep full holdout records private and publish only allowlisted aggregates.
 
 ## Determinism
 

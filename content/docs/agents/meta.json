@@ -1,4 +1,4 @@
 {
   "title": "Agents",
-  "pages": ["harnesses", "configuration"]
+  "pages": ["harnesses", "configuration", "prime-agent"]
 }

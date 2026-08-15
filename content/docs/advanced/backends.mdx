@@ -1,49 +1,93 @@
 ---
 title: Backends
-description: A compute backend executes a single trial inside a container or sandbox on a target compute platform.
+description: A Harbor execution backend places each trial in a container or sandbox on the selected compute platform.
 ---
 
-Backends are pluggable via the `ComputeBackend` protocol. They execute a single prepared trial and return collected artifacts to the harness boundary.
+`aec-bench run` uses one execution path. It builds a Harbor job, dispatches the job through Harbor, waits for completion, and imports the results into the ledger. `--backend` selects the Harbor execution environment; it does not select a separate aec-bench runner.
 
-This page covers the compute layer. For the orchestration layer that dispatches jobs to external services, see [Deployment](/docs/advanced/deployment).
+Use `aec-bench run-local` when you need an in-process development path without Harbor or Docker.
 
-## The backend protocol
+## Execution paths
 
-Every direct backend implements the same five-method interface:
+| Command | Runtime boundary | Result handling |
+|---------|------------------|-----------------|
+| `aec-bench run` | Harbor environment | Dispatches the job and imports the completed Harbor job directory |
+| `aec-bench run-local` | Local host process | Runs one task and imports the local result unless `--no-import` is set |
 
-```python
-class ComputeBackend(Protocol):
-    def build_environment(self, *, task_dir: Path) -> str: ...
-    def launch_trial(self, *, image_ref: str, workspace_dir: Path) -> TrialHandle: ...
-    def execute_trial(
-        self,
-        *,
-        handle: TrialHandle,
-        request: BackendExecutionRequest,
-    ) -> BackendExecutionResult: ...
-    def collect_outputs(self, *, handle: TrialHandle) -> CollectedArtifacts: ...
-    def teardown(self, *, handle: TrialHandle) -> None: ...
+Both paths use the selected agent harness and the task-owned verifier. The environment changes where the trial runs, not what counts as a correct answer.
+
+## Available Harbor environments
+
+`aec-bench run --backend` accepts five values:
+
+| Backend | Where trials run | Configuration owner |
+|---------|------------------|---------------------|
+| **`modal`** | Modal containers | Harbor |
+| **`docker`** | Local Docker daemon | Harbor |
+| **`e2b`** | E2B sandboxes | Harbor |
+| **`daytona`** | Daytona workspaces | Harbor |
+| **`morph`** | Morph Cloud instances | AEC-Bench Harbor environment binding |
+
+Install the Harbor execution extra before using these environments:
+
+```bash
+pip install "aec-bench[execution]"
 ```
 
-The orchestrator drives the sequence: build the task environment, launch a runtime for one trial, execute the agent and verifier inside, collect artifacts, and tear down. A `TrialHandle` is an opaque identifier: a Docker container ID, a Modal sandbox reference, or whatever the backend needs.
+Harbor owns the native `modal`, `docker`, `e2b`, and `daytona` environment implementations. Their credentials and service configuration follow the Harbor and provider setup. AEC-Bench validates the selected backend before dispatch; other values are rejected.
 
-## Available backends
+## Selecting an environment
 
-Different backends suit different workflows. `aec-bench run --backend` currently accepts `modal`, `docker`, `e2b`, and `daytona`. Local execution is exposed through `aec-bench run-local` and through evolution/swarm development paths.
+For a one-task run, pass the backend directly:
 
-| Backend | Where trials run | Suited for |
-|---------|------------------|------------|
-| **`modal`** | Modal serverless containers | Scaling out without infra |
-| **`docker`** | Local Docker daemon | Reproducible runs on your machine |
-| **`e2b`** | E2B sandboxes | Sandbox-per-trial isolation |
-| **`daytona`** | Daytona workspaces | Dev-environment-backed runs |
-| **local runtime** | In-process on the host | Harness iteration, verifier debugging |
+```bash
+uv run aec-bench run tasks/electrical/voltage-drop \
+  --model "<model-id>" \
+  --backend docker
+```
 
-Maturity varies. `modal` and local runtime paths are the best exercised. The others are supported at the protocol level but may need environment tuning for your workloads.
+For a manifest-driven run, use `compute.backend`:
 
-## Local
+```yaml
+compute:
+  backend: modal
+  resource_limits:
+    n_concurrent_trials: 4
+  timeout_override: 600
+```
 
-In-process execution on your machine. The adapter runs in Python directly; the verifier runs as a subprocess against a local workspace directory. No containerisation.
+`n_concurrent_trials` configures the local Harbor orchestrator. `timeout_override` applies an agent timeout override to the generated Harbor job.
+
+Use `--dry-run` to validate task selection and inspect the trial plan without invoking Harbor:
+
+```bash
+uv run aec-bench run --config experiment.yaml --dry-run
+```
+
+## Morph Cloud through Harbor
+
+Morph uses the same Harbor dispatch and import path as the native environments, with an AEC-Bench environment binding that translates Harbor operations into Morph Cloud calls.
+
+Install both optional extras and set `MORPH_API_KEY`:
+
+```bash
+pip install "aec-bench[execution,morph]"
+export MORPH_API_KEY="<your-key>"
+```
+
+Then select `morph` as the backend:
+
+```bash
+uv run aec-bench run tasks/electrical/voltage-drop \
+  --model "<model-id>" \
+  --backend morph
+```
+
+Harbor still owns task staging, agent invocation, artefact collection, and verifier invocation. The Morph provider binding only owns the environment operations.
+
+## Local development
+
+`run-local` creates a temporary workspace, runs one agent harness on the host, runs the verifier, and imports the result. It is useful for harness iteration and verifier debugging because failures remain on the local process boundary.
 
 ```bash
 uv run aec-bench run-local tasks/electrical/voltage-drop \
@@ -51,87 +95,6 @@ uv run aec-bench run-local tasks/electrical/voltage-drop \
   --harness direct
 ```
 
-Zero infrastructure setup. Good for harness development, debugging verifier scripts, and short experiments where you would rather see stack traces than log artefacts. Throughput is bounded by a single host.
+This path does not provide container isolation. Use a Harbor environment when the task must run inside a controlled container or remote sandbox.
 
-## Modal
-
-Each trial runs in an ephemeral Modal sandbox built from the task's environment image. Task fixtures stage onto a Modal volume; outputs pull back when the trial completes.
-
-```yaml
-compute:
-  backend: modal
-  modal:
-    environment: aec-bench-prod
-    timeout_sec: 600
-```
-
-Modal scales horizontally without infrastructure work. Cost is per-second, so short trials are cheap and long ones show up on the bill.
-
-## Docker
-
-A local Docker daemon runs each trial in a container built from the task's Dockerfile. Most of the same guarantees as Modal (reproducible environment, isolation) without leaving your machine.
-
-```yaml
-compute:
-  backend: docker
-```
-
-Good middle ground between local runtime (no isolation) and `modal` (cloud cost plus latency). Throughput is bounded by host resources.
-
-## E2B and Daytona
-
-Both provide per-trial sandboxed environments hosted off-machine:
-
-- **E2B**: purpose-built sandboxes for agent workloads, quick to spin up per trial
-- **Daytona**: dev-environment-style workspaces, useful where trials need longer-lived state or heavier tooling
-
-Config follows the same pattern:
-
-```yaml
-compute:
-  backend: e2b        # or daytona
-```
-
-Reach for these when Modal does not fit: different regions, different sandbox semantics, or existing infrastructure investments.
-
-## Writing a custom backend
-
-Adding a backend means implementing the five-method protocol:
-
-```python
-from pathlib import Path
-from aec_bench.harness.backend import (
-    BackendExecutionRequest,
-    BackendExecutionResult,
-    CollectedArtifacts,
-    TrialHandle,
-)
-
-class KubernetesBackend:
-    def build_environment(self, *, task_dir: Path) -> str:
-        # push image to registry, return ref
-        ...
-
-    def launch_trial(self, *, image_ref: str, workspace_dir: Path) -> TrialHandle:
-        # create pod, return handle
-        ...
-
-    def execute_trial(
-        self,
-        *,
-        handle: TrialHandle,
-        request: BackendExecutionRequest,
-    ) -> BackendExecutionResult:
-        # exec adapter + verifier in pod, return result
-        ...
-
-    def collect_outputs(self, *, handle: TrialHandle) -> CollectedArtifacts:
-        # pull logs and reward artifacts
-        ...
-
-    def teardown(self, *, handle: TrialHandle) -> None:
-        # delete pod
-        ...
-```
-
-Once registered, the new backend can be wired into the experiment runner. Trial semantics do not change: same harness, same verifier, same trial record at the other end.
+There is no public custom-backend registration API in the installed library. A new execution platform must be integrated at the Harbor environment composition boundary and added to the supported CLI values.

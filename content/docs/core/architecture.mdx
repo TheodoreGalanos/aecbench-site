@@ -1,133 +1,111 @@
 ---
 title: Architecture
-description: aec-bench is organised as a dependency-layered pipeline of seven domains, from contracts and tasks through to evaluation and reporting.
+description: aec-bench supports artefact tasks and Interactive Worlds through shared authoring, evaluation, evidence, and reporting boundaries.
 ---
 
 import { BenchmarkRunFlow } from '@/components/docs/benchmark-run-flow';
 import { CoreDomains } from '@/components/docs/core-domains';
 
-## End-to-End Flow
-
-A benchmark run goes through six stages:
-
-<BenchmarkRunFlow />
-
-| Stage | What happens | Key module |
-|-------|-------------|------------|
-| **Define** | A `task.toml` describes the problem, `instruction.md` provides the prompt, and a verifier script defines how to score | `contracts/task_definition` |
-| **Resolve** | Paths are resolved, tools discovered, and the task is packaged into a `ResolvedTaskInstance` | `tasks/instance` |
-| **Stage** | A workspace or sandbox is prepared, with declared files, fixtures, and tools staged for the selected backend | `harness/local_environment` |
-| **Execute** | An agent harness runs the task — calling tools, writing output, recording a trajectory | `adapters/*` |
-| **Score** | The task's verifier, usually `tests/verify.py`, runs against the agent's output, producing a reward (0.0–1.0) and per-field details | `evaluation/pipeline` |
-| **Aggregate** | Trial records are appended to the ledger, scores aggregated, and reports generated | `ledger`, `communication` |
-
-## Core Domains
-
-The library is organised into seven domains with strict dependency boundaries — each layer only depends on layers above it.
+aec-bench has two execution families. They share experiment identity, agent and provider configuration, resource limits, evaluation, provenance, and reporting. They do not force different task types through one low-level runtime.
 
 <CoreDomains />
 
-### Contracts
+## Artefact and workspace tasks
 
-The foundation layer. Pydantic models that define the shape of data at every boundary:
+An artefact task gives an agent an instruction and an execution environment. The agent changes files or submits an artefact, and the task verifier evaluates the resulting workspace.
 
-- `TaskDefinition` — what a task is (prompt, environment, verifier, difficulty)
-- `TrialRecord` — immutable record of one agent run with full provenance
-- `EvaluationResult` — reward score, per-field breakdown, confidence, behavioural classification
-- `ExperimentManifest` — which tasks x which agents x how many repetitions
+<BenchmarkRunFlow />
 
-All other domains depend on contracts. Contracts depend on nothing.
+| Stage | What happens |
+|-------|--------------|
+| **Define** | `task.toml`, `instruction.md`, the environment, and verifier define one runnable task |
+| **Resolve** | The loader validates the task and binds it to an exact source revision |
+| **Stage** | Files, fixtures, tools, and resource limits are prepared for execution |
+| **Execute** | A provider-neutral agent harness runs locally, through Harbor, or through the separate Prime integration |
+| **Score** | The task verifier supplies task-owned reward and diagnostic evidence; evaluation validates it and interprets validity |
+| **Aggregate** | The result enters the append-only ledger and becomes available to reports and review tools |
 
-### Tasks
+Templates and suites produce deterministic task instances before this flow starts. Generated identity binds the template source digest, seed, stable instance index, difficulty, and visibility. The time at which the task was materialised does not change its identity.
 
-Loading, discovery, and lifecycle management of benchmark tasks. Tasks live on the filesystem as directories containing `task.toml`, `instruction.md`, a Docker environment, and a verifier script.
+See [Tasks](/docs/core/tasks) and [Templates](/docs/core/templates) for the authoring path.
 
-```
-tasks/
-└── electrical/
-    └── cable-voltage-drop/
-        ├── task.toml           # metadata, timeout, difficulty
-        ├── instruction.md      # the prompt sent to the agent
-        ├── environment/
-        │   ├── Dockerfile
-        │   └── fixtures/       # input data staged into the container
-        └── tests/
-            └── verify.py       # scoring script
-```
+## Interactive Worlds
 
-See [Tasks](/docs/core/tasks) for the full reference.
+An Interactive World repeatedly shows an actor-visible observation and accepts an action that changes task-owned state. This is a better fit when the benchmark needs causal decisions over time instead of one final workspace submission.
 
-### Agent harnesses
+The boundary is deliberately small:
 
-Provider-neutral agent execution strategies. Four built-in harnesses share the same internal execution protocol:
+- the world owns state, observations, action meaning, transitions, domain termination, and evaluation;
+- the episode host owns decision correlation, recording, accepted-step advancement, limits, and truncation; and
+- evaluation runs outside the live transition.
 
-| Harness | How it works | Best for |
-|---------|-------------|----------|
-| **Direct** | Single LLM call, no tools | Classification, extraction |
-| **Tool Loop** | Multi-turn with tool calls (max N turns) | General tasks with tool use |
-| **RLM** | Sandboxed REPL with structured sub-calls | Complex calculations, iterative work |
-| **Lambda-RLM** | Pre-planned steps with bounded execution | Structured reports, known workflows |
+The current catalogue contains wastewater pump-station stewardship and dam-seepage monitoring. Both use the same episode host, but each defines its own state, actions, persistence, and provider integration.
 
-All agent harnesses produce the same output envelope: the agent's answer, a full execution trajectory, and token usage.
+Persistence, recovery, host controls, branching, rollouts, staged evidence, and provider integration are optional capabilities. A new world does not acquire them only because the pump-station world uses them.
 
-See [Agent Harnesses](/docs/agents/harnesses) for details on each strategy.
+See [Interactive Worlds](/docs/core/interactive-worlds) for the contributor-facing model.
 
-### Generation
+## Finite lifecycles
 
-Parameterised templates that produce reproducible task instances. A template defines parameters (soil type, load magnitude, cable length), archetypes (sandy soil, clay), and difficulty presets. The generator samples parameters and renders concrete tasks.
+A finite lifecycle is a third coordination shape, not a third task execution family. It declares a bounded sequence of evidence stages before execution. The task owns each stage's objective, visible evidence, required result, and verifier rules. The host owns release, progression, failure, and finalisation.
 
-```
-Template (Jinja2 + ParamSpec)
-    → sample parameters
-    → render instruction
-    → generate verifier
-    → scaffold task directory
-```
+Use a lifecycle when the work has known stages and controlled evidence release. Use an Interactive World when actions change an ongoing causal state. Use an artefact task when one workspace or submission is sufficient.
 
-See [Templates](/docs/core/templates) for the template engine reference.
+See [Finite Lifecycles](/docs/core/lifecycles).
 
-### Execution harness
+## Capability ownership
 
-Orchestrates trial execution. Handles container lifecycle, tool staging, agent-harness dispatch, and trajectory recording. Runs trials on pluggable compute backends:
+| Concern | Owner | Boundary |
+|---------|-------|----------|
+| Task meaning | Task, template, lifecycle, or world | Keeps engineering inputs, actions, and verifier rules together |
+| Orchestration | Harness, lifecycle host, or episode host | Applies limits and records identity without interpreting task semantics |
+| Agent execution | Agent harness and provider integration | Translates model and tool protocols without selecting benchmark policy |
+| Evaluation | Evaluation | Owns reward, validity, breakdowns, behavioural analysis, and review evidence; task verifiers supply task-owned evidence |
+| Durable evidence | Ledger and producing domain | Stores immutable trial, dataset, and content-addressed evidence records |
+| Presentation | CLI, TUI, web, and reports | Projects established results without defining a second metric |
 
-- **Local** — in-process execution on your machine
-- **Modal** — serverless cloud execution
-- **Docker**, **e2b**, **Daytona** — alternative sandbox targets
+### Local and remote execution
 
-For production deployment across a shared fleet, aec-bench dispatches jobs through **Harbor** — a separate orchestration service that schedules trials across backends. Harbor is not an agent harness; it decides where trial jobs run. See [Deployment](/docs/advanced/deployment).
+`run-local` executes one artefact task without Harbor. Production local execution selects from a fixed set of agent-harness builders; it does not expose a mutable adapter registry.
 
-### Evaluation
+`run` lowers an experiment to the one Harbor dispatch-and-import workflow. Docker, Modal, Morph, e2b, and Daytona are Harbor environment backends. They are not separate benchmark runtimes.
 
-Multi-stage scoring pipeline:
+Prime is separate from Harbor. Prime Lab exports public artefact tasks into packages for hosted evaluation and training. Its finite-lifecycle export is local-only and keeps references to the source packages and checkout. Prime Agent runs the upstream executable directly for local artefact tasks or through bounded ACP sessions for supported Interactive Worlds.
 
-1. **Verifier** — task-specific script that checks agent output against expected results
-2. **Reward** — normalised score (0.0–1.0) with per-field breakdown
-3. **Confidence** — statistical metadata (Cohen's kappa, Wilson CI)
-4. **Behavioural classification** — categorise agent turns using the bond taxonomy: execution, verification, deliberation, and exploration
+See [Execution Backends](/docs/advanced/backends), [Prime Lab](/docs/advanced/prime-lab), and [Prime Agent](/docs/agents/prime-agent).
 
-### Communication
+## Evidence boundaries
 
-Reporting and visualisation: HTML reports, leaderboard tables, trace viewers, and structured exports (JSON, JSONL).
+`TrialRecord` is the canonical record for a reportable trial. It binds task, agent, environment, inputs, outputs, evaluation, timing, cost, completeness, and any execution-family provenance.
 
-### Feedback
+`OutputRecord` separates normal termination from host truncation and records the final reason. `CostRecord` owns model calls, token and cache use, advisor use, and estimated cost. Attached artefacts use SHA-256-bound `ArtifactReference` values.
 
-Structured expert review, calibration, adjudication, and benchmark improvement. Feedback captures human judgments as provenanced data, feeds task and verifier fixes back into the benchmark, and keeps holdout-sensitive observations out of public or training-visible surfaces.
+`trajectory.jsonl` is an ordered stream of validated entries. It has no format header. Provider transcripts remain separate only when their producing boundary needs the exact representation.
 
-## Design Principles
+Accepted trial evidence and published datasets are immutable. Internal source code, temporary workspaces, and service objects are not append-only records.
 
-aec-bench follows a strict priority order when design decisions conflict:
+## Dependency direction
 
-| Priority | Principle | What it means |
-|----------|-----------|--------------|
+Dependencies follow ownership instead of a permanent numbered hierarchy:
+
+- task definitions and task worlds do not import providers;
+- shared world-runtime code does not import a concrete world;
+- orchestration can depend on task and execution boundaries without taking over task semantics;
+- evaluation consumes verifier evidence, while persistence does not define evaluation policy; and
+- CLI, TUI, web, and reports compose lower-level capabilities.
+
+Pydantic models sit at untrusted, external, persisted, or cross-process boundaries. Normal Python values are enough inside one owner.
+
+## Design priorities
+
+When design goals conflict, aec-bench uses this order:
+
+| Priority | Principle | What it protects |
+|----------|-----------|------------------|
 | 1 | **Validity** | Results reflect real agent capability, not benchmark artefacts |
-| 2 | **Reproducibility** | Any result can be reconstructed from recorded inputs |
-| 3 | **Coverage** | Benchmark spans meaningful AEC domain breadth and depth |
-| 4 | **Cost** | Experiments are affordable enough to run frequently |
-| 5 | **Throughput** | New tasks, agents, and models can be onboarded quickly |
+| 2 | **Reproducibility** | Recorded inputs and revisions can reconstruct a result |
+| 3 | **Coverage** | The benchmark spans meaningful AEC work |
+| 4 | **Cost** | Experiments remain affordable to repeat |
+| 5 | **Throughput** | New tasks, harnesses, and models can be added efficiently |
 
-### Key invariants
-
-- **Trial records are immutable** — once written to the ledger, a trial record is never modified
-- **Tasks are self-contained** — everything needed to run and score a task lives in its directory
-- **Agent harnesses are provider-neutral** — the same task can be run with any LLM provider
-- **Verifier scoring is deterministic** — the same output and verifier revision produce the same mechanical score
+When two designs protect these goals equally, the simpler final system wins.

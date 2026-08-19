@@ -78,7 +78,7 @@ Choose either conditional evidence requests or conditional operations within one
 
 ## Execution evidence
 
-Lifecycle execution records keep session identity, resolved model, agent harness, execution mode, memory visibility, status, usage, and SHA-256-bound artefacts. A final `TrialRecord` references this evidence, while lifecycle state remains authoritative in the execution record.
+Lifecycle execution records keep session identity, resolved model, agent harness, execution mode, memory visibility, status, usage, and retained `ArtifactRef` values. A final `TrialRecord` references this evidence, while lifecycle state remains authoritative in the execution record.
 
 Persistent-context and fresh-context execution are explicit choices. Fresh sessions can receive only the evidence allowed by their memory visibility policy. The resolved model and agent harness stay stable across one lifecycle execution.
 

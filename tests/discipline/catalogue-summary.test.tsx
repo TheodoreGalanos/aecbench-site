@@ -1,5 +1,5 @@
-// ABOUTME: Tests CatalogueSummary — totals + provenance line render.
-// ABOUTME: Verifies totals display, commit truncation to 7 chars, and date-only timestamp.
+// ABOUTME: Tests CatalogueSummary as a derived view of deterministic catalogue entries.
+// ABOUTME: Confirms deployment metadata does not appear as catalogue identity.
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { CatalogueSummary } from '@/components/discipline/catalogue-summary';
@@ -7,9 +7,6 @@ import { CatalogueSummary } from '@/components/discipline/catalogue-summary';
 describe('CatalogueSummary', () => {
   const baseProps = {
     totals: { tasks: 87, built: 56, proposed: 31, categories: 12, standards: 42 },
-    libraryVersion: '0.1.0',
-    libraryCommit: '1a2b3c4d5e6f7890abcdef1234567890abcdef12',
-    generatedAt: '2026-04-19T09:00:00Z',
   };
 
   it('renders the totals line', () => {
@@ -21,20 +18,10 @@ describe('CatalogueSummary', () => {
     expect(screen.getByText(/42 standards/)).toBeInTheDocument();
   });
 
-  it('renders the provenance line with truncated commit', () => {
+  it('does not present package, commit, or build time as catalogue identity', () => {
     render(<CatalogueSummary {...baseProps} />);
-    expect(screen.getByText(/library v0\.1\.0/)).toBeInTheDocument();
-    expect(screen.getByText(/1a2b3c4/)).toBeInTheDocument();
-    expect(screen.queryByText(/5e6f7890/)).not.toBeInTheDocument();
-  });
-
-  it('renders the generated date (date portion only)', () => {
-    render(<CatalogueSummary {...baseProps} />);
-    expect(screen.getByText(/2026-04-19/)).toBeInTheDocument();
-  });
-
-  it('renders uncommitted when the source catalogue has no library commit yet', () => {
-    render(<CatalogueSummary {...baseProps} libraryCommit={null} />);
-    expect(screen.getByText(/uncommitted/)).toBeInTheDocument();
+    expect(screen.queryByText(/library v/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/generated/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/commit/i)).not.toBeInTheDocument();
   });
 });

@@ -1,5 +1,5 @@
 // ABOUTME: Dev sync — copies sibling aec-bench/artefacts/library-catalogue.json into data/.
-// ABOUTME: Validates against the v1 schema before writing; invoked via `pnpm sync:catalogue`.
+// ABOUTME: Preserves deterministic catalogue bytes after validating schema 2 or the bounded v1 transition.
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { LibraryCatalogueSchema } from '@/lib/aec-bench/library-catalogue';
@@ -26,19 +26,19 @@ export function syncCatalogue(opts: SyncCatalogueOptions): void {
   const parsed = LibraryCatalogueSchema.safeParse(data);
   if (!parsed.success) {
     throw new Error(
-      `Library catalogue at ${source} failed v1 schema validation:\n${parsed.error.message}`,
+      `Library catalogue at ${source} failed schema validation:\n${parsed.error.message}`,
     );
   }
 
   const target = resolve(opts.target);
   mkdirSync(dirname(target), { recursive: true });
-  writeFileSync(target, JSON.stringify(parsed.data, null, 2) + '\n');
+  writeFileSync(target, raw.endsWith('\n') ? raw : `${raw}\n`);
 
-  const shortCommit = parsed.data.library_commit?.slice(0, 7) ?? 'uncommitted';
   // eslint-disable-next-line no-console
   console.log(
     `[sync:catalogue] ${source} → ${target}\n` +
-      `              library v${parsed.data.library_version} @ ${shortCommit} · generated ${parsed.data.generated_at}`,
+      `              schema ${parsed.data.schema_version} · ${parsed.data.counts.total_templates} templates · ` +
+      `${parsed.data.counts.total_seeds} seeds`,
   );
 }
 

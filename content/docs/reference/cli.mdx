@@ -136,22 +136,25 @@ See [Finite Lifecycles](/docs/core/lifecycles) and [Interactive Worlds](/docs/co
 
 ### `dataset`
 
-Freeze, inspect, export, import, and evaluate task snapshots:
+Create a semantic selection, publish one exact reference, and use its immutable label:
 
 ```bash
-uv run aec-bench dataset create \
-  --name electrical-v1 \
-  --version 1.0.0 \
-  --domain electrical
+uv run aec-bench dataset create electrical-core \
+  --domain electrical \
+  --description "Cable and power-system baseline"
 
-uv run aec-bench dataset config electrical-v1@1.0.0 \
+uv run aec-bench dataset publish electrical-core --label public-2026
+
+uv run aec-bench dataset config electrical-core@public-2026 \
   --model gpt-4.1-mini \
   --output experiment.yaml
 
 uv run aec-bench dataset list
-uv run aec-bench dataset info electrical-v1@1.0.0
-uv run aec-bench dataset validate electrical-v1@1.0.0
-uv run aec-bench dataset results electrical-v1@1.0.0
+uv run aec-bench dataset info electrical-core@public-2026
+uv run aec-bench dataset validate electrical-core@public-2026
+uv run aec-bench dataset export electrical-core@public-2026 --output electrical-core.tar.gz
+uv run aec-bench dataset import electrical-core.tar.gz
+uv run aec-bench dataset results electrical-core@public-2026
 ```
 
 ## Running Experiments
@@ -177,6 +180,15 @@ uv run aec-bench run tasks/electrical/voltage-drop \
 ```
 
 The inline form also accepts `--tasks-root`, `--dry-run`, `--no-verify`, and reviewer options. The CLI accepts `--adapter` as an alias for `--harness`. Use `--reviewer-model MODEL` or `--reviewer-models-config PATH` to enable the optional post-verifier LLM reviewer.
+
+Move a completed run as one deterministic package:
+
+```bash
+uv run aec-bench run export run-001 --output run-001.tar.zst
+uv run aec-bench run import run-001.tar.zst
+```
+
+The `.tar.zst` suffix means a tar archive compressed with Zstandard. Export produces deterministic package bytes. Import validates the package before it writes accepted run records.
 
 ### `run-local`
 
@@ -334,8 +346,10 @@ Single-workspace evolution:
 uv run aec-bench evolve init workspaces/my-ws --name voltage-drop-evo --harness rlm
 uv run aec-bench evolve run --config evolution.yaml --tasks-root tasks
 uv run aec-bench evolve history workspaces/my-ws
-uv run aec-bench evolve rollback workspaces/my-ws evo-20260404-1220-2
+uv run aec-bench evolve rollback workspaces/my-ws <candidate-id>
 ```
+
+`rollback` accepts a stable `candidate_id` or an immutable label. Candidate lineage uses `parent_candidate_id`, and `source_revision` is the full Git revision of the candidate source.
 
 Multi-agent QD swarm evolution:
 

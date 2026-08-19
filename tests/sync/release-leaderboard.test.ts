@@ -153,7 +153,8 @@ describe('release leaderboard sync', () => {
       JSON.parse(await readFile(join(output, 'leaderboard.json'), 'utf-8')),
     );
     expect(artefact.is_mock).toBe(false);
-    expect(artefact.dataset.version).toBe('release');
+    expect(artefact.dataset.release_label).toBe('release');
+    expect(artefact.dataset).not.toHaveProperty('content_hash');
     expect(artefact.entries).toHaveLength(2);
     expect(artefact.entries[0].model_key).toBe('gpt-5-2/tool_loop');
     expect(artefact.entries[0].dataset).toBe('aec-bench@release');

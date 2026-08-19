@@ -75,45 +75,93 @@ A positive reward requires valid, parseable output. Reports use the stored resul
 
 The verifier remains task-owned. It can retain detailed evidence in a task-specific artefact while the shared result carries the normalised outcome.
 
-## TrialRecord — the reportable record
+## Identity vocabulary
 
-`TrialRecord` is the canonical envelope for one trial. This trimmed view shows the common fields:
+Use each identity mechanism for one purpose:
+
+| Mechanism | Purpose |
+|-----------|---------|
+| Git revision | Exact repository source |
+| Stable domain ID | A task, dataset, run, trial, or candidate |
+| `ArtifactRef` | Exact retained bytes |
+| Timestamp | A real event, such as start, completion, or publication |
+| Schema or protocol version | Compatibility of a document or wire contract |
+
+Schema labels such as v2 or v3 are valid compatibility versions. They are not extra identity layers for a task, dataset, or run.
+
+## RunManifest — shared run identity
+
+`RunManifest` stores the identity that all trials in one run share:
+
+```python
+class RunManifest(FrozenStrictModel):
+    schema_version: Literal[2]
+    run_id: NonEmptyStr
+    experiment_id: NonEmptyStr
+    dataset: DatasetRef | None
+    source: SourceRef
+    agent: AgentConfiguration
+    execution_environment: ExecutionEnvironmentRef
+    provider_route: ProviderRoute
+    expected_authorities: tuple[AuthorityExpectation, ...]
+    evaluation_regime: EvaluationRegimeRef | None
+    qualification: QualificationRequirement | None
+```
+
+The exact source, agent configuration, environment, provider route, and dataset reference appear once per run. A trial refers to them through `run_id`.
+
+## TrialRecord — one trial result
+
+`TrialRecord` stores facts that can differ for each attempt:
 
 ```python
 class TrialRecord(StrictModel):
+    schema_version: Literal[2]
     trial_id: NonEmptyStr
-    experiment_id: NonEmptyStr
-    dataset_id: str | None
-    timestamp: datetime
-    task: TaskReference
-    agent: AgentReference
-    environment: EnvironmentSnapshot
-    inputs: InputRecord
-    outputs: OutputRecord
-    evaluation: EvaluationResult
+    run_id: NonEmptyStr
+    task_id: NonEmptyStr
+    attempt: PositiveInt
+    execution_status: ExecutionStatus
+    evaluation_status: EvaluationStatus
+    evidence_status: EvidenceStatus
+    started_at: datetime
+    completed_at: datetime | None
+    input: TrialInput
+    output: TrialOutput | None
+    evaluation: EvaluationResult | None
     timing: TimingRecord
     cost: CostRecord | None
-    completeness: Completeness      # complete | partial
+    authority_evidence: tuple[AuthorityEvidenceRef, ...]
+    provider_evidence: ArtifactRef | None
+    extension_refs: tuple[TrialExtensionRef, ...]
 ```
 
-Optional provenance can bind a finite lifecycle, Interactive World episode, or meta-harness study to the same trial.
+The three statuses do not collapse into one generic completeness flag:
 
-Both complete and partial records can enter the append-only ledger. A complete record must carry the provenance needed for its execution family. Import code records the available evidence and marks the record partial when required provenance is absent.
+| Status | Question |
+|--------|----------|
+| `execution_status` | Did the agent execution complete, fail, cancel, or become invalid? |
+| `evaluation_status` | Was evaluation requested, and did it complete? |
+| `evidence_status` | Is required authority evidence absent, pending, verified, incomplete, or invalid? |
+
+Publication policy evaluates these facts with the run manifest. A reportable result normally needs completed execution, completed evaluation, a completed verifier, and evidence that is `verified` or `not_required`.
+
+Finite lifecycle, Interactive World, adaptation, proposal-session, and meta-harness details use typed extension references. The main trial does not copy each optional forensic structure.
 
 Once accepted, a trial record is immutable. Temporary workspaces and internal builders remain replaceable implementation.
 
 ### Output state
 
-`OutputRecord` keeps completion facts separate:
+`TrialOutput` references retained output bytes:
 
 ```python
-class OutputRecord(StrictModel):
+class TrialOutput(StrictModel):
     agent_output: AgentOutput | None
-    raw_output_path: str | None
-    conversation_path: str | None
-    trajectory_path: str | None
+    raw_output: ArtifactRef | None
+    conversation: ArtifactRef | None
+    trajectory: ArtifactRef | None
     agent_result: dict[str, Any] | None
-    artifacts: list[ArtifactReference] | None
+    artifacts: tuple[TrialArtifactRef, ...]
     terminated: bool
     truncated: bool
     final_reason: NonEmptyStr | None
@@ -123,17 +171,25 @@ Termination and truncation are mutually exclusive. Provider completion, truncati
 
 ### Artefact integrity
 
-Evidence attached to a trial uses a content-bound reference:
+Exact retained bytes use one universal reference:
 
 ```python
-class ArtifactReference(StrictModel):
-    kind: NonEmptyStr
-    path: NonEmptyStr
-    sha256: NonEmptyStr
+class ArtifactRef(FrozenStrictModel):
+    artifact_id: NonEmptyStr
+    sha256: Sha256
+    size_bytes: PositiveInt
     media_type: NonEmptyStr
 ```
 
-The SHA-256 value must match the referenced bytes.
+The artefact repository verifies size and SHA-256 when it reads the bytes. Domain IDs do not replace `ArtifactRef`, and ambient content hashes do not replace domain IDs.
+
+### Authority and provider evidence
+
+The authority that produces evidence owns its final evidence document. A trial stores an `AuthorityEvidenceRef` with the authority kind, protocol, and `ArtifactRef`. It does not copy the authority-owned document.
+
+Provider evidence uses the separate `provider_evidence` field. One runtime attestation binds to one retained provider evidence manifest. Keyless protocol proof shows that the protocol contract works without live credentials. Live-provider qualification is a separate claim and needs live provider evidence. Do not treat keyless proof as live qualification.
+
+Provider packages translate provider and tool protocols. They do not select tasks, change task intent, score outputs, or contain task-specific behaviour.
 
 ### Cost tracking
 

@@ -17,10 +17,12 @@ function isValidDiscipline(slug: string): slug is Domain {
 
 export async function generateStaticParams() {
   const catalogue = getCatalogue();
-  return catalogue.templates.map((entry) => ({
-    discipline: entry.discipline,
-    taskId: entry.task_id,
-  }));
+  return catalogue.templates
+    .filter((entry) => isValidDiscipline(entry.discipline))
+    .map((entry) => ({
+      discipline: entry.discipline,
+      taskId: entry.task_id,
+    }));
 }
 
 export async function generateMetadata({
@@ -65,10 +67,6 @@ export default async function TaskTemplatePage({
       detail={detail}
       variants={variants}
       canonicalPath={`/tasks/${entry.discipline}/${entry.task_id}`}
-      catalogueMeta={{
-        libraryVersion: catalogue.library_version,
-        libraryCommit: catalogue.library_commit,
-      }}
     />
   );
 }

@@ -77,11 +77,16 @@ export async function runIngest(opts: RunOptions): Promise<LeaderboardArtefact> 
   const lastSubmission =
     allTrials.length === 0
       ? generatedAt
-      : allTrials.map((t) => t.timestamp).sort().at(-1)!;
+      : allTrials.map((trial) => trial.completed_at ?? trial.started_at).sort().at(-1)!;
 
   const artefact: LeaderboardArtefact = {
     generated_at: generatedAt,
-    dataset: manifest,
+    dataset: {
+      dataset_id: manifest.dataset_id,
+      release_label: manifest.release_label,
+      description: manifest.description,
+      task_count: manifest.tasks.length,
+    },
     entries: withDelta,
     is_mock: isMock,
     run_status: {

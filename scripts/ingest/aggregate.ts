@@ -2,7 +2,7 @@
 // ABOUTME: Aggregation — grouping, reward mean+CI, per-discipline, cost rollup, ranking, delta.
 // ABOUTME: Functions are pure. Orchestrator calls them in sequence.
 import type {
-  DatasetManifest,
+  DatasetSelection,
   Domain,
   LeaderboardEntry,
   ModelEntry,
@@ -74,7 +74,7 @@ export function computeReward(trials: TrialRecord[]): RewardStats {
 
 export type PerDiscipline = Partial<Record<Domain, number>>;
 
-export function computePerDiscipline(trials: TrialRecord[], manifest: DatasetManifest): PerDiscipline {
+export function computePerDiscipline(trials: TrialRecord[], manifest: DatasetSelection): PerDiscipline {
   const taskDomain = new Map(manifest.tasks.map((t) => [t.task_id, t.domain]));
   const buckets = new Map<Domain, number[]>();
   for (const trial of trials.filter(isComplete)) {
@@ -91,8 +91,16 @@ export function computePerDiscipline(trials: TrialRecord[], manifest: DatasetMan
   return out;
 }
 
-function isComplete(t: TrialRecord): boolean {
-  return t.completeness === 'complete' && t.evaluation.validity.verifier_completed;
+function isComplete(
+  trial: TrialRecord,
+): trial is TrialRecord & { evaluation: NonNullable<TrialRecord['evaluation']> } {
+  return (
+    trial.execution_status === 'completed'
+    && trial.evaluation_status === 'completed'
+    && ['verified', 'not_required'].includes(trial.evidence_status)
+    && trial.evaluation !== null
+    && trial.evaluation.validity.verifier_completed
+  );
 }
 
 function seedOf(trialIds: string[]): string {
@@ -178,7 +186,7 @@ export function applyDelta(
 
 export interface BuildEntryContext {
   group: TrialGroup;
-  manifest: DatasetManifest;
+  manifest: DatasetSelection;
   activeKey: string;
   submissionCount: number;
   is_mock: boolean;
@@ -191,7 +199,7 @@ export function buildEntry(ctx: BuildEntryContext): LeaderboardEntry {
   const costTiming = computeCostAndTiming(group.trials);
 
   const lastSubmission = group.trials
-    .map((t) => t.timestamp)
+    .map((trial) => trial.completed_at ?? trial.started_at)
     .sort()
     .at(-1)!;
 

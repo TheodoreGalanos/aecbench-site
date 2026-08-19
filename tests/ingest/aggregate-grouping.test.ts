@@ -14,8 +14,10 @@ function makeTrial(overrides: Partial<TrialRecord>): TrialRecord {
   return {
     trial_id: 'x',
     experiment_id: 'e',
+    run_id: null,
     dataset_id: 'aec-bench@0.4.1',
-    timestamp: '2026-04-10T12:00:00Z',
+    started_at: '2026-04-10T12:00:00Z',
+    completed_at: '2026-04-10T12:00:01Z',
     task: { task_id: 't', task_revision: 'r' },
     agent: {
       adapter: 'tool_loop',
@@ -29,7 +31,9 @@ function makeTrial(overrides: Partial<TrialRecord>): TrialRecord {
     },
     timing: { total_seconds: 1, agent_seconds: 1 },
     cost: null,
-    completeness: 'complete',
+    execution_status: 'completed',
+    evaluation_status: 'completed',
+    evidence_status: 'not_required',
     ...overrides,
   };
 }

@@ -16,9 +16,9 @@ Each evolution cycle runs six phases:
 | **Classify** | Read recent trials and tag turns, failures, and behavioural patterns |
 | **Analyse** | Identify repeated failure modes and the prompt or skill surface implicated |
 | **Evolve** | Propose structured prompt or skill mutations |
-| **Apply** | Write the candidate workspace version |
+| **Apply** | Write the candidate workspace source |
 | **Gate** | Run the candidate on a batch of tasks and compare with the incumbent |
-| **Version** | Promote the candidate when it clears the threshold; otherwise retain the previous best |
+| **Register** | Record the candidate ID, exact source revision, lineage, score, and optional label |
 
 The loop stops when `max_cycles` is reached or the configured stagnation window produces no improvement.
 
@@ -33,6 +33,12 @@ uv run aec-bench evolve init workspaces/voltage-drop-evo \
 ```
 
 The workspace contains a manifest, system prompt, and skill directory. Treat it like source code: review diffs, keep changes scoped, and avoid contaminating benchmark task definitions with answer leakage.
+
+## Candidate identity
+
+Each candidate has one `candidate_id`. Its `source_revision` is the full Git commit that contains its source. `parent_candidate_id` records explicit lineage. An optional label can help a person find the candidate, but the label is immutable and is not candidate identity.
+
+The baseline can have the label `evo-0`. This label does not create a second version or identity layer.
 
 ## Configuration
 
@@ -72,10 +78,10 @@ uv run aec-bench evolve history workspaces/voltage-drop-evo
 
 Pass `--tasks-root` to bind the YAML selectors to runnable tasks. Task-backed benchmark evidence requires this binding; other runs exercise the evolution workflow and produce diagnostic output.
 
-Rollback restores an older tag as a new workspace version and preserves history.
+Rollback accepts a candidate ID or immutable label. It restores that candidate's exact source as a new Git commit. It does not change the original candidate.
 
 ```bash
-uv run aec-bench evolve rollback workspaces/voltage-drop-evo evo-20260404-1220-2
+uv run aec-bench evolve rollback workspaces/voltage-drop-evo <candidate-id>
 ```
 
 ## Mutations
@@ -93,7 +99,7 @@ class MutationAction:
     prompt_content: str | None = None
 ```
 
-Each mutation is validated before application. Applied versions can be evaluated, compared, archived, or rolled back.
+Each mutation is validated before application. Registered candidates can be evaluated, compared, archived, or restored.
 
 ## Selection strategy
 

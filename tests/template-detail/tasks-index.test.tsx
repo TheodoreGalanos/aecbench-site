@@ -3,6 +3,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import TasksPage, { metadata } from '@/app/(home)/tasks/page';
+import { getCatalogue } from '@/lib/aec-bench/library-catalogue';
 
 describe('TasksPage', () => {
   it('sets task-library metadata', () => {
@@ -10,6 +11,7 @@ describe('TasksPage', () => {
   });
 
   it('renders the task library sitemap and canonical task links', () => {
+    const builtTemplates = getCatalogue().counts.total_templates;
     render(<TasksPage />);
     expect(screen.getByRole('heading', { level: 1, name: /Task Library/i })).toBeInTheDocument();
     expect(screen.getByText('/tasks/[discipline]/[taskId]')).toBeInTheDocument();
@@ -18,13 +20,13 @@ describe('TasksPage', () => {
       'href',
       '#civil-tasks-heading',
     );
-    expect(within(navigation).getAllByRole('link')).toHaveLength(5);
+    expect(within(navigation).getAllByRole('link')).toHaveLength(6);
     expect(screen.getByRole('link', { name: /^Voltage Drop$/i })).toHaveAttribute(
       'href',
       '/tasks/electrical/voltage-drop',
     );
     expect(screen.getByText('built templates')).toBeInTheDocument();
-    expect(screen.getByText('184')).toBeInTheDocument();
-    expect(screen.getAllByRole('link').filter((link) => link.getAttribute('href')?.startsWith('/tasks/'))).toHaveLength(184);
+    expect(screen.getByText(String(builtTemplates))).toBeInTheDocument();
+    expect(screen.getAllByRole('link').filter((link) => link.getAttribute('href')?.startsWith('/tasks/'))).toHaveLength(builtTemplates);
   });
 });

@@ -25,7 +25,7 @@ An artefact task gives an agent an instruction and an execution environment. The
 | **Score** | The task verifier supplies task-owned reward and diagnostic evidence; evaluation validates it and interprets validity |
 | **Aggregate** | The result enters the append-only ledger and becomes available to reports and review tools |
 
-Templates and suites produce deterministic task instances before this flow starts. Generated identity binds the template source digest, seed, stable instance index, difficulty, and visibility. This identity remains stable regardless of when the instance is materialised.
+Templates and suites produce deterministic task instances before this flow starts. The generator can write replay inputs once in `generation-manifest.json` at the output root. Runnable tasks do not copy this provenance, and normal loading and execution do not depend on the sidecar.
 
 See [Tasks](/docs/core/tasks) and [Templates](/docs/core/templates) for the authoring path.
 
@@ -76,13 +76,15 @@ See [Execution Backends](/docs/advanced/backends), [Prime Lab](/docs/advanced/pr
 
 ## Evidence boundaries
 
-`TrialRecord` is the canonical record for a reportable trial. It binds task, agent, environment, inputs, outputs, evaluation, timing, cost, completeness, and any execution-family provenance.
+`RunManifest` owns the source, dataset, agent, environment, provider route, expected authorities, and other identity shared by a run. Each `TrialRecord` refers to it through `run_id` and records one task attempt.
 
-`OutputRecord` separates normal termination from host truncation and records the final reason. `CostRecord` owns model calls, token and cache use, advisor use, and estimated cost. Attached artefacts use SHA-256-bound `ArtifactReference` values.
+`TrialRecord` keeps execution, evaluation, and evidence status separate. `TrialOutput` separates normal termination from host truncation and records the final reason. `CostRecord` owns model calls, token and cache use, advisor use, and estimated cost. Retained bytes use `ArtifactRef`, which includes the artefact ID, SHA-256, byte size, and media type.
+
+Producing authorities own their evidence documents. Trials refer to authority evidence instead of copying it. Provider evidence has its own single-manifest reference. Keyless protocol proof and live-provider qualification remain separate claims.
 
 `trajectory.jsonl` contains one validated entry per non-empty line, starting with the first line. Provider transcripts remain separate only when their producing boundary needs the exact representation.
 
-Accepted trial records are append-only; published dataset versions are immutable.
+Accepted run manifests and trial records are immutable. Dataset publications bind a stable dataset ID to one exact repository or bundle reference under an immutable label.
 
 ## Dependency direction
 

@@ -45,8 +45,8 @@ uv run aec-bench prime export \
 
 ```bash
 uv run aec-bench prime export \
-  --name aec-electrical-v1 \
-  --dataset electrical-v1@1.0.0 \
+  --name aec-electrical-core \
+  --dataset electrical-core@public-2026 \
   --harness-mode auto
 ```
 
@@ -89,8 +89,8 @@ Push a generated environment to Prime Hub:
 
 ```bash
 uv run aec-bench prime push \
-  --name aec-electrical-v1 \
-  --dataset electrical-v1@1.0.0 \
+  --name aec-electrical-core \
+  --dataset electrical-core@public-2026 \
   --visibility PRIVATE \
   --owner your-owner
 ```
@@ -105,7 +105,7 @@ Run a hosted eval against an existing Hub environment:
 
 ```bash
 uv run aec-bench prime eval \
-  --remote-env your-owner/aec-electrical-v1 \
+  --remote-env your-owner/aec-electrical-core \
   --hosted \
   --model "Qwen/Qwen3.5-4B" \
   --split eval \
@@ -125,7 +125,7 @@ Use repeated `--difficulty` values for mixed slices:
 
 ```bash
 uv run aec-bench prime eval \
-  --remote-env your-owner/aec-electrical-v1 \
+  --remote-env your-owner/aec-electrical-core \
   --hosted \
   --model "Qwen/Qwen3.5-4B" \
   --difficulty easy \
@@ -149,7 +149,7 @@ If you already know the deployed adapter id, pass the base model as `--model` an
 
 ```bash
 uv run aec-bench prime eval \
-  --remote-env your-owner/aec-electrical-v1 \
+  --remote-env your-owner/aec-electrical-core \
   --hosted \
   --model "Qwen/Qwen3.5-4B" \
   --adapter-id uv124zgh7ttg3in94f7jzmv2 \
@@ -168,7 +168,7 @@ aec-bench composes the Prime model string as `<base-model>:<adapter-id>`. To kee
 
 ```bash
 uv run aec-bench prime eval \
-  --remote-env your-owner/aec-electrical-v1 \
+  --remote-env your-owner/aec-electrical-core \
   --hosted \
   --model "Qwen/Qwen3.5-4B" \
   --adapter-from-run <training-run-id> \
@@ -192,7 +192,7 @@ Write a conservative single-slice training config:
 
 ```bash
 uv run aec-bench prime train-config \
-  --environment your-owner/aec-electrical-v1 \
+  --environment your-owner/aec-electrical-core \
   --output train.toml \
   --model "Qwen/Qwen3.5-0.8B" \
   --split train \
@@ -257,7 +257,7 @@ uv run aec-bench import-prime-eval <prime-eval-id> \
 
 The importer writes one `TrialRecord` per Prime sample plus local artefacts under the ledger: `conversation.jsonl`, the raw `prime_sample.json`, and `output.md` when the rollout called `submit_answer` with submitted content. It preserves Prime's hosted result and materialises the result locally so the rest of aec-bench can inspect it.
 
-Provider completion, truncation, and errors are mapped independently from reward. A sample can have a reward and still be partial or failed, so use the imported status and stop condition together with the verifier score.
+Provider completion, evaluation, and evidence are separate facts. A sample can have a reward and still have failed execution or incomplete evidence. Check `execution_status`, `evaluation_status`, and `evidence_status` with the verifier result.
 
 After import, use the existing report commands:
 

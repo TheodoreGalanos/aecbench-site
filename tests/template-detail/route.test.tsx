@@ -14,6 +14,9 @@ import {
   generateMetadata,
   generateStaticParams,
 } from '@/app/(home)/tasks/[discipline]/[taskId]/page';
+import {
+  generateStaticParams as generateLeaderboardStaticParams,
+} from '@/app/(home)/leaderboard/[discipline]/[taskId]/page';
 
 async function renderAsync(discipline: string, taskId: string) {
   const element = await TaskTemplatePage({
@@ -28,6 +31,12 @@ describe('task-template detail route', () => {
     expect(params).toContainEqual({ discipline: 'electrical', taskId: 'voltage-drop' });
     expect(params).toContainEqual({ discipline: 'civil', taskId: 'lateral-earth-pressure' });
     expect(params).toContainEqual({ discipline: 'ground', taskId: 'lateral-earth-pressure' });
+  });
+
+  it('keeps Maritime out of the five-domain leaderboard route', async () => {
+    const params = await generateLeaderboardStaticParams();
+    expect(params.some((param) => param.discipline === 'maritime')).toBe(false);
+    expect(params).toContainEqual({ discipline: 'electrical', taskId: 'voltage-drop' });
   });
 
   it('generates metadata from the catalogue entry', async () => {

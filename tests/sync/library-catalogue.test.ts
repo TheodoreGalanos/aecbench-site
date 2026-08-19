@@ -18,17 +18,23 @@ describe('syncCatalogue', () => {
     rmSync(tmp, { recursive: true, force: true });
   });
 
-  it('copies a valid catalogue from AEC_BENCH_ROOT to the target', () => {
+  it('copies a valid schema-2 catalogue without adding deployment metadata', () => {
     const source = join(tmp, 'aec-bench', 'artefacts', 'library-catalogue.json');
     const target = join(tmp, 'site', 'data', 'library-catalogue.json');
     mkdirSync(join(tmp, 'aec-bench', 'artefacts'), { recursive: true });
-    writeFileSync(source, JSON.stringify(makeCatalogue(), null, 2));
+    const legacy = makeCatalogue();
+    writeFileSync(source, JSON.stringify({
+      schema_version: 2,
+      templates: legacy.templates,
+      seeds: legacy.seeds,
+    }, null, 2));
 
     syncCatalogue({ aecBenchRoot: join(tmp, 'aec-bench'), target });
 
     expect(existsSync(target)).toBe(true);
     const written = JSON.parse(readFileSync(target, 'utf-8'));
-    expect(written.schema_version).toBe(1);
+    expect(written.schema_version).toBe(2);
+    expect(Object.keys(written).sort()).toEqual(['schema_version', 'seeds', 'templates']);
   });
 
   it('throws an actionable error when source is missing', () => {

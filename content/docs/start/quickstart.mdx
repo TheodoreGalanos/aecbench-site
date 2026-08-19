@@ -36,7 +36,7 @@ aec-bench generate task terzaghi-bearing-capacity \
   --output tasks/generated
 ```
 
-Generated instances are normal task directories: instruction, task config, verifier files, and generation provenance. Deterministic identity binds the template source digest, seed, stable instance index, difficulty, and visibility.
+Generated instances are normal task directories with an instruction, task config, and verifier files. The output root also contains an optional `generation-manifest.json` sidecar with replay inputs. Task loading and execution ignore this sidecar.
 
 ## Validate
 

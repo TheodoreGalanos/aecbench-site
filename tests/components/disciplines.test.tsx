@@ -9,26 +9,27 @@ const counts = {
   ground:     { templates: 10, seeds: 3 },
   mechanical: { templates: 0,  seeds: 141 },
   structural: { templates: 0,  seeds: 82 },
+  maritime:   { templates: 3,  seeds: 0 },
 };
 
 describe('Disciplines', () => {
   it('renders the heading', () => {
     render(<Disciplines counts={counts} totalTasks={467} />);
     expect(
-      screen.getByRole('heading', { name: /five engineering disciplines/i }),
+      screen.getByRole('heading', { name: /six engineering disciplines/i }),
     ).toBeInTheDocument();
   });
 
-  it('renders five discipline codes', () => {
+  it('renders six discipline codes', () => {
     render(<Disciplines counts={counts} totalTasks={467} />);
-    for (const c of ['CIV·01', 'ELE·02', 'GND·03', 'MEC·04', 'STR·05']) {
+    for (const c of ['CIV·01', 'ELE·02', 'GND·03', 'MEC·04', 'STR·05', 'MAR·06']) {
       expect(screen.getByText(c)).toBeInTheDocument();
     }
   });
 
-  it('renders all five discipline names', () => {
+  it('renders all six discipline names', () => {
     render(<Disciplines counts={counts} totalTasks={467} />);
-    for (const n of ['Civil', 'Electrical', 'Ground', 'Mechanical', 'Structural']) {
+    for (const n of ['Civil', 'Electrical', 'Ground', 'Mechanical', 'Structural', 'Maritime']) {
       expect(screen.getByRole('heading', { name: n })).toBeInTheDocument();
     }
   });
@@ -53,10 +54,11 @@ describe('Disciplines', () => {
     const hrefs = links.map((a) => a.getAttribute('href'));
     expect(hrefs).toContain('/tasks#civil-tasks-heading');
     expect(hrefs).toContain('/tasks#structural-tasks-heading');
+    expect(hrefs).toContain('/tasks#maritime-tasks-heading');
   });
 
   it('renders the live coverage line using totalTasks prop', () => {
     render(<Disciplines counts={counts} totalTasks={467} />);
-    expect(screen.getByText(/467\/467/)).toBeInTheDocument();
+    expect(screen.getByText(/467 catalogue entries/)).toBeInTheDocument();
   });
 });

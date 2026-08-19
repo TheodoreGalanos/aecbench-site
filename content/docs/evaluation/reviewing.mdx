@@ -24,6 +24,12 @@ Use `--reviewer-models-config PATH` for multiple or custom endpoints. Add `--fai
 
 The stage writes request, per-model review, evaluation, and summary artefacts beside the run. On import, its summary is stored under `EvaluationResult.breakdown["llm_reviewer"]`. `reward` remains the verifier value, and human review uses `Annotation`.
 
+## Task-genome review evidence
+
+A task-genome review refers to one exact `TaskSnapshotRef`. It records small `SourceSpan` values for the instruction, verifier, and other source evidence that supports each extracted claim. It does not copy the complete task source into the review.
+
+When a review must be retained independently, store the review bytes and use `ArtifactRef`. Before reuse, verify that the review still matches the selected task snapshot. A changed task needs a new review.
+
 ## Structured review
 
 Human judgement is recorded separately as data attached to a trial:
@@ -107,7 +113,7 @@ Review can trigger changes to:
 - agent-harness observability; or
 - public documentation.
 
-Those changes produce new versions and new evidence. Historical trial records remain
+Those changes produce new source revisions and new evidence. Historical trial records remain
 immutable, and benchmark improvements produce new evidence linked to the result that
 exposed the problem.
 

@@ -1,7 +1,7 @@
 // ABOUTME: Typed reader for generated task-template detail supplements.
 // ABOUTME: Supplies rich params/archetype/difficulty metadata to server-rendered task pages.
 import { z } from 'zod';
-import type { Domain } from '@/lib/aec-bench/contracts';
+import type { CatalogueDiscipline } from '@/lib/aec-bench/contracts';
 import artefact from '@/data/template-detail-supplements.json';
 
 export type DifficultyLevel = 'easy' | 'medium' | 'hard';
@@ -141,7 +141,7 @@ export type TemplateDetailArtefact = z.infer<typeof ArtefactSchema>;
 
 let cached: TemplateDetailArtefact | null = null;
 
-export function templateDetailKey(discipline: Domain, taskId: string): string {
+export function templateDetailKey(discipline: CatalogueDiscipline, taskId: string): string {
   return `${discipline}/${taskId}`;
 }
 
@@ -156,7 +156,7 @@ export function getTemplateDetailArtefact(): TemplateDetailArtefact {
 }
 
 export function getTemplateDetailSupplement(
-  discipline: Domain,
+  discipline: CatalogueDiscipline,
   taskId: string,
 ): TemplateDetailSupplement | null {
   return getTemplateDetailArtefact().templates[templateDetailKey(discipline, taskId)] ?? null;

@@ -132,29 +132,48 @@ describe('library documentation coverage', () => {
     expect(installation).not.toContain('aec-bench[pydantic-ai]');
   });
 
-  it('reflects the current six-discipline library export and the pending site-data boundary', () => {
+  it('reflects the current deterministic six-discipline catalogue', () => {
     const catalogue = JSON.parse(readFileSync(join(ROOT, 'data', 'library-catalogue.json'), 'utf-8'));
     const templates = readDoc('core/templates.mdx');
     const libraryCatalogue = readDoc('reference/library-catalogue.mdx');
 
-    expect(catalogue.schema_version).toBe(1);
+    expect(catalogue.schema_version).toBe(2);
     expect(templates).toContain('352 built templates');
     expect(templates).toContain('284 proposed seed tasks');
     expect(templates).toContain('| Maritime | 3 |');
     expect(libraryCatalogue).toContain('352 built templates');
-    expect(libraryCatalogue).toContain('184 built templates');
     expect(libraryCatalogue).toContain('six disciplines');
-    expect(libraryCatalogue).toContain('task-browser catalogue contract');
+    expect(libraryCatalogue).toContain('same public library content produces the same export bytes');
+    expect(libraryCatalogue).not.toContain('library_commit');
   });
 
-  it('documents dataset hashes and the separate pre-run validation gate', () => {
+  it('documents stable dataset identity and exact references', () => {
     const datasets = readDoc('advanced/datasets.mdx');
 
-    expect(datasets).toContain('sorted `task_id:content_hash` pairs');
-    expect(datasets).toContain('exactly 64 lowercase hexadecimal characters');
-    expect(datasets).toContain('dataset validate electrical-v1@1.0.0');
-    expect(datasets).toContain('`dataset validate` owns live task-hash comparison');
-    expect(datasets).not.toContain('"content_hash": "sha256:');
+    expect(datasets).toContain('`dataset_id`');
+    expect(datasets).toContain('dataset publish electrical-core --label public-2026');
+    expect(datasets).toContain('One repository commit and manifest path');
+    expect(datasets).toContain('`ArtifactRef`');
+    expect(datasets).not.toContain('content_hash');
+  });
+
+  it('documents current run, generation, review, and candidate boundaries', () => {
+    const contracts = readDoc('core/contracts.mdx');
+    const traces = readDoc('evaluation/traces.mdx');
+    const templates = readDoc('core/templates.mdx');
+    const reviewing = readDoc('evaluation/reviewing.mdx');
+    const evolution = readDoc('advanced/evolution.mdx');
+
+    expect(contracts).toContain('RunManifest');
+    expect(contracts).toContain('execution_status');
+    expect(contracts).toContain('provider_evidence');
+    expect(traces).toContain('evidence_status');
+    expect(traces).not.toContain('Completeness');
+    expect(templates).toContain('generation-manifest.json');
+    expect(reviewing).toContain('TaskSnapshotRef');
+    expect(reviewing).toContain('SourceSpan');
+    expect(evolution).toContain('parent_candidate_id');
+    expect(evolution).toContain('source_revision');
   });
 
   it('keeps public docs out of internal winning-work scope', () => {

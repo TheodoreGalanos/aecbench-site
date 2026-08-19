@@ -16,6 +16,12 @@ Use `aec-bench run-local` when you need an in-process development path on the lo
 
 Both paths use the selected agent harness and the same task-owned verifier, which defines correctness in every environment.
 
+## Provider boundary
+
+Provider packages translate model, tool, and runtime protocols. They can capture provider evidence, but they do not own task selection, task meaning, or scoring. Task-specific branches belong with the task or world, not in a provider package.
+
+Each runtime attestation refers to one retained provider evidence manifest. Keyless tests can prove the protocol shape without credentials. Live-provider qualification is a different claim and needs evidence from the real provider route. Passing keyless tests does not qualify a live provider.
+
 ## Available Harbor environments
 
 `aec-bench run --backend` accepts five values:

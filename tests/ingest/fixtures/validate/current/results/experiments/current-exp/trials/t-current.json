@@ -1,0 +1,32 @@
+{
+  "schema_version": 2,
+  "trial_id": "t-current",
+  "run_id": "run-current",
+  "task_id": "electrical/pf-droop",
+  "attempt": 1,
+  "execution_status": "completed",
+  "evaluation_status": "completed",
+  "evidence_status": "not_required",
+  "started_at": "2026-04-10T12:00:00Z",
+  "completed_at": "2026-04-10T12:00:10Z",
+  "input": {
+    "instruction": "Calculate the result.",
+    "task_revision": "r1",
+    "task_kind": "artifact"
+  },
+  "output": {},
+  "evaluation": {
+    "reward": 0.8,
+    "validity": {
+      "output_parseable": true,
+      "schema_valid": true,
+      "verifier_completed": true,
+      "errors": []
+    }
+  },
+  "timing": { "total_seconds": 10.0, "agent_seconds": 8.0 },
+  "cost": null,
+  "authority_evidence": [],
+  "provider_evidence": null,
+  "extension_refs": []
+}

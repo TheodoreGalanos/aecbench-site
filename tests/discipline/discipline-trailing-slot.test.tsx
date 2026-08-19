@@ -14,19 +14,12 @@ const catalogue = makeCatalogue({
 const sliceElectrical = getCatalogueForDiscipline('electrical', catalogue);
 const sliceStructural = getCatalogueForDiscipline('structural', catalogue); // empty
 
-const baseMeta = {
-  libraryVersion: '0.1.0',
-  libraryCommit: '1a2b3c4d5e6f78',
-  generatedAt: '2026-04-19T09:00:00Z',
-};
-
 describe('DisciplineTrailingSlot', () => {
   it('renders summary, category sections, and nav for a populated slice', () => {
     render(
       <DisciplineTrailingSlot
         slug="electrical"
         slice={sliceElectrical}
-        {...baseMeta}
       />,
     );
     expect(screen.getByText(/1 tasks/)).toBeInTheDocument();        // summary totals
@@ -40,7 +33,6 @@ describe('DisciplineTrailingSlot', () => {
       <DisciplineTrailingSlot
         slug="structural"
         slice={sliceStructural}
-        {...baseMeta}
       />,
     );
     expect(screen.getByText(/no templates or seeds registered/i)).toBeInTheDocument();

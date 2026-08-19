@@ -2,7 +2,10 @@
 // ABOUTME: Uses discipline plus task id so duplicate template names remain distinct.
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { DOMAINS, type Domain } from '@/lib/aec-bench/contracts';
+import {
+  CATALOGUE_DISCIPLINES,
+  type CatalogueDiscipline,
+} from '@/lib/aec-bench/contracts';
 import {
   getCatalogue,
   getCatalogueEntry,
@@ -11,8 +14,8 @@ import {
 import { getTemplateDetailSupplement } from '@/lib/aec-bench/template-detail-supplements';
 import { TaskTemplateDetail } from '@/components/template-detail/task-template-detail';
 
-function isValidDiscipline(slug: string): slug is Domain {
-  return (DOMAINS as readonly string[]).includes(slug);
+function isValidDiscipline(slug: string): slug is CatalogueDiscipline {
+  return (CATALOGUE_DISCIPLINES as readonly string[]).includes(slug);
 }
 
 export async function generateStaticParams() {
@@ -65,10 +68,6 @@ export default async function TaskTemplatePage({
       detail={getTemplateDetailSupplement(discipline, taskId)}
       variants={getTemplateVariants(taskId, catalogue)}
       canonicalPath={`/tasks/${entry.discipline}/${entry.task_id}`}
-      catalogueMeta={{
-        libraryVersion: catalogue.library_version,
-        libraryCommit: catalogue.library_commit,
-      }}
     />
   );
 }

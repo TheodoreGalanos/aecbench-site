@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import hashlib
 import json
 from collections import defaultdict
 from pathlib import Path
@@ -16,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_ANALYSIS = ROOT.parent / "aec-bench" / "artefacts" / "release-evals" / "analysis"
 DEFAULT_DATASET = ROOT.parent / "aec-bench" / "tasks" / "generated" / "release-foundry-full-suite" / "dataset.json"
 DEFAULT_OUTPUT = ROOT / "public" / "data"
-DEFAULT_PUBLIC_VERSION = "release"
+DEFAULT_RELEASE_LABEL = "release"
 DOMAINS = ("civil", "electrical", "ground", "mechanical", "structural")
 
 
@@ -76,33 +75,13 @@ def mean(values: list[float]) -> float | None:
     return sum(values) / len(values)
 
 
-def build_dataset(dataset_path: Path, public_version: str) -> tuple[dict[str, Any], dict[str, Any]]:
-    raw = dataset_path.read_bytes()
-    source = json.loads(raw)
-    tasks = []
-    for instance in source["instances"]:
-        domain = instance["path"].split("/", 1)[0]
-        tasks.append(
-            {
-                "task_id": instance["path"],
-                "domain": domain,
-                "difficulty": instance["difficulty"],
-                "tags": [
-                    f"template:{instance['template']}",
-                    f"visibility:{instance['visibility']}",
-                    f"tool_mode:{instance['tool_mode']}",
-                ],
-            }
-        )
+def build_dataset(dataset_path: Path, release_label: str) -> tuple[dict[str, Any], dict[str, Any]]:
+    source = json.loads(dataset_path.read_text(encoding="utf-8"))
     dataset = {
-        "name": "aec-bench",
-        "version": public_version,
-        "content_hash": hashlib.sha256(raw).hexdigest(),
-        "description": {
-            "summary": "Release Foundry full suite generated from built AEC-Bench templates.",
-            "task_count": source["summary"]["total_instances"],
-        },
-        "tasks": tasks,
+        "dataset_id": "aec-bench",
+        "release_label": release_label,
+        "description": "Release Foundry full suite generated from built AEC-Bench templates.",
+        "task_count": source["summary"]["total_instances"],
     }
     return dataset, source
 
@@ -229,10 +208,10 @@ def emit(output_dir: Path, artefact: dict[str, Any]) -> None:
         (models_dir / model_file).write_text(json.dumps(entry, indent=2) + "\n", encoding="utf-8")
 
 
-def build(analysis_dir: Path, dataset_path: Path, public_version: str = DEFAULT_PUBLIC_VERSION) -> dict[str, Any]:
-    dataset, source = build_dataset(dataset_path, public_version)
+def build(analysis_dir: Path, dataset_path: Path, release_label: str = DEFAULT_RELEASE_LABEL) -> dict[str, Any]:
+    dataset, source = build_dataset(dataset_path, release_label)
     generated_at = source["created"]
-    dataset_key = f"{dataset['name']}@{dataset['version']}"
+    dataset_key = f"{dataset['dataset_id']}@{dataset['release_label']}"
     entries = build_entries(
         analysis_dir,
         dataset_key,
@@ -260,10 +239,10 @@ def main() -> None:
     parser.add_argument("--analysis-dir", type=Path, default=DEFAULT_ANALYSIS)
     parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT)
-    parser.add_argument("--public-version", default=DEFAULT_PUBLIC_VERSION)
+    parser.add_argument("--release-label", default=DEFAULT_RELEASE_LABEL)
     args = parser.parse_args()
 
-    artefact = build(args.analysis_dir, args.dataset, args.public_version)
+    artefact = build(args.analysis_dir, args.dataset, args.release_label)
     emit(args.output_dir, artefact)
     print(
         json.dumps(

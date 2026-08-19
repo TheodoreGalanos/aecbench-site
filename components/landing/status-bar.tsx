@@ -54,7 +54,7 @@ export function StatusBar() {
           />
           <span className="text-accent-amber">{label}</span>
         </span>
-        <span>dataset <span className="text-landing-text">{runStatus.datasetVersion}</span></span>
+        <span>dataset <span className="text-landing-text">{runStatus.datasetLabel}</span></span>
         <span>tasks <span className="text-landing-text">{runStatus.tasks}</span></span>
         <span>models <span className="text-landing-text">{runStatus.models}</span></span>
         <span className="hidden sm:inline">

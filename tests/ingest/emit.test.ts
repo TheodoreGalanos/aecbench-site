@@ -18,11 +18,10 @@ function makeArtefact(): LeaderboardArtefact {
   return {
     generated_at: '2026-04-18T12:00:00Z',
     dataset: {
-      name: 'aec-bench',
-      version: '0.4.1',
-      content_hash: 'h',
-      description: { summary: 's', task_count: 1 },
-      tasks: [{ task_id: 'civil/a', domain: 'civil', difficulty: 'easy', tags: [] }],
+      dataset_id: 'aec-bench',
+      release_label: '0.4.1',
+      description: 's',
+      task_count: 1,
     },
     entries: [
       {

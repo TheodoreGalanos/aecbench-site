@@ -1,4 +1,4 @@
-// ABOUTME: Two-line summary header: totals + provenance for the discipline catalogue.
+// ABOUTME: Summary header with counts derived from the discipline catalogue entries.
 // ABOUTME: Server component; pure presentation, props-driven.
 export interface CatalogueSummaryProps {
   totals: {
@@ -8,20 +8,9 @@ export interface CatalogueSummaryProps {
     categories: number;
     standards: number;
   };
-  libraryVersion: string;
-  libraryCommit: string | null;
-  generatedAt: string;
 }
 
-export function CatalogueSummary({
-  totals,
-  libraryVersion,
-  libraryCommit,
-  generatedAt,
-}: CatalogueSummaryProps) {
-  const date = generatedAt.slice(0, 10);
-  const commit = libraryCommit ? libraryCommit.slice(0, 7) : 'uncommitted';
-
+export function CatalogueSummary({ totals }: CatalogueSummaryProps) {
   return (
     <header className="mb-4">
       <p className="font-mono text-xs text-landing-text">
@@ -29,9 +18,6 @@ export function CatalogueSummary({
         {' · '}
         {totals.built} built · {totals.proposed} proposed ·{' '}
         {totals.categories} categories · {totals.standards} standards
-      </p>
-      <p className="mt-1 font-mono text-[0.65rem] text-landing-muted">
-        catalogue library v{libraryVersion} · @ {commit} · generated {date}
       </p>
     </header>
   );

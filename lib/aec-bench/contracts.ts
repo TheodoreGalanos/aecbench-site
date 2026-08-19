@@ -1,17 +1,49 @@
 // lib/aec-bench/contracts.ts
-// ABOUTME: TypeScript mirrors of aec-bench pydantic contracts plus zod validators.
-// ABOUTME: Only the subset the site reads is mirrored — not EnvironmentSpec or ToolSpec.
+// ABOUTME: Validates current AEC-Bench inputs and normalises the bounded legacy site inputs.
+// ABOUTME: Keeps external source contracts separate from the smaller site-owned read models.
 import { z } from 'zod';
 
 export const DOMAINS = ['civil', 'electrical', 'ground', 'mechanical', 'structural'] as const;
 export type Domain = (typeof DOMAINS)[number];
+
+export const CATALOGUE_DISCIPLINES = [...DOMAINS, 'maritime'] as const;
+export type CatalogueDiscipline = (typeof CATALOGUE_DISCIPLINES)[number];
 
 export const PROVIDERS = ['anthropic', 'openai', 'google', 'meta', 'other'] as const;
 export type Provider = (typeof PROVIDERS)[number];
 
 // --- Library-mirror contracts ---
 
-export const TrialRecordSchema = z.object({
+const Sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
+const GitRevisionSchema = z.string().regex(/^[0-9a-f]{40}$/);
+
+export const ArtifactRefSchema = z.object({
+  artifact_id: z.string().min(1),
+  sha256: Sha256Schema,
+  size_bytes: z.number().int().positive(),
+  media_type: z.string().min(1),
+});
+export type ArtifactRef = z.infer<typeof ArtifactRefSchema>;
+
+const EvaluationResultSchema = z.object({
+  reward: z.number().min(0).max(1),
+  validity: z.object({
+    output_parseable: z.boolean(),
+    schema_valid: z.boolean(),
+    verifier_completed: z.boolean(),
+    errors: z.array(z.string()).optional(),
+  }),
+});
+
+const CostRecordSchema = z.object({
+  tokens_in: z.number().int().nonnegative().nullish(),
+  tokens_out: z.number().int().nonnegative().nullish(),
+  cache_read_tokens: z.number().int().nonnegative().nullish(),
+  cache_write_tokens: z.number().int().nonnegative().nullish(),
+  estimated_cost_usd: z.number().nonnegative().nullish(),
+});
+
+export const LegacyTrialRecordSchema = z.object({
   trial_id: z.string().min(1),
   experiment_id: z.string().min(1),
   dataset_id: z.string().nullable(),
@@ -26,40 +58,171 @@ export const TrialRecordSchema = z.object({
     adapter_revision: z.string().nullable(),
     configuration: z.record(z.unknown()),
   }),
-  evaluation: z.object({
-    reward: z.number().min(0).max(1),
-    validity: z.object({
-      output_parseable: z.boolean(),
-      schema_valid: z.boolean(),
-      verifier_completed: z.boolean(),
-    }),
-  }),
+  evaluation: EvaluationResultSchema,
   timing: z.object({
     total_seconds: z.number().nonnegative(),
     agent_seconds: z.number().nonnegative().nullable(),
   }),
-  cost: z
-    .object({
-      tokens_in: z.number().int().nonnegative().nullable(),
-      tokens_out: z.number().int().nonnegative().nullable(),
-      cache_read_tokens: z.number().int().nonnegative().nullable(),
-      cache_write_tokens: z.number().int().nonnegative().nullable(),
-      estimated_cost_usd: z.number().nonnegative().nullable(),
-    })
-    .nullable(),
+  cost: CostRecordSchema.nullable(),
   completeness: z.enum(['complete', 'partial']),
+});
+
+const DatasetRepositoryRefSchema = z.object({
+  kind: z.literal('repository'),
+  dataset_id: z.string().min(1),
+  source_revision: GitRevisionSchema,
+  manifest_path: z.string().min(1),
+});
+
+const DatasetBundleRefSchema = z.object({
+  kind: z.literal('bundle'),
+  dataset_id: z.string().min(1),
+  artifact: ArtifactRefSchema,
+});
+
+export const DatasetRefSchema = z.discriminatedUnion('kind', [
+  DatasetRepositoryRefSchema,
+  DatasetBundleRefSchema,
+]);
+
+export const RunManifestV2Schema = z.object({
+  schema_version: z.literal(2),
+  run_id: z.string().min(1),
+  experiment_id: z.string().min(1),
+  dataset: DatasetRefSchema.nullish(),
+  source: z.discriminatedUnion('kind', [
+    z.object({ kind: z.literal('git'), revision: GitRevisionSchema }),
+    z.object({
+      kind: z.literal('snapshot'),
+      artifact: ArtifactRefSchema,
+      base_revision: GitRevisionSchema.nullable().optional(),
+    }),
+    z.object({ kind: z.literal('unresolved'), reason: z.string().min(1) }),
+  ]),
+  agent: z.object({
+    adapter: z.string().min(1),
+    model: z.string().min(1),
+    adapter_revision: z.string().min(1).nullish(),
+    configuration: z.record(z.string(), z.unknown()).optional(),
+  }),
+  execution_environment: z.object({
+    runtime_image: z.string().min(1),
+    compute_backend: z.string().min(1),
+    tool_versions: z.record(z.string(), z.string()).nullish(),
+  }),
+  provider_route: z.object({
+    provider: z.string().min(1),
+    route: z.string().min(1),
+  }),
+  expected_authorities: z.array(z.unknown()).optional(),
+  evaluation_regime: z.unknown().nullable().optional(),
+  qualification: z.unknown().nullable().optional(),
+});
+export type RunManifestV2 = z.infer<typeof RunManifestV2Schema>;
+
+export const TrialRecordV2Schema = z.object({
+  schema_version: z.literal(2),
+  trial_id: z.string().min(1),
+  run_id: z.string().min(1),
+  task_id: z.string().min(1),
+  attempt: z.number().int().positive().optional(),
+  execution_status: z.enum(['planned', 'running', 'completed', 'failed', 'cancelled', 'invalid']),
+  evaluation_status: z.enum(['not_requested', 'pending', 'completed', 'invalid', 'failed']),
+  evidence_status: z.enum(['not_required', 'pending', 'verified', 'incomplete', 'invalid']),
+  started_at: z.string().min(1),
+  completed_at: z.string().min(1).nullish(),
+  input: z.object({
+    instruction: z.string().min(1),
+    task_revision: z.string().min(1),
+    task_kind: z.enum(['artifact', 'lifecycle', 'world']).optional(),
+    visibility: z.string().nullable().optional(),
+  }),
+  output: z.record(z.string(), z.unknown()).nullish(),
+  evaluation: EvaluationResultSchema.nullish(),
+  timing: z.object({
+    total_seconds: z.number().nonnegative(),
+    agent_seconds: z.number().nonnegative().nullable().optional(),
+  }),
+  cost: CostRecordSchema.extend({
+    model_calls: z.number().int().nonnegative().nullable().optional(),
+    advisor_calls: z.number().int().nonnegative().nullable().optional(),
+    advisor_input_tokens: z.number().int().nonnegative().nullable().optional(),
+    advisor_output_tokens: z.number().int().nonnegative().nullable().optional(),
+  }).nullish(),
+  authority_evidence: z.array(z.unknown()).optional(),
+  provider_evidence: ArtifactRefSchema.nullable().optional(),
+  extension_refs: z.array(z.unknown()).optional(),
+}).superRefine((trial, context) => {
+  const terminal = ['completed', 'failed', 'cancelled', 'invalid'].includes(
+    trial.execution_status,
+  );
+  if (terminal !== Boolean(trial.completed_at)) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'terminal execution status and completed_at must be present together',
+    });
+  }
+  if (trial.execution_status === 'completed' && !trial.output) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'completed execution requires an output',
+    });
+  }
+  if (trial.evaluation_status === 'completed' && !trial.evaluation) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'completed evaluation requires an evaluation result',
+    });
+  }
+  if (
+    ['not_requested', 'pending'].includes(trial.evaluation_status)
+    && trial.evaluation
+  ) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'not-requested or pending evaluation cannot include a result',
+    });
+  }
+});
+export type TrialRecordV2 = z.infer<typeof TrialRecordV2Schema>;
+
+export const TrialRecordSchema = z.object({
+  trial_id: z.string().min(1),
+  experiment_id: z.string().min(1),
+  run_id: z.string().min(1).nullable(),
+  dataset_id: z.string().min(1).nullable(),
+  started_at: z.string().min(1),
+  completed_at: z.string().min(1).nullable(),
+  task: z.object({
+    task_id: z.string().min(1),
+    task_revision: z.string().min(1),
+  }),
+  agent: z.object({
+    adapter: z.string().min(1),
+    model: z.string().min(1),
+    adapter_revision: z.string().nullable(),
+    configuration: z.record(z.string(), z.unknown()),
+  }),
+  evaluation: EvaluationResultSchema.nullable(),
+  timing: z.object({
+    total_seconds: z.number().nonnegative(),
+    agent_seconds: z.number().nonnegative().nullable(),
+  }),
+  cost: CostRecordSchema.nullable(),
+  execution_status: z.enum(['planned', 'running', 'completed', 'failed', 'cancelled', 'invalid']),
+  evaluation_status: z.enum(['not_requested', 'pending', 'completed', 'invalid', 'failed']),
+  evidence_status: z.enum(['not_required', 'pending', 'verified', 'incomplete', 'invalid']),
 });
 export type TrialRecord = z.infer<typeof TrialRecordSchema>;
 
-export const DatasetTaskEntrySchema = z.object({
+const LegacyDatasetTaskEntrySchema = z.object({
   task_id: z.string().min(1),
   domain: z.enum(DOMAINS),
   difficulty: z.enum(['easy', 'medium', 'hard']),
   tags: z.array(z.string()),
 });
-export type DatasetTaskEntry = z.infer<typeof DatasetTaskEntrySchema>;
 
-export const DatasetManifestSchema = z.object({
+export const LegacyDatasetManifestSchema = z.object({
   name: z.string().min(1),
   version: z.string().min(1),
   content_hash: z.string().min(1),
@@ -67,9 +230,34 @@ export const DatasetManifestSchema = z.object({
     summary: z.string().min(1),
     task_count: z.number().int().nonnegative(),
   }),
-  tasks: z.array(DatasetTaskEntrySchema).min(1),
+  tasks: z.array(LegacyDatasetTaskEntrySchema).min(1),
 });
-export type DatasetManifest = z.infer<typeof DatasetManifestSchema>;
+
+export const DatasetManifestV2Schema = z.object({
+  schema_version: z.literal(2),
+  dataset_id: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]*$/),
+  description: z.string().min(1),
+  tasks: z.array(z.object({
+    task_id: z.string().min(1),
+    path: z.string().min(1),
+    task_kind: z.enum(['artifact', 'lifecycle', 'world']),
+  })).min(1),
+  generation: z.object({
+    seed: z.number().int().nullable().optional(),
+    config_ref: z.string().min(1).nullable().optional(),
+  }).nullable().optional(),
+});
+
+export const DatasetSelectionSchema = z.object({
+  dataset_id: z.string().min(1),
+  release_label: z.string().min(1),
+  description: z.string().min(1),
+  tasks: z.array(z.object({
+    task_id: z.string().min(1),
+    domain: z.enum(DOMAINS),
+  })).min(1),
+});
+export type DatasetSelection = z.infer<typeof DatasetSelectionSchema>;
 
 // --- Site-owned contracts ---
 
@@ -100,10 +288,26 @@ export const SubmissionSchema = z.object({
 });
 export type Submission = z.infer<typeof SubmissionSchema>;
 
-export const ActivePointerSchema = z.object({
+export const LegacyActivePointerSchema = z.object({
   benchmark: z.string().min(1),
   version: z.string().min(1),
 });
+
+export const CurrentActivePointerSchema = z.object({
+  dataset_id: z.string().min(1),
+  release_label: z.string().min(1),
+});
+
+export const ActivePointerSchema = z
+  .union([CurrentActivePointerSchema, LegacyActivePointerSchema])
+  .transform((pointer) => (
+    'dataset_id' in pointer
+      ? pointer
+      : { dataset_id: pointer.benchmark, release_label: pointer.version }
+  ))
+  .refine((pointer) => pointer.release_label.toLowerCase() !== 'latest', {
+    message: 'latest is a mutable selector and cannot be persisted',
+  });
 export type ActivePointer = z.infer<typeof ActivePointerSchema>;
 
 // --- Derived aggregates (what the build emits) ---
@@ -158,9 +362,17 @@ export const RunStatusSchema = z.object({
 });
 export type RunStatus = z.infer<typeof RunStatusSchema>;
 
+export const LeaderboardDatasetSchema = z.object({
+  dataset_id: z.string().min(1),
+  release_label: z.string().min(1),
+  description: z.string().min(1),
+  task_count: z.number().int().nonnegative(),
+});
+export type LeaderboardDataset = z.infer<typeof LeaderboardDatasetSchema>;
+
 export const LeaderboardArtefactSchema = z.object({
   generated_at: z.string().min(1),
-  dataset: DatasetManifestSchema,
+  dataset: LeaderboardDatasetSchema,
   entries: z.array(LeaderboardEntrySchema),
   is_mock: z.boolean(),
   run_status: RunStatusSchema,

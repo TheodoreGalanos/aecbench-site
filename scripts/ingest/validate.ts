@@ -2,12 +2,16 @@
 // ABOUTME: Per-experiment validation — parse submission + trials, enforce cross-file invariants.
 // ABOUTME: Any failure throws a ValidationError that names the offending file.
 import { readFile, readdir } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { load } from 'js-yaml';
 import {
   SubmissionSchema,
+  LegacyTrialRecordSchema,
+  RunManifestV2Schema,
   TrialRecordSchema,
-  type DatasetManifest,
+  TrialRecordV2Schema,
+  type DatasetSelection,
   type Submission,
   type TrialRecord,
 } from '@/lib/aec-bench/contracts';
@@ -29,7 +33,7 @@ export interface ValidatedExperiment {
 
 export async function validateExperiment(
   exp: DiscoveredExperiment,
-  manifest: DatasetManifest,
+  manifest: DatasetSelection,
   activeDataset: string,
 ): Promise<ValidatedExperiment> {
   // 1. Parse submission.yml
@@ -105,10 +109,86 @@ async function parseTrials(dir: string): Promise<TrialRecord[]> {
     const path = join(dir, file);
     const raw = await readFile(path, 'utf-8');
     try {
-      trials.push(TrialRecordSchema.parse(JSON.parse(raw)));
+      const value = JSON.parse(raw) as { schema_version?: unknown };
+      trials.push(
+        value.schema_version === 2
+          ? await parseCurrentTrial(value, dir)
+          : parseLegacyTrial(value),
+      );
     } catch (err) {
       throw new ValidationError(`${path}: ${(err as Error).message}`);
     }
   }
   return trials;
+}
+
+function parseLegacyTrial(value: unknown): TrialRecord {
+  const legacy = LegacyTrialRecordSchema.parse(value);
+  const complete = legacy.completeness === 'complete';
+  return TrialRecordSchema.parse({
+    trial_id: legacy.trial_id,
+    experiment_id: legacy.experiment_id,
+    run_id: null,
+    dataset_id: legacy.dataset_id,
+    started_at: legacy.timestamp,
+    completed_at: complete ? legacy.timestamp : null,
+    task: legacy.task,
+    agent: legacy.agent,
+    evaluation: legacy.evaluation,
+    timing: legacy.timing,
+    cost: legacy.cost,
+    execution_status: complete ? 'completed' : 'invalid',
+    evaluation_status: legacy.evaluation.validity.verifier_completed ? 'completed' : 'failed',
+    evidence_status: complete ? 'not_required' : 'incomplete',
+  });
+}
+
+async function parseCurrentTrial(value: unknown, trialsDir: string): Promise<TrialRecord> {
+  const trial = TrialRecordV2Schema.parse(value);
+  const manifestName = createHash('sha256').update(trial.run_id).digest('hex');
+  const manifestPath = join(trialsDir, '_runs', `${manifestName}.json`);
+
+  let manifestRaw: string;
+  try {
+    manifestRaw = await readFile(manifestPath, 'utf-8');
+  } catch {
+    throw new Error(`${manifestPath}: run manifest missing for run_id "${trial.run_id}"`);
+  }
+  const manifest = RunManifestV2Schema.parse(JSON.parse(manifestRaw));
+  if (manifest.run_id !== trial.run_id) {
+    throw new Error(`${manifestPath}: run_id does not match trial run_id "${trial.run_id}"`);
+  }
+
+  return TrialRecordSchema.parse({
+    trial_id: trial.trial_id,
+    experiment_id: manifest.experiment_id,
+    run_id: trial.run_id,
+    dataset_id: manifest.dataset?.dataset_id ?? null,
+    started_at: trial.started_at,
+    completed_at: trial.completed_at ?? null,
+    task: { task_id: trial.task_id, task_revision: trial.input.task_revision },
+    agent: {
+      adapter: manifest.agent.adapter,
+      model: manifest.agent.model,
+      adapter_revision: manifest.agent.adapter_revision ?? null,
+      configuration: manifest.agent.configuration ?? {},
+    },
+    evaluation: trial.evaluation ?? null,
+    timing: {
+      total_seconds: trial.timing.total_seconds,
+      agent_seconds: trial.timing.agent_seconds ?? null,
+    },
+    cost: trial.cost
+      ? {
+          tokens_in: trial.cost.tokens_in ?? null,
+          tokens_out: trial.cost.tokens_out ?? null,
+          cache_read_tokens: trial.cost.cache_read_tokens ?? null,
+          cache_write_tokens: trial.cost.cache_write_tokens ?? null,
+          estimated_cost_usd: trial.cost.estimated_cost_usd ?? null,
+        }
+      : null,
+    execution_status: trial.execution_status,
+    evaluation_status: trial.evaluation_status,
+    evidence_status: trial.evidence_status,
+  });
 }

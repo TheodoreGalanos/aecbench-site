@@ -1,6 +1,6 @@
 ---
 title: Library Catalogue
-description: The library catalogue is the versioned JSON export that lets the website display current public templates and proposed seed tasks from the aec-bench library.
+description: The deterministic library catalogue lets the website display public templates and proposed seed tasks from the AEC-Bench library.
 ---
 
 The catalogue is the public data bridge between the Python library and this site. It contains built templates and proposed seed tasks.
@@ -38,22 +38,17 @@ The current upstream library export contains 352 built templates and 284 propose
 
 ## Schema
 
-The v1 export has top-level metadata, counts, templates, and seeds. This shortened example shows its metadata and aggregate totals:
+The current export has only the schema marker and the two entry lists:
 
 ```json
 {
-  "schema_version": 1,
-  "generated_at": "<ISO-8601 timestamp>",
-  "library_version": "<library version>",
-  "library_commit": "<git commit>",
-  "counts": {
-    "total_templates": 352,
-    "total_seeds": 284
-  },
+  "schema_version": 2,
   "templates": [],
   "seeds": []
 }
 ```
+
+The site derives all counts from these lists. Build time, package version, Git revision, and stored counts do not enter the catalogue bytes. Therefore, the same public library content produces the same export bytes.
 
 Each entry includes:
 
@@ -71,15 +66,15 @@ Each entry includes:
 | `tool_mode` | Whether generated tasks expose tools |
 | `archetype_count` | Number of sampling archetypes for built templates |
 
-## Generation identity
+## Generated task replay
 
-The catalogue describes public template families. Each generated task has its own deterministic provenance: template source digest, seed, stable instance index, difficulty, and visibility. Keep those fields with the generated task to preserve the identity of an existing instance across catalogue refreshes.
+The catalogue describes public template families. Task generation writes optional replay data once, in `generation-manifest.json` at the output root. Runnable task directories do not copy generation provenance. Normal task loading and execution do not read the sidecar.
+
+Use the sidecar when you must replay generation. Use the task ID and an exact dataset reference when you run or report a benchmark selection.
 
 ## Site sync
 
-The task browser uses the last successfully synced snapshot: 184 built templates and 284 proposed seeds across five disciplines. The upstream library export is authoritative for current template and seed counts.
-
-The current library export includes Maritime, but the task browser accepts only five disciplines. Add Maritime to the task-browser catalogue contract and routes before syncing the six-discipline file. The leaderboard can remain on its existing five-domain contract until ranked Maritime trial data exists.
+The task browser uses the last successfully synced catalogue. It supports all six catalogue disciplines, including Maritime. The result leaderboard remains on its five-domain result contract until a ranked dataset includes Maritime results.
 
 From the site checkout:
 
@@ -105,10 +100,12 @@ The catalogue is for public library documentation. It should describe:
 
 - Built-in templates and proposed seed tasks
 - Engineering discipline, category, standards, inputs, outputs, and difficulty
-- Reproducible generation and benchmark metadata
+- Public template and seed metadata
 
 Limit the catalogue to the public benchmark surface. Keep local run outputs, private customer material, scratch workspaces, and intentionally excluded task families outside it.
 
-## Versioning
+## Schema compatibility
 
-`schema_version` protects the site build. If the library changes the catalogue shape, update the site schema and docs in the same change. If only counts or entries change, regenerate and sync the JSON artefact.
+`schema_version` describes the JSON contract. It is not template identity or library identity. The site accepts schema 2 and a bounded schema-1 transition reader. Unknown schemas fail the build.
+
+If the contract changes, update the site reader and these docs in the same change. If entries change, export and sync the catalogue again.

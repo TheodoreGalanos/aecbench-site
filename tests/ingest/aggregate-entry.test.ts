@@ -3,7 +3,7 @@
 // ABOUTME: Exercises the full join of reward, discipline, cost, and metadata.
 import { describe, it, expect } from 'vitest';
 import { buildEntry } from '@/scripts/ingest/aggregate';
-import type { DatasetManifest, ModelEntry, TrialRecord } from '@/lib/aec-bench/contracts';
+import type { DatasetSelection, ModelEntry, TrialRecord } from '@/lib/aec-bench/contracts';
 
 const entry: ModelEntry = {
   match: 'claude-sonnet-4',
@@ -11,14 +11,13 @@ const entry: ModelEntry = {
   provider: 'anthropic',
   family: 'Claude 4',
 };
-const manifest: DatasetManifest = {
-  name: 'aec-bench',
-  version: '0.4.1',
-  content_hash: 'h',
-  description: { summary: 's', task_count: 2 },
+const manifest: DatasetSelection = {
+  dataset_id: 'aec-bench',
+  release_label: '0.4.1',
+  description: 's',
   tasks: [
-    { task_id: 'civil/a', domain: 'civil', difficulty: 'easy', tags: [] },
-    { task_id: 'electrical/b', domain: 'electrical', difficulty: 'easy', tags: [] },
+    { task_id: 'civil/a', domain: 'civil' },
+    { task_id: 'electrical/b', domain: 'electrical' },
   ],
 };
 
@@ -26,8 +25,10 @@ function makeTrial(trial_id: string, task_id: string, reward: number, ts: string
   return {
     trial_id,
     experiment_id: 'e',
+    run_id: null,
     dataset_id: 'aec-bench@0.4.1',
-    timestamp: ts,
+    started_at: ts,
+    completed_at: ts,
     task: { task_id, task_revision: 'r' },
     agent: {
       adapter: 'tool_loop',
@@ -47,7 +48,9 @@ function makeTrial(trial_id: string, task_id: string, reward: number, ts: string
       cache_write_tokens: null,
       estimated_cost_usd: 0.3,
     },
-    completeness: 'complete',
+    execution_status: 'completed',
+    evaluation_status: 'completed',
+    evidence_status: 'not_required',
   };
 }
 

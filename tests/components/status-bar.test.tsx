@@ -15,11 +15,10 @@ vi.mock('@/lib/aec-bench/read', () => ({
     generated_at: '2026-04-18T12:00:00Z',
   }),
   getDataset: () => ({
-    name: 'aec-bench',
-    version: '0.4.1',
-    content_hash: 'h',
-    description: { summary: 's', task_count: 30 },
-    tasks: [],
+    dataset_id: 'aec-bench',
+    release_label: 'public-2026',
+    description: 's',
+    task_count: 30,
   }),
   isMock: () => true,
 }));
@@ -36,6 +35,7 @@ describe('StatusBar', () => {
     expect(screen.getByText('30')).toBeInTheDocument();
     // models and disciplines both equal 5 in mock data — two matching spans is correct
     expect(screen.getAllByText('5', { selector: 'span' })).toHaveLength(2);
+    expect(screen.getByText('aec-bench@public-2026')).toBeInTheDocument();
   });
 
   it('shows last_submission and built-at relative times', () => {

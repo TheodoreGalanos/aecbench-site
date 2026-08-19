@@ -2,16 +2,16 @@
 // ABOUTME: Groups built and proposed task entries by discipline and category with detail links.
 import Link from 'next/link';
 import { ArrowRight, Boxes } from 'lucide-react';
-import type { Domain } from '@/lib/aec-bench/contracts';
+import type { CatalogueDiscipline } from '@/lib/aec-bench/contracts';
 import type { LibraryCatalogue } from '@/lib/aec-bench/library-catalogue';
-import { DISCIPLINE_META, DISCIPLINE_ORDER } from '@/lib/disciplines';
+import { CATALOGUE_DISCIPLINE_ORDER, DISCIPLINE_META } from '@/lib/disciplines';
 
 interface TaskLibraryIndexProps {
   catalogue: LibraryCatalogue;
 }
 
 interface DisciplineNavigationItem {
-  discipline: Domain;
+  discipline: CatalogueDiscipline;
   name: string;
   templates: number;
   seeds: number;
@@ -27,7 +27,7 @@ function prettify(slug: string): string {
 
 export function TaskLibraryIndex({ catalogue }: TaskLibraryIndexProps) {
   const totalTasks = catalogue.counts.total_templates + catalogue.counts.total_seeds;
-  const disciplineNavigation = DISCIPLINE_ORDER.map((discipline) => ({
+  const disciplineNavigation = CATALOGUE_DISCIPLINE_ORDER.map((discipline) => ({
     discipline,
     name: DISCIPLINE_META[discipline].name,
     ...catalogue.counts.by_discipline[discipline],
@@ -62,10 +62,6 @@ export function TaskLibraryIndex({ catalogue }: TaskLibraryIndexProps) {
                 <dt className="text-landing-muted">total tasks</dt>
                 <dd>{totalTasks}</dd>
               </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-landing-muted">source</dt>
-                <dd>{catalogue.library_commit ?? 'unavailable'}</dd>
-              </div>
             </dl>
           </aside>
         </div>
@@ -88,7 +84,7 @@ export function TaskLibraryIndex({ catalogue }: TaskLibraryIndexProps) {
           <DisciplineNavigation items={disciplineNavigation} />
 
           <div className="grid gap-4">
-            {DISCIPLINE_ORDER.map((discipline) => (
+            {CATALOGUE_DISCIPLINE_ORDER.map((discipline) => (
               <DisciplineBlock
                 key={discipline}
                 discipline={discipline}
@@ -142,7 +138,7 @@ function DisciplineBlock({
   discipline,
   catalogue,
 }: {
-  discipline: Domain;
+  discipline: CatalogueDiscipline;
   catalogue: LibraryCatalogue;
 }) {
   const meta = DISCIPLINE_META[discipline];

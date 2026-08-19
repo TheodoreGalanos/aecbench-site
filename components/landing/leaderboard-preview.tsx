@@ -52,7 +52,7 @@ export function LeaderboardPreview() {
           Current standings
         </h2>
         <p className="mb-6 mt-1 font-mono text-xs text-landing-muted">
-          dataset <span className="text-accent-amber">{runStatus.datasetVersion}</span> ·{' '}
+          dataset <span className="text-accent-amber">{runStatus.datasetLabel}</span> ·{' '}
           {runStatus.tasks} tasks · {runStatus.disciplines} disciplines
         </p>
 

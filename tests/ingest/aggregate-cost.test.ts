@@ -13,8 +13,10 @@ function makeTrial(
   return {
     trial_id,
     experiment_id: 'e',
+    run_id: null,
     dataset_id: 'aec-bench@0.4.1',
-    timestamp: '2026-04-10T12:00:00Z',
+    started_at: '2026-04-10T12:00:00Z',
+    completed_at: '2026-04-10T12:00:10Z',
     task: { task_id: 't', task_revision: 'r' },
     agent: {
       adapter: 'tool_loop',
@@ -28,7 +30,9 @@ function makeTrial(
     },
     timing: { total_seconds, agent_seconds: total_seconds * 0.8 },
     cost,
-    completeness: 'complete',
+    execution_status: 'completed',
+    evaluation_status: 'completed',
+    evidence_status: 'not_required',
   };
 }
 

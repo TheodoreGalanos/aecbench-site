@@ -45,8 +45,7 @@ export default async function DisciplinePage({
 
   const slice = await getByDiscipline(discipline);
   const runStatus = getRunStatus();
-  const catalogue = getCatalogue();
-  const catalogueSlice = getCatalogueForDiscipline(discipline, catalogue);
+  const catalogueSlice = getCatalogueForDiscipline(discipline, getCatalogue());
   const meta = DISCIPLINE_META[discipline];
 
   return (
@@ -60,13 +59,7 @@ export default async function DisciplinePage({
           subheading={meta.description}
           lockedDiscipline={discipline}
           trailingSlot={
-            <DisciplineTrailingSlot
-              slug={discipline}
-              slice={catalogueSlice}
-              libraryVersion={catalogue.library_version}
-              libraryCommit={catalogue.library_commit}
-              generatedAt={catalogue.generated_at}
-            />
+            <DisciplineTrailingSlot slug={discipline} slice={catalogueSlice} />
           }
         />
       </Suspense>

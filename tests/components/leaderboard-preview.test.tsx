@@ -11,7 +11,7 @@ describe('LeaderboardPreview', () => {
       screen.getByRole('heading', { name: /current standings/i }),
     ).toBeInTheDocument();
     expect(screen.getByText(/dataset/)).toBeInTheDocument();
-    expect(screen.getByText('release', { selector: '.text-accent-amber' })).toBeInTheDocument();
+    expect(screen.getByText('aec-bench@release', { selector: '.text-accent-amber' })).toBeInTheDocument();
   });
 
   it('renders 4 rank badges (zero-padded)', () => {

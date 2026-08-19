@@ -2,6 +2,7 @@
 // ABOUTME: Deterministic mock generator — produces a full results/ tree for the active dataset.
 // ABOUTME: Rewards drawn from per-model beta distributions; costs derived from pricing table.
 import { mkdir, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { dirname, join } from 'node:path';
 import seedrandom from 'seedrandom';
 import { dump } from 'js-yaml';
@@ -52,22 +53,20 @@ export async function generateMocks(opts: GenerateOptions): Promise<void> {
   // 1. Emit active.json
   await writeJson(
     join(opts.projectRoot, 'results/active.json'),
-    { benchmark: 'aec-bench', version: '0.4.1' },
+    { dataset_id: 'aec-bench', release_label: '0.4.1' },
   );
 
   // 2. Emit dataset manifest
   await writeJson(
     join(opts.projectRoot, 'results/datasets/aec-bench@0.4.1/manifest.json'),
     {
-      name: 'aec-bench',
-      version: '0.4.1',
-      content_hash: 'mock-' + 'a'.repeat(56),
-      description: { summary: 'Mock aec-bench dataset (synthetic)', task_count: TASK_SEED_IDS.length },
+      schema_version: 2,
+      dataset_id: 'aec-bench',
+      description: 'Mock AEC-Bench dataset with synthetic results.',
       tasks: TASK_SEED_IDS.map((t) => ({
         task_id: t.task_id,
-        domain: t.domain,
-        difficulty: 'medium',
-        tags: ['mock'],
+        path: `tasks/${t.task_id}`,
+        task_kind: 'artifact',
       })),
     },
   );
@@ -76,6 +75,7 @@ export async function generateMocks(opts: GenerateOptions): Promise<void> {
   for (const model of MOCK_MODELS) {
     const expId = `_mock-${model.display}-${model.adapter}`;
     const expDir = join(opts.projectRoot, 'results/experiments', expId);
+    const runId = `${expId}-run`;
 
     const submission = {
       experiment_id: expId,
@@ -87,6 +87,31 @@ export async function generateMocks(opts: GenerateOptions): Promise<void> {
       mock_notes: `Synthetic data; generated with seed "${opts.seed}"`,
     };
     await writeYaml(join(expDir, 'submission.yml'), submission);
+    await writeJson(
+      join(expDir, 'trials', '_runs', `${sha256(runId)}.json`),
+      {
+        schema_version: 2,
+        run_id: runId,
+        experiment_id: expId,
+        dataset: null,
+        source: { kind: 'unresolved', reason: 'Synthetic mock data.' },
+        agent: {
+          adapter: model.adapter,
+          model: model.library,
+          adapter_revision: null,
+          configuration: {},
+        },
+        execution_environment: {
+          runtime_image: 'aec-bench-site:mock',
+          compute_backend: 'synthetic',
+          tool_versions: null,
+        },
+        provider_route: { provider: 'synthetic', route: 'mock' },
+        expected_authorities: [],
+        evaluation_regime: null,
+        qualification: null,
+      },
+    );
 
     let trialIdx = 0;
     for (const task of TASK_SEED_IDS) {
@@ -98,24 +123,36 @@ export async function generateMocks(opts: GenerateOptions): Promise<void> {
           (tokensIn * model.pricePerMtokIn + tokensOut * model.pricePerMtokOut) / 1_000_000,
           4,
         );
+        const startedAt = offsetIso('2026-04-10T12:00:00Z', trialIdx * 60);
+        const totalSeconds = roundTo(sampleLogNormal(rng, 30, 0.3), 2);
         const trial = {
+          schema_version: 2,
           trial_id: `trial-${trialIdx}`,
-          experiment_id: expId,
-          dataset_id: 'aec-bench@0.4.1',
-          timestamp: offsetIso('2026-04-10T12:00:00Z', trialIdx * 60),
-          task: { task_id: task.task_id, task_revision: 'mock-rev' },
-          agent: {
-            adapter: model.adapter,
-            model: model.library,
-            adapter_revision: '1.0.0',
-            configuration: {},
+          run_id: runId,
+          task_id: task.task_id,
+          attempt: rep + 1,
+          execution_status: 'completed',
+          evaluation_status: 'completed',
+          evidence_status: 'not_required',
+          started_at: startedAt,
+          completed_at: offsetIso(startedAt, totalSeconds),
+          input: {
+            instruction: 'Synthetic mock task.',
+            task_revision: 'mock-rev',
+            task_kind: 'artifact',
           },
+          output: { artifacts: [], terminated: true, truncated: false },
           evaluation: {
             reward,
-            validity: { output_parseable: true, schema_valid: true, verifier_completed: true },
+            validity: {
+              output_parseable: true,
+              schema_valid: true,
+              verifier_completed: true,
+              errors: [],
+            },
           },
           timing: {
-            total_seconds: roundTo(sampleLogNormal(rng, 30, 0.3), 2),
+            total_seconds: totalSeconds,
             agent_seconds: roundTo(sampleLogNormal(rng, 20, 0.3), 2),
           },
           cost: {
@@ -125,7 +162,9 @@ export async function generateMocks(opts: GenerateOptions): Promise<void> {
             cache_write_tokens: null,
             estimated_cost_usd: costUsd,
           },
-          completeness: 'complete' as const,
+          authority_evidence: [],
+          provider_evidence: null,
+          extension_refs: [],
         };
         await writeJson(join(expDir, 'trials', `trial-${trialIdx}.json`), trial);
         trialIdx++;
@@ -161,6 +200,10 @@ function offsetIso(baseIso: string, addSeconds: number): string {
 function roundTo(n: number, places: number): number {
   const f = 10 ** places;
   return Math.round(n * f) / f;
+}
+
+function sha256(value: string): string {
+  return createHash('sha256').update(value).digest('hex');
 }
 
 async function writeJson(path: string, content: unknown): Promise<void> {

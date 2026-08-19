@@ -89,12 +89,28 @@ uv run aec-bench import jobs/<harbor-job-id>
 
 The importer reads the Harbor results and trial artefacts, validates their task and execution records, and writes `TrialRecord` records. Re-importing identical records reports duplicates. A conflicting trial identity fails the import and preserves the existing record.
 
-Provider completion, agent failure, verifier evidence, and reviewer evidence remain distinct in the imported record. A complete, valid trial with verifier evidence establishes whether the task passed.
+Provider completion, agent failure, verifier evidence, and reviewer evidence remain distinct. Imported trials record `execution_status`, `evaluation_status`, and `evidence_status` separately. The verifier result establishes the score only after execution and evaluation complete and required evidence is valid.
+
+## Move a completed run
+
+Export one accepted run and its retained artefacts as a deterministic package:
+
+```bash
+uv run aec-bench run export run-001 --output run-001.tar.zst
+```
+
+Import the package into another ledger:
+
+```bash
+uv run aec-bench run import run-001.tar.zst
+```
+
+`.tar.zst` is a tar archive compressed with Zstandard. The export has deterministic ordering and metadata, so unchanged run content produces the same package bytes. Import validates package paths, manifests, trial records, artefact size, and SHA-256 before it writes accepted data.
 
 ## Operational boundaries
 
 - Harbor creates the execution environment and runs the generated job; AEC-Bench owns planning and ledger import.
 - `aec-bench run` is attached. Keep the calling process alive until Harbor returns.
 - AEC-Bench adds no retry or pre-emption policy around Harbor; any such policy belongs to Harbor or the selected provider.
-- Trial provenance records the task, agent, environment, output, timing, and evaluation evidence needed for later analysis.
-- Complete, valid trial records are the basis for comparison and leaderboard aggregation.
+- `RunManifest` records shared run identity once. Each `TrialRecord` stores one attempt and refers to the run.
+- Completed execution and evaluation, plus verified or not-required evidence, are the basis for comparison and leaderboard aggregation.

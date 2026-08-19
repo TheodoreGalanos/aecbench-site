@@ -1,96 +1,93 @@
 ---
 title: Datasets
-description: A dataset is a versioned, content-hashed snapshot of a task collection that anchors comparable leaderboard results.
+description: A dataset uses one stable ID and one exact repository or bundle reference to anchor comparable benchmark runs.
 ---
 
-Datasets are the formal "this is the benchmark slice" artefact. They sit between task generation and experiment execution, making runs comparable even as templates and tasks continue to evolve.
+A dataset is the formal "this is the benchmark selection" artefact. It sits between task authoring and experiment execution. It keeps runs comparable while templates and tasks continue to change.
 
-## Anatomy
+## Identity and references
 
-A dataset lives under a versioned path:
+AEC-Bench separates three concepts:
 
-```text
-artefacts/datasets/
-└── electrical-v1/
-    └── 1.0.0/
-        └── manifest.json
-```
+| Concept | Purpose |
+|---------|---------|
+| `dataset_id` | Stable identity of the semantic task selection |
+| Exact reference | One repository commit and manifest path, or one retained bundle `ArtifactRef` |
+| Publication label | Human discovery name that resolves to one exact reference |
 
-The manifest pins every included task:
+A label such as `public-2026` does not define dataset identity. The label cannot be reassigned after publication. `latest` is not a valid persisted label because it can change what a run selects.
+
+## Semantic manifest
+
+`dataset create` writes one schema-2 manifest under `artefacts/datasets/manifests/<dataset_id>/manifest.json`:
 
 ```json
 {
-  "name": "electrical-v1",
-  "version": "1.0.0",
-  "content_hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-  "description": {
-    "summary": "Electrical engineering benchmark",
-    "purpose": "Baseline evaluation for cable and power-system tasks",
-    "domains": ["electrical"],
-    "difficulty_distribution": { "easy": 3, "medium": 3 },
-    "standards": ["AS/NZS 3008"],
-    "task_count": 6
-  },
+  "schema_version": 2,
+  "dataset_id": "electrical-core",
+  "description": "Cable and power-system baseline",
   "tasks": [
     {
       "task_id": "electrical/cable-sizing/voltage-drop/example",
-      "task_path": "tasks/electrical/cable-sizing/voltage-drop/example",
-      "content_hash": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
-      "domain": "electrical",
-      "difficulty": "easy",
-      "tags": ["deterministic"]
+      "path": "tasks/electrical/cable-sizing/voltage-drop/example",
+      "task_kind": "artifact"
     }
-  ]
+  ],
+  "generation": {
+    "seed": 42,
+    "config_ref": "suite.toml"
+  }
 }
 ```
 
-## Content hashing
+The manifest contains semantic task identity and repository-relative paths. It does not copy task hashes, dataset hashes, package versions, or creation times.
 
-Hashes apply at two levels:
+The optional `generation` field records replay inputs for the selection. Exact source or byte identity stays in the published dataset reference.
 
-1. **Task hash** — SHA-256 over the task directory's sorted file paths and contents, excluding `__pycache__` directories and `.pyc` files.
-2. **Dataset hash** — SHA-256 over the sorted `task_id:content_hash` pairs for all included tasks.
+## Create and publish
 
-`dataset create` writes both fields as exactly 64 lowercase hexadecimal characters.
-
-If a verifier changes, the task hash changes. If a task is added, removed, or changed, the dataset hash changes. Only the sorted `task_id:content_hash` pairs contribute to the dataset content hash.
-
-## Creating a dataset
-
-Freeze existing tasks by domain, difficulty, or pattern:
+Create a manifest from selected local tasks:
 
 ```bash
-uv run aec-bench dataset create \
-  --name electrical-v1 \
-  --version 1.0.0 \
+uv run aec-bench dataset create electrical-core \
   --domain electrical \
   --difficulty easy \
   --difficulty medium \
-  --summary "Electrical deterministic baseline" \
-  --purpose "Comparable cable and power-system evaluation"
+  --description "Cable and power-system baseline"
 ```
 
-Freeze the exact output of a generated suite:
+Create a manifest from the exact selection in a generated-suite sidecar:
 
 ```bash
-uv run aec-bench generate suite --config suite.toml --output tasks/generated
+uv run aec-bench generate suite --config suite.toml
 
-uv run aec-bench dataset create \
-  --name suite-v1 \
-  --version 1.0.0 \
-  --from-suite-output tasks/generated/dataset.json
+uv run aec-bench dataset create electrical-core \
+  --from-suite-output tasks/generated/my-suite/generation-manifest.json \
+  --description "Generated electrical baseline"
 ```
 
-Use `--overwrite` only when replacing a local mistake before sharing results. Published dataset versions should be immutable.
-
-## Running from a dataset
-
-Validate the recorded task hashes before every dataset-backed run, then generate and run the experiment manifest:
+Creation is local and write-once for one `dataset_id`. Publish it under a new label before you use it in a repeatable experiment:
 
 ```bash
-uv run aec-bench dataset validate electrical-v1@1.0.0
+uv run aec-bench dataset publish electrical-core --label public-2026
+```
 
-uv run aec-bench dataset config electrical-v1@1.0.0 \
+The default publication stores a deterministic detached bundle and references its exact bytes with `ArtifactRef`. Use `--repository` to bind the manifest to the current full Git commit and repository path instead:
+
+```bash
+uv run aec-bench dataset publish electrical-core \
+  --label public-2026-repository \
+  --repository
+```
+
+## Run from a publication
+
+Resolve the label, validate the exact materialisation, and write an experiment that contains the exact reference:
+
+```bash
+uv run aec-bench dataset validate electrical-core@public-2026
+
+uv run aec-bench dataset config electrical-core@public-2026 \
   --model gpt-4.1-mini \
   --harness tool_loop \
   --backend modal \
@@ -99,39 +96,28 @@ uv run aec-bench dataset config electrical-v1@1.0.0 \
 uv run aec-bench run --config experiment.yaml
 ```
 
-This validation is a separate required gate. `dataset validate` owns live task-hash comparison, while the current `run` selector uses task IDs from a dataset that it can resolve. If the dataset reference is unresolved, the other task filters determine selection.
+`dataset config` resolves the interactive label before it writes `experiment.yaml`. Persisted run identity contains the exact repository or bundle reference, not the mutable idea of a current release.
 
-Manual experiment manifests can also reference a dataset:
-
-```yaml
-tasks:
-  dataset: electrical-v1@1.0.0
-  difficulties: ["medium", "hard"]
-```
-
-When the dataset resolves, additional filters intersect with its task IDs.
-
-## Inspecting and moving datasets
+## Inspect and move datasets
 
 ```bash
 uv run aec-bench dataset list
-uv run aec-bench dataset info electrical-v1@1.0.0
-uv run aec-bench dataset validate electrical-v1@1.0.0
-uv run aec-bench dataset results electrical-v1@1.0.0
-uv run aec-bench dataset export electrical-v1@1.0.0 --output electrical-v1.tar.gz
-uv run aec-bench dataset import electrical-v1.tar.gz
+uv run aec-bench dataset info electrical-core@public-2026
+uv run aec-bench dataset validate electrical-core@public-2026
+uv run aec-bench dataset results electrical-core@public-2026
+uv run aec-bench dataset export electrical-core@public-2026 --output electrical-core.tar.gz
+uv run aec-bench dataset import electrical-core.tar.gz
 ```
 
-`dataset validate` owns the hash-integrity check and exits non-zero when files are missing or drifted from the recorded hashes. Run it explicitly before `aec-bench run`.
+Dataset export produces a deterministic detached bundle. Import validates the bundle and does not overwrite existing local data.
 
-## Versioning policy
+## Change policy
 
-Use semver-like discipline:
+When task membership or meaning changes, create a new semantic dataset ID if it is a different benchmark selection. When the semantic selection is unchanged but you need a new exact retained materialisation, publish it under a new immutable label.
 
-| Change | Bump |
-|--------|------|
-| Add tasks while preserving existing task content | minor |
-| Change task instructions, verifiers, fixtures, or environment | major |
-| Edit non-scoring metadata only | patch |
+Do not add another name, version, and hash layer for the same concept. Use:
 
-The practical rule is simple: whenever reward comparability changes, create a new major dataset version.
+- Git for exact repository source;
+- a stable ID for the dataset;
+- `ArtifactRef` for exact retained bundle bytes; and
+- a timestamp only for the real publication event.

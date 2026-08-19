@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "dataset_id": "aec-bench",
+  "description": "Current public benchmark selection.",
+  "tasks": [
+    {
+      "task_id": "electrical/pf-droop",
+      "path": "tasks/electrical/pf-droop",
+      "task_kind": "artifact"
+    }
+  ]
+}

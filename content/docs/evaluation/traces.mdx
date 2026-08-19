@@ -1,11 +1,11 @@
 ---
 title: Traces
-description: A trace is the per-turn trajectory plus the TrialRecord that preserves task, agent, output, evaluation, timing, and cost evidence.
+description: A trace combines per-turn trajectory evidence with a run manifest and one trial result.
 ---
 
 ## The trajectory
 
-During execution, an agent harness can append to `/workspace/trajectory.jsonl`. The file starts with a `TrajectoryEntry`, and every non-blank line uses that schema:
+During execution, an agent harness can append to `/workspace/trajectory.jsonl`. The file starts with a `TrajectoryEntry`. Every non-blank line uses that schema:
 
 ```jsonl
 {"step": 0, "role": "system", "content": "You are a senior electrical engineer...", "timestamp": "2026-08-15T01:02:03.000Z"}
@@ -15,97 +15,90 @@ During execution, an agent harness can append to `/workspace/trajectory.jsonl`. 
 {"step": 1, "role": "tool_result", "tool_name": "python", "stdout": "V_drop = 5.2V", "stderr": "", "exit_code": 0, "duration_ms": 142, "call_type": "main", "timestamp": "2026-08-15T01:02:05.142Z"}
 ```
 
-Each entry carries `step` and `role`. Text entries usually carry `content`.
+Each entry carries `step` and `role`. Tool entries can also carry `tool_name`, `command`, `arguments`, `stdout`, `stderr`, `exit_code`, `duration_ms`, media, and structured metadata. A timestamp records the real step event. It does not define trace identity.
 
-Tool entries can carry `tool_name`, `command`, `arguments`, `stdout`, `stderr`, `exit_code`, `duration_ms`, `media`, and structured `metadata`. Current optional context fields are `call_type`, `output_summary`, `timestamp`, and `meta_harness`.
+## Shared run identity
 
-## The trial record
+`RunManifest` records the facts shared by all trials in one run:
 
-Once evaluation finishes, the runner assembles a `TrialRecord`, the self-contained record of one agent run:
+- `run_id` and `experiment_id`;
+- an exact source reference;
+- the agent and effective configuration;
+- the execution environment and provider route;
+- an exact dataset reference when the run uses one;
+- expected evidence authorities; and
+- optional evaluation and qualification requirements.
+
+The ledger stores the manifest once. Each trial uses `run_id` instead of copying these fields.
+
+## The trial result
+
+`TrialRecord` stores facts for one task attempt:
 
 ```python
 class TrialRecord(StrictModel):
+    schema_version: Literal[2]
     trial_id: NonEmptyStr
-    experiment_id: NonEmptyStr
-    dataset_id: str | None = None
-    timestamp: datetime
+    run_id: NonEmptyStr
+    task_id: NonEmptyStr
+    attempt: PositiveInt
 
-    task: TaskReference              # task_id + content hash
-    agent: AgentReference            # harness, model, configuration
+    execution_status: ExecutionStatus
+    evaluation_status: EvaluationStatus
+    evidence_status: EvidenceStatus
+    started_at: datetime
+    completed_at: datetime | None
 
-    environment: EnvironmentSnapshot # Docker image, compute backend
-    inputs: InputRecord              # instruction, system prompt, files
-    outputs: OutputRecord            # agent output, raw output, conversation, trajectory
-    evaluation: EvaluationResult
-
-    timing: TimingRecord             # wall-clock per phase
-    cost: CostRecord | None          # tokens, advisor calls, estimated USD
-    adaptation: AdaptationProvenance | None
-    lifecycle_execution: LifecycleExecutionRecord | None
-    lifecycle_provenance: LifecycleTrialProvenance | None
-    episode_artifact: ArtifactReference | None
-    meta_harness_provenance: MetaHarnessTrialProvenance | None
-    completeness: Completeness       # complete | partial
+    input: TrialInput
+    output: TrialOutput | None
+    evaluation: EvaluationResult | None
+    timing: TimingRecord
+    cost: CostRecord | None
+    authority_evidence: tuple[AuthorityEvidenceRef, ...]
+    provider_evidence: ArtifactRef | None
+    extension_refs: tuple[TrialExtensionRef, ...]
 ```
 
-The record captures the main inputs needed to reproduce the run:
+`TrialInput` carries the instruction, task revision, task kind, visibility, and optional input-file references. `TrialOutput` references the retained raw output, conversation, trajectory, and other output artefacts with `ArtifactRef`.
 
-- **Task reference**: `task_id` plus `task_revision`
-- **Agent reference**: harness name, resolved model, optional harness revision, and effective configuration
-- **Input record**: instruction, optional system prompt, and input file references
-- **Environment snapshot**: runtime image, compute backend, and tool versions when available
+## Result status
 
-If any of these change later, the new run should produce a different record and preserve the old record.
+Do not infer one generic complete or partial state from the shape of a record.
 
-## Completeness
-
-Trial records have two states:
-
-| State | Meaning |
+| Field | Meaning |
 |-------|---------|
-| `partial` | Some required provenance is missing. The record can still support diagnostics. |
-| `complete` | Sealed after evaluation with the required provenance for its run type. |
+| `execution_status` | Execution progress or terminal result |
+| `evaluation_status` | Whether evaluation was requested and completed |
+| `evidence_status` | Whether required authority evidence is ready and valid |
 
-Complete records must include `agent.adapter_revision`, `environment.tool_versions`, and `inputs.input_files`. Partial records are useful for debugging. Reserve leaderboard claims for complete records.
+Leaderboard publication normally requires:
 
-Lifecycle records also require paired execution and provenance fields. Episode and meta-harness artefacts must be included in `outputs.artifacts` when their references are present.
+1. `execution_status == "completed"`;
+2. `evaluation_status == "completed"`;
+3. `evaluation.validity.verifier_completed == true`; and
+4. `evidence_status` equal to `verified` or `not_required`, subject to the run policy.
+
+A failed execution can still have useful diagnostics. A completed evaluation does not prove that required evidence exists. Keep each status visible.
 
 ## Cost tracking
 
-Each trial optionally records token usage and an estimated USD cost:
-
-```python
-class CostRecord(StrictModel):
-    model_calls: int | None
-    tokens_in: int | None
-    tokens_out: int | None
-    cache_read_tokens: int | None
-    cache_write_tokens: int | None
-    estimated_cost_usd: float | None
-    advisor_calls: int | None
-    advisor_input_tokens: int | None
-    advisor_output_tokens: int | None
-```
-
-These fields support cost-efficiency views and make advisor-heavy runs visible during review.
+Each trial can record model calls, input and output tokens, cache use, advisor use, and an estimated USD cost. Reports use `CostRecord` as the aggregate usage authority. Provider-specific metadata can remain in provider evidence when it is needed for diagnosis.
 
 ## The ledger
 
-Ledger trial records are append-only. Once written, a trial record remains immutable. New information attaches through new records or review artefacts that reference the original `trial_id`.
+Accepted run manifests, trial records, and retained evidence are immutable. New review or forensic detail uses a new retained artefact that refers to the existing trial. Source code and temporary workspaces remain normal replaceable implementation.
 
 ## Imported Prime rollouts
 
-Hosted Prime eval samples can be materialised into the same ledger shape:
+Hosted Prime eval samples can enter the same run and trial boundary:
 
 ```bash
 uv run aec-bench import-prime-eval <prime-eval-id> \
   --experiment prime-eval-medium-stateful
 ```
 
-The import writes one partial `TrialRecord` per hosted sample. Each record points to a local `conversation.jsonl` built from the Prime prompt and completion messages, preserves the raw `prime_sample.json`, and records Prime metrics such as reward, timing, token usage, stop condition, tool-call counts, and `submit_answer` calls in the normal output/evaluation fields.
+The import retains the Prime sample and conversation as artefacts. It maps provider execution, evaluation, and evidence separately. Imported samples are useful for rollout review. Leaderboard claims still need an exact dataset, reconstructive source, repeated trials, verifier evidence, and the selected publication policy.
 
-Imported Prime records are diagnostic artefacts. They are useful for reviewing rollouts, comparing base and adapter behaviour, and running trace reports; leaderboard-grade claims still need the usual benchmark controls around task slice, model, repetitions, verifier provenance, and review policy.
+## Inspect a trace
 
-## Inspecting a trace
-
-For quick diagnostics, the evaluation layer can load the trajectory first and fall back to `conversation.jsonl` when no trajectory is present. Trace summaries expose turn counts, tool errors, first error seen, and the behavioural classification described in [Classification](/docs/evaluation/classification). Full trajectories are the evidence surface for step-by-step inspection.
+The evaluation layer loads `trajectory.jsonl` first and can fall back to `conversation.jsonl`. Trace summaries expose turn counts, tool errors, the first error, and the behavioural classification described in [Classification](/docs/evaluation/classification). The retained trace artefact is the step-by-step evidence surface.

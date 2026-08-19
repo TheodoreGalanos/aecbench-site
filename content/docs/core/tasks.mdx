@@ -202,7 +202,7 @@ There are three common ways work enters the benchmark:
 
 **Seed runnable instances** are hand-authored tasks with a prompt, runtime, and custom verifier. These are useful when the task needs expert judgement, a bespoke source document, or a narrow real-world scenario.
 
-**Generated instances** come from parameterised templates. A template defines the problem structure with variable parameters, and the generator samples concrete values to create reproducible task instances. Generated `task.toml` files bind the template source digest, seed, stable instance index, difficulty, and visibility. See [Templates](/docs/core/templates) for how this works.
+**Generated instances** come from parameterised templates. A template defines the problem structure with variable parameters, and the generator samples concrete values to create reproducible task instances. The generator can write replay inputs once in `generation-manifest.json` at the output root. Generated `task.toml` files do not copy that provenance. See [Templates](/docs/core/templates) for how this works.
 
 ## Container extensions
 

@@ -1,27 +1,29 @@
 // tests/ingest/contracts.test.ts
-// ABOUTME: Exercises zod schemas mirroring aec-bench library pydantic contracts.
-// ABOUTME: Asserts every schema accepts a valid fixture and rejects known malformations.
+// ABOUTME: Exercises the current AEC-Bench source contracts used by site ingestion.
+// ABOUTME: Keeps source schema versions separate from the site-owned normalised models.
 import { describe, it, expect } from 'vitest';
 import {
-  TrialRecordSchema,
-  DatasetManifestSchema,
+  TrialRecordV2Schema,
+  DatasetManifestV2Schema,
   SubmissionSchema,
   ModelEntrySchema,
   LeaderboardEntrySchema,
+  ActivePointerSchema,
 } from '@/lib/aec-bench/contracts';
 
 const validTrial = {
+  schema_version: 2 as const,
   trial_id: 'pf-droop__abc123',
-  experiment_id: 'sonnet4-tool-loop',
-  dataset_id: 'aec-bench@0.4.1',
-  timestamp: '2026-04-10T12:00:00Z',
-  task: { task_id: 'electrical/pf-droop', task_revision: 'deadbeef' },
-  agent: {
-    adapter: 'tool_loop',
-    model: 'claude-sonnet-4-6',
-    adapter_revision: '1.0.0',
-    configuration: {},
-  },
+  run_id: 'run-1',
+  task_id: 'electrical/pf-droop',
+  attempt: 1,
+  execution_status: 'completed' as const,
+  evaluation_status: 'completed' as const,
+  evidence_status: 'not_required' as const,
+  started_at: '2026-04-10T12:00:00Z',
+  completed_at: '2026-04-10T12:00:42.500Z',
+  input: { instruction: 'Calculate the result.', task_revision: 'deadbeef' },
+  output: {},
   evaluation: {
     reward: 0.82,
     validity: {
@@ -38,52 +40,69 @@ const validTrial = {
     cache_write_tokens: null,
     estimated_cost_usd: 0.3,
   },
-  completeness: 'complete' as const,
+  authority_evidence: [],
+  provider_evidence: null,
+  extension_refs: [],
 };
 
-describe('TrialRecordSchema', () => {
-  it('accepts a valid TrialRecord', () => {
-    expect(() => TrialRecordSchema.parse(validTrial)).not.toThrow();
+describe('TrialRecordV2Schema', () => {
+  it('accepts a current TrialRecord', () => {
+    expect(() => TrialRecordV2Schema.parse(validTrial)).not.toThrow();
   });
 
   it('rejects reward outside [0, 1]', () => {
     const bad = { ...validTrial, evaluation: { ...validTrial.evaluation, reward: 1.5 } };
-    expect(() => TrialRecordSchema.parse(bad)).toThrow();
+    expect(() => TrialRecordV2Schema.parse(bad)).toThrow();
   });
 
-  it('rejects unknown completeness', () => {
-    const bad = { ...validTrial, completeness: 'maybe' as unknown as 'complete' };
-    expect(() => TrialRecordSchema.parse(bad)).toThrow();
+  it('rejects an unknown evidence status', () => {
+    const bad = { ...validTrial, evidence_status: 'maybe' };
+    expect(() => TrialRecordV2Schema.parse(bad)).toThrow();
   });
 
   it('allows cost to be null', () => {
-    expect(() => TrialRecordSchema.parse({ ...validTrial, cost: null })).not.toThrow();
+    expect(() => TrialRecordV2Schema.parse({ ...validTrial, cost: null })).not.toThrow();
+  });
+
+  it('rejects a completed trial without output', () => {
+    expect(() => TrialRecordV2Schema.parse({ ...validTrial, output: null })).toThrow();
   });
 });
 
-describe('DatasetManifestSchema', () => {
-  it('accepts a valid manifest', () => {
+describe('ActivePointerSchema', () => {
+  it('rejects persisted latest selection', () => {
+    expect(() => ActivePointerSchema.parse({
+      dataset_id: 'aec-bench',
+      release_label: 'latest',
+    })).toThrow();
+  });
+});
+
+describe('DatasetManifestV2Schema', () => {
+  it('accepts a current semantic manifest', () => {
     const manifest = {
-      name: 'aec-bench',
-      version: '0.4.1',
-      content_hash: 'hash-' + 'a'.repeat(56),
-      description: { summary: 'AEC engineering tasks', task_count: 547 },
+      schema_version: 2 as const,
+      dataset_id: 'aec-bench',
+      description: 'AEC engineering tasks',
       tasks: [
-        { task_id: 'electrical/pf-droop', domain: 'electrical', difficulty: 'medium', tags: [] },
+        {
+          task_id: 'electrical/pf-droop',
+          path: 'tasks/electrical/pf-droop',
+          task_kind: 'artifact' as const,
+        },
       ],
     };
-    expect(() => DatasetManifestSchema.parse(manifest)).not.toThrow();
+    expect(() => DatasetManifestV2Schema.parse(manifest)).not.toThrow();
   });
 
-  it('rejects unknown domain', () => {
+  it('rejects a mutable latest dataset ID', () => {
     const bad = {
-      name: 'x',
-      version: '0.0.1',
-      content_hash: 'h',
-      description: { summary: 's', task_count: 1 },
-      tasks: [{ task_id: 't', domain: 'biology', difficulty: 'medium', tags: [] }],
+      schema_version: 2,
+      dataset_id: 'bad/id',
+      description: 's',
+      tasks: [{ task_id: 't', path: 'tasks/t', task_kind: 'artifact' }],
     };
-    expect(() => DatasetManifestSchema.parse(bad)).toThrow();
+    expect(() => DatasetManifestV2Schema.parse(bad)).toThrow();
   });
 });
 

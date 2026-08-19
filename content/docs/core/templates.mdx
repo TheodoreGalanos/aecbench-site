@@ -45,8 +45,7 @@ The three required files are the contract:
 | `engine.py` | Computes expected outputs from sampled parameters for verifier and fixture generation |
 
 Templates can also provide `verify.py`, `system_prompt.md`, and
-`output_contract.json`. These optional source files become part of the template
-source digest when present.
+`output_contract.json`. These optional files are part of the exact template source in Git.
 
 ## `params.toml`
 
@@ -229,7 +228,7 @@ uv run aec-bench generate suite --config suite.toml --dry-run
 uv run aec-bench generate suite --config suite.toml
 ```
 
-Each generated instance records its template source digest, seed, stable instance index, difficulty, visibility, and sampled values. Those fields define deterministic identity across repeated generations, regardless of when each instance is materialised.
+Generation writes optional replay data once in `generation-manifest.json` at the output root. The sidecar records the source template, seed, stable instance index, difficulty, visibility, and sampled parameters needed for replay. Runnable task directories do not copy those fields. Normal task loading and execution ignore the sidecar.
 
 ## Built-in template scope
 

@@ -5,12 +5,14 @@ import { describe, it, expect } from 'vitest';
 import { computeReward } from '@/scripts/ingest/aggregate';
 import type { TrialRecord } from '@/lib/aec-bench/contracts';
 
-function makeTrial(trial_id: string, reward: number, completeness: 'complete' | 'partial' = 'complete'): TrialRecord {
+function makeTrial(trial_id: string, reward: number, complete = true): TrialRecord {
   return {
     trial_id,
     experiment_id: 'e',
+    run_id: null,
     dataset_id: 'aec-bench@0.4.1',
-    timestamp: '2026-04-10T12:00:00Z',
+    started_at: '2026-04-10T12:00:00Z',
+    completed_at: complete ? '2026-04-10T12:00:01Z' : null,
     task: { task_id: 't', task_revision: 'r' },
     agent: {
       adapter: 'tool_loop',
@@ -24,13 +26,15 @@ function makeTrial(trial_id: string, reward: number, completeness: 'complete' | 
     },
     timing: { total_seconds: 1, agent_seconds: 1 },
     cost: null,
-    completeness,
+    execution_status: complete ? 'completed' : 'invalid',
+    evaluation_status: complete ? 'completed' : 'failed',
+    evidence_status: complete ? 'not_required' : 'incomplete',
   };
 }
 
 describe('computeReward', () => {
   it('averages complete trials only', () => {
-    const trials = [makeTrial('a', 1.0), makeTrial('b', 0.5), makeTrial('c', 0.0, 'partial')];
+    const trials = [makeTrial('a', 1.0), makeTrial('b', 0.5), makeTrial('c', 0.0, false)];
     const { mean, complete, total } = computeReward(trials);
     expect(mean).toBeCloseTo(0.75, 5);
     expect(complete).toBe(2);
@@ -38,7 +42,7 @@ describe('computeReward', () => {
   });
 
   it('returns mean=0 when no complete trials exist', () => {
-    const trials = [makeTrial('a', 0.9, 'partial')];
+    const trials = [makeTrial('a', 0.9, false)];
     const { mean, complete } = computeReward(trials);
     expect(mean).toBe(0);
     expect(complete).toBe(0);

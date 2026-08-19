@@ -1,4 +1,4 @@
-// ABOUTME: Disciplines showcase — 5 cards in a row; metadata pulled from lib/disciplines.
+// ABOUTME: Disciplines showcase for all six public catalogue disciplines.
 // ABOUTME: Each card links to /tasks#discipline and displays live built/proposed counts.
 import Link from 'next/link';
 import { BlueprintBg } from './blueprint-bg';
@@ -9,27 +9,32 @@ import {
   CivilGlyph,
   ElectricalGlyph,
   GroundGlyph,
+  MaritimeGlyph,
   MechanicalGlyph,
   StructuralGlyph,
 } from './discipline-glyphs';
 import type { ComponentType } from 'react';
-import type { Domain } from '@/lib/aec-bench/contracts';
-import { DISCIPLINE_META, DISCIPLINE_ORDER } from '@/lib/disciplines';
+import type { CatalogueDiscipline } from '@/lib/aec-bench/contracts';
+import { CATALOGUE_DISCIPLINE_ORDER, DISCIPLINE_META } from '@/lib/disciplines';
 
-const GLYPHS: Record<Domain, ComponentType<{ className?: string }>> = {
+const GLYPHS: Record<CatalogueDiscipline, ComponentType<{ className?: string }>> = {
   civil: CivilGlyph,
   electrical: ElectricalGlyph,
   ground: GroundGlyph,
   mechanical: MechanicalGlyph,
   structural: StructuralGlyph,
+  maritime: MaritimeGlyph,
 };
 
 export interface DisciplinesProps {
-  counts: Record<Domain, { templates: number; seeds: number }>;
+  counts: Record<CatalogueDiscipline, { templates: number; seeds: number }>;
   totalTasks: number;
 }
 
 export function Disciplines({ counts, totalTasks }: DisciplinesProps) {
+  const built = Object.values(counts).reduce((total, count) => total + count.templates, 0);
+  const proposed = Object.values(counts).reduce((total, count) => total + count.seeds, 0);
+
   return (
     <BlueprintBg>
       <SheetCorners figNumber={4} figName="DISCIPLINES" />
@@ -37,15 +42,15 @@ export function Disciplines({ counts, totalTasks }: DisciplinesProps) {
         <div className="mx-auto max-w-5xl px-6 py-16 md:py-20">
           <SectionAnno number={4} name="Disciplines" />
           <h2 className="mt-2 text-3xl font-bold text-landing-text md:text-4xl">
-            Five engineering disciplines
+            Six engineering disciplines
           </h2>
           <p className="mb-8 mt-1 font-mono text-xs text-landing-muted">
-            coverage <span className="text-accent-amber">{totalTasks}/{totalTasks}</span> tasks · verified against
-            AS/NZS standards
+            <span className="text-accent-amber">{built} built</span> · {proposed} proposed ·{' '}
+            {totalTasks} catalogue entries
           </p>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            {DISCIPLINE_ORDER.map((slug) => {
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            {CATALOGUE_DISCIPLINE_ORDER.map((slug) => {
               const meta = DISCIPLINE_META[slug];
               const Glyph = GLYPHS[slug];
               const c = counts[slug] ?? { templates: 0, seeds: 0 };

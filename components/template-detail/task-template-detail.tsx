@@ -15,10 +15,6 @@ export interface TaskTemplateDetailProps {
   detail: TemplateDetailSupplement | null;
   variants: LibraryCatalogueEntry[];
   canonicalPath?: string;
-  catalogueMeta: {
-    libraryVersion: string;
-    libraryCommit: string | null;
-  };
 }
 
 function chipClass(tone: 'amber' | 'teal' | 'green' | 'red' | 'muted' = 'muted') {
@@ -311,7 +307,6 @@ export function TaskTemplateDetail({
   detail,
   variants,
   canonicalPath,
-  catalogueMeta,
 }: TaskTemplateDetailProps) {
   const parameters = detail?.parameters ?? fallbackParameters(entry);
   const relatedVariants = variants.filter((variant) => variant.discipline !== entry.discipline);
@@ -351,15 +346,11 @@ export function TaskTemplateDetail({
               </p>
             </div>
             <aside className="min-w-0 overflow-hidden rounded border border-landing-border bg-[#050505] p-4">
-              <p className="font-mono text-xs uppercase tracking-wider text-landing-muted">catalogue source</p>
+              <p className="font-mono text-xs uppercase tracking-wider text-landing-muted">template identity</p>
               <dl className="mt-4 grid min-w-0 gap-2 font-mono text-xs">
-                <div className="flex justify-between gap-4">
-                  <dt className="text-landing-muted">version</dt>
-                  <dd>{catalogueMeta.libraryVersion}</dd>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <dt className="text-landing-muted">commit</dt>
-                  <dd>{catalogueMeta.libraryCommit ?? 'unavailable'}</dd>
+                <div className="grid gap-1">
+                  <dt className="text-landing-muted">task ID</dt>
+                  <dd className="min-w-0 break-all text-landing-text">{entry.task_id}</dd>
                 </div>
                 {detail?.sourcePath && (
                   <div className="grid gap-1 border-t border-landing-border pt-3">

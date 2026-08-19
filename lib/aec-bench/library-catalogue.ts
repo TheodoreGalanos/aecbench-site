@@ -1,7 +1,10 @@
-// ABOUTME: Zod contract + read helpers for the aec-bench library-catalogue v1 export.
-// ABOUTME: Static import from data/library-catalogue.json; schema_version mismatch fails the build.
+// ABOUTME: Reads deterministic catalogue schema 2 and the bounded public schema-1 transition.
+// ABOUTME: Derives display counts from entries instead of treating build metadata as catalogue content.
 import { z } from 'zod';
-import { DOMAINS } from '@/lib/aec-bench/contracts';
+import {
+  CATALOGUE_DISCIPLINES,
+  type CatalogueDiscipline,
+} from '@/lib/aec-bench/contracts';
 
 export const CatalogueIOSchema = z.object({
   name: z.string(),
@@ -14,12 +17,12 @@ export type CatalogueIO = z.infer<typeof CatalogueIOSchema>;
 
 export const LibraryCatalogueEntrySchema = z.object({
   task_id: z.string().min(1),
-  discipline: z.enum(DOMAINS),
+  discipline: z.enum(CATALOGUE_DISCIPLINES),
   category: z.string().min(1),
   category_label: z.string().nullable(),
   task_name: z.string().min(1),
   description: z.string(),
-  long_description: z.string().optional(),
+  long_description: z.string().nullish(),
   standards: z.array(z.string()),
   tags: z.array(z.string()).optional(),
   inputs: z.array(CatalogueIOSchema),
@@ -37,15 +40,7 @@ const DisciplineCountsSchema = z.object({
   seeds: z.number().int().nonnegative(),
 });
 
-const ByDisciplineSchema = z.object({
-  civil: DisciplineCountsSchema,
-  electrical: DisciplineCountsSchema,
-  ground: DisciplineCountsSchema,
-  mechanical: DisciplineCountsSchema,
-  structural: DisciplineCountsSchema,
-});
-
-export const LibraryCatalogueSchema = z.object({
+const LegacyLibraryCatalogueSchema = z.object({
   schema_version: z.literal(1),
   generated_at: z.string().min(1),
   library_version: z.string().min(1),
@@ -53,15 +48,66 @@ export const LibraryCatalogueSchema = z.object({
   counts: z.object({
     total_templates: z.number().int().nonnegative(),
     total_seeds: z.number().int().nonnegative(),
-    by_discipline: ByDisciplineSchema,
+    by_discipline: z.record(z.string(), DisciplineCountsSchema),
   }),
   templates: z.array(LibraryCatalogueEntrySchema),
   seeds: z.array(LibraryCatalogueEntrySchema),
 });
-export type LibraryCatalogue = z.infer<typeof LibraryCatalogueSchema>;
+
+const CurrentLibraryCatalogueSchema = z.object({
+  schema_version: z.literal(2),
+  templates: z.array(LibraryCatalogueEntrySchema),
+  seeds: z.array(LibraryCatalogueEntrySchema),
+});
+
+export interface LibraryCatalogueCounts {
+  total_templates: number;
+  total_seeds: number;
+  by_discipline: Record<CatalogueDiscipline, { templates: number; seeds: number }>;
+}
+
+export interface LibraryCatalogue {
+  schema_version: 1 | 2;
+  templates: LibraryCatalogueEntry[];
+  seeds: LibraryCatalogueEntry[];
+  counts: LibraryCatalogueCounts;
+}
+
+function deriveCounts(
+  templates: LibraryCatalogueEntry[],
+  seeds: LibraryCatalogueEntry[],
+): LibraryCatalogueCounts {
+  const by_discipline = Object.fromEntries(
+    CATALOGUE_DISCIPLINES.map((discipline) => [
+      discipline,
+      {
+        templates: templates.filter((entry) => entry.discipline === discipline).length,
+        seeds: seeds.filter((entry) => entry.discipline === discipline).length,
+      },
+    ]),
+  ) as LibraryCatalogueCounts['by_discipline'];
+
+  return {
+    total_templates: templates.length,
+    total_seeds: seeds.length,
+    by_discipline,
+  };
+}
+
+export const LibraryCatalogueSchema = z
+  .discriminatedUnion('schema_version', [LegacyLibraryCatalogueSchema, CurrentLibraryCatalogueSchema])
+  .transform((catalogue): LibraryCatalogue => ({
+    schema_version: catalogue.schema_version,
+    templates: catalogue.templates,
+    seeds: catalogue.seeds,
+    counts: deriveCounts(catalogue.templates, catalogue.seeds),
+  }));
+
+export function parseLibraryCatalogue(value: unknown): LibraryCatalogue {
+  return LibraryCatalogueSchema.parse(value);
+}
 
 import artefact from '@/data/library-catalogue.json';
-import type { Domain } from '@/lib/aec-bench/contracts';
 
 let cached: LibraryCatalogue | null = null;
 
@@ -79,8 +125,8 @@ export function getCatalogue(): LibraryCatalogue {
   if (!parsed.success) {
     const raw = artefact as { schema_version?: unknown };
     const msg =
-      typeof raw.schema_version === 'number' && raw.schema_version !== 1
-        ? `Library catalogue schema_version ${raw.schema_version} unsupported (site supports v1). Re-run 'pnpm sync:catalogue' or upgrade the site.`
+      typeof raw.schema_version === 'number' && ![1, 2].includes(raw.schema_version)
+        ? `Library catalogue schema_version ${raw.schema_version} unsupported (site supports v1 and v2). Re-run 'pnpm sync:catalogue' or upgrade the site.`
         : `Library catalogue failed validation: ${parsed.error.message}`;
     throw new Error(msg);
   }
@@ -107,7 +153,7 @@ export interface DisciplineCatalogueSlice {
 }
 
 export function getCatalogueForDiscipline(
-  domain: Domain,
+  domain: CatalogueDiscipline,
   catalogue: LibraryCatalogue = getCatalogue(),
 ): DisciplineCatalogueSlice {
   const templates = catalogue.templates.filter((t) => t.discipline === domain);
@@ -150,7 +196,7 @@ export function getCatalogueForDiscipline(
 }
 
 export function getCatalogueEntry(
-  domain: Domain,
+  domain: CatalogueDiscipline,
   taskId: string,
   catalogue: LibraryCatalogue = getCatalogue(),
 ): LibraryCatalogueEntry | null {

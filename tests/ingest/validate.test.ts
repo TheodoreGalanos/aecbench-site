@@ -5,18 +5,18 @@ import { describe, it, expect } from 'vitest';
 import { resolve } from 'node:path';
 import { discoverExperiments } from '@/scripts/ingest/discover';
 import { validateExperiment, ValidationError } from '@/scripts/ingest/validate';
-import type { DatasetManifest } from '@/lib/aec-bench/contracts';
+import type { DatasetSelection } from '@/lib/aec-bench/contracts';
 
 const VALID_ROOT = resolve(__dirname, 'fixtures/validate/valid');
 const MISMATCH_ROOT = resolve(__dirname, 'fixtures/validate/mismatch');
 const DUPLICATE_ROOT = resolve(__dirname, 'fixtures/validate/duplicate-trial');
+const CURRENT_ROOT = resolve(__dirname, 'fixtures/validate/current');
 
-const manifest: DatasetManifest = {
-  name: 'aec-bench',
-  version: '0.4.1',
-  content_hash: 'h',
-  description: { summary: 's', task_count: 1 },
-  tasks: [{ task_id: 'electrical/pf-droop', domain: 'electrical', difficulty: 'medium', tags: [] }],
+const manifest: DatasetSelection = {
+  dataset_id: 'aec-bench',
+  release_label: '0.4.1',
+  description: 's',
+  tasks: [{ task_id: 'electrical/pf-droop', domain: 'electrical' }],
 };
 
 describe('validateExperiment', () => {
@@ -41,12 +41,26 @@ describe('validateExperiment', () => {
   });
 
   it('rejects trials whose task_id is not in the dataset manifest', async () => {
-    const strictManifest: DatasetManifest = {
+    const strictManifest: DatasetSelection = {
       ...manifest,
-      tasks: [{ task_id: 'ground/foo', domain: 'ground', difficulty: 'easy', tags: [] }],
+      tasks: [{ task_id: 'ground/foo', domain: 'ground' }],
     };
     const [exp] = await discoverExperiments(VALID_ROOT);
     await expect(validateExperiment(exp, strictManifest, 'aec-bench@0.4.1')).rejects.toThrow(ValidationError);
     await expect(validateExperiment(exp, strictManifest, 'aec-bench@0.4.1')).rejects.toThrow(/task_id/);
+  });
+
+  it('binds a current trial to its run manifest', async () => {
+    const [exp] = await discoverExperiments(CURRENT_ROOT);
+    const result = await validateExperiment(exp, manifest, 'aec-bench@0.4.1');
+    expect(result.trials[0]).toMatchObject({
+      trial_id: 't-current',
+      run_id: 'run-current',
+      experiment_id: 'current-exp',
+      execution_status: 'completed',
+      evaluation_status: 'completed',
+      evidence_status: 'not_required',
+      agent: { model: 'claude-sonnet-4-6' },
+    });
   });
 });

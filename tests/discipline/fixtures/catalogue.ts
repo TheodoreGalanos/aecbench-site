@@ -98,17 +98,14 @@ export function makeCatalogue(overrides: Partial<LibraryCatalogue> = {}): Librar
   const templates = overrides.templates ?? BUILT_TEMPLATES;
   const seeds = overrides.seeds ?? PROPOSED_SEEDS;
   const by_discipline: LibraryCatalogue['counts']['by_discipline'] = {} as LibraryCatalogue['counts']['by_discipline'];
-  for (const d of ['civil', 'electrical', 'ground', 'mechanical', 'structural'] as const) {
+  for (const d of ['civil', 'electrical', 'ground', 'mechanical', 'structural', 'maritime'] as const) {
     by_discipline[d] = {
       templates: templates.filter((t) => t.discipline === d).length,
       seeds: seeds.filter((s) => s.discipline === d).length,
     };
   }
   return {
-    schema_version: 1,
-    generated_at: '2026-04-19T09:00:00Z',
-    library_version: '0.1.0',
-    library_commit: '1a2b3c4d5e6f7890abcdef1234567890abcdef12',
+    schema_version: 2,
     counts: {
       total_templates: templates.length,
       total_seeds: seeds.length,

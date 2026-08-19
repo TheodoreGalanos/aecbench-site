@@ -3,6 +3,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { TaskCard } from '@/components/discipline/task-card';
+import type { LibraryCatalogueEntry } from '@/lib/aec-bench/library-catalogue';
 import { makeCatalogueEntry } from './fixtures/catalogue';
 
 describe('TaskCard — built template', () => {
@@ -45,7 +46,7 @@ describe('TaskCard — built template', () => {
   });
 
   it('renders difficulty_tiers single value when length === 1', () => {
-    const single = { ...builtAllTiers, difficulty_tiers: ['medium'] as const };
+    const single: LibraryCatalogueEntry = { ...builtAllTiers, difficulty_tiers: ['medium'] };
     render(<TaskCard entry={single} />);
     expect(screen.getByText('medium')).toBeInTheDocument();
   });

@@ -70,7 +70,11 @@ name: "Claude vs GPT electrical"
 description: "Optional narrative description"
 
 tasks:
-  dataset: electrical-v1@1.0.0
+  dataset:
+    kind: repository
+    dataset_id: electrical-core
+    source_revision: 0123456789abcdef0123456789abcdef01234567
+    manifest_path: artefacts/datasets/manifests/electrical-core/manifest.json
   include_patterns: ["electrical/*"]
   exclude_patterns: []
   domains:      ["electrical"]
@@ -111,7 +115,7 @@ disable_verification: false
 
 The `model` field supports `$ENV_VAR` expansion. The manifest parser accepts `harness` as the public synonym for the internal `adapter` field; generated YAML may still contain `adapter`.
 
-The current runner applies resolved dataset task IDs, patterns, domain, and difficulty as intersections. `lifecycle_filter` is currently informational, and the other selectors determine the task set when a dataset reference is unresolved. Run `dataset validate` first and inspect the dry-run plan before a dataset-backed experiment.
+The runner applies dataset task IDs, patterns, domain, and difficulty as intersections. A dataset-backed experiment contains an exact repository or bundle reference. Use `dataset config` to resolve a human label before you write the experiment. Run `dataset validate` first and inspect the dry-run plan.
 
 `compute.timeout_override` sits alongside `resource_limits` and overrides the per-task trial timeout.
 
@@ -280,41 +284,25 @@ The `templates.include` entries match each template's logical `discipline/name` 
 
 ## Dataset manifest
 
-Create dataset manifests with `aec-bench dataset create`. The generated structure is useful for tooling:
+Create semantic dataset manifests with `aec-bench dataset create`:
 
 ```json
 {
-  "name": "electrical-v1",
-  "version": "1.0.0",
-  "content_hash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-  "created_at": "2026-04-12T00:00:00Z",
-  "description": {
-    "summary": "...",
-    "purpose": "...",
-    "standards": ["AS/NZS 3008"],
-    "domains": ["electrical"],
-    "difficulty_distribution": { "easy": 3, "medium": 3 },
-    "task_count": 6
-  },
+  "schema_version": 2,
+  "dataset_id": "electrical-core",
+  "description": "Cable and power-system baseline",
   "tasks": [
     {
-      "task_id": "electrical.voltage-drop.basic",
-      "task_path": "tasks/electrical/voltage-drop/basic",
-      "content_hash": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
-      "domain": "electrical",
-      "difficulty": "easy",
-      "tags": ["deterministic", "AS-NZS-3008"]
+      "task_id": "electrical/voltage-drop/basic",
+      "path": "tasks/electrical/voltage-drop/basic",
+      "task_kind": "artifact"
     }
   ],
-  "source": {
-    "method": "manual",
-    "suite_config": {},
-    "seed": null
-  }
+  "generation": null
 }
 ```
 
-See [Datasets](/docs/advanced/datasets) for the content hashing and versioning policy.
+The manifest defines the semantic selection. Publication binds it to one exact Git source or detached bundle. See [Datasets](/docs/advanced/datasets).
 
 ## `swarm.yaml`
 

@@ -1,4 +1,4 @@
-// ABOUTME: Five inline SVG placeholder glyphs for engineering disciplines.
+// ABOUTME: Six inline SVG placeholder glyphs for engineering disciplines.
 // ABOUTME: Decorative; parent marks aria-hidden. Designer to iterate later.
 type GlyphProps = { className?: string };
 
@@ -49,6 +49,17 @@ export function StructuralGlyph({ className = '' }: GlyphProps) {
     <svg viewBox="0 0 40 40" className={`${base} ${className}`} aria-hidden="true" strokeWidth="1.5">
       <path d="M6 6 L34 6 L34 34 L6 34 Z" />
       <path d="M6 6 L34 34 M34 6 L6 34" />
+    </svg>
+  );
+}
+
+export function MaritimeGlyph({ className = '' }: GlyphProps) {
+  return (
+    <svg viewBox="0 0 40 40" className={`${base} ${className}`} aria-hidden="true" strokeWidth="1.5">
+      <path d="M6 23 L11 31 L29 31 L35 23 Z" />
+      <path d="M12 23 L12 16 L27 16 L30 23" />
+      <path d="M17 16 L17 10 L24 10 L24 16" />
+      <path d="M5 35 Q10 32 15 35 T25 35 T35 35" />
     </svg>
   );
 }

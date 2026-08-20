@@ -128,9 +128,30 @@ Inspect finite evidence lifecycles and the installed pump-station world:
 
 ```bash
 uv run aec-bench task lifecycle list
+uv run aec-bench task lifecycle list-variants <template-id>
 uv run aec-bench task lifecycle materialize <template-id> --output <package-dir>
 uv run aec-bench task pump-station-world --help
 ```
+
+The complete lifecycle command hierarchy is:
+
+```text
+aec-bench task lifecycle list
+aec-bench task lifecycle list-variants
+aec-bench task lifecycle materialize
+aec-bench task lifecycle start
+aec-bench task lifecycle submit
+aec-bench task lifecycle status
+aec-bench task lifecycle revisit
+aec-bench task lifecycle branch
+aec-bench task lifecycle run
+aec-bench task lifecycle verify
+aec-bench task lifecycle run-smoke
+aec-bench task lifecycle study ablation
+aec-bench task lifecycle study calibration-freeze
+```
+
+`start` releases the next checkpoint. `submit` archives the active checkpoint submission. `status` reads state, and `revisit` reads an accepted checkpoint without changing progression. `branch` creates a separate run from a submitted checkpoint and inherits the accepted prefix. `run` resumes from the current lifecycle state. It does not accept a `start_at` override.
 
 See [Finite Lifecycles](/docs/core/lifecycles) and [Interactive Worlds](/docs/core/interactive-worlds) for their separate execution contracts.
 
@@ -290,7 +311,7 @@ uv run aec-bench meta-harness autonomous --task-text "Create a diagnostic task."
 
 `recipe`, `compare`, and `example` use the runtime-neutral functional study API. The process commands are pauseable: briefs, problem models, task runs, operation plans, and governance decisions that require input enter `awaiting_*` states. Existing `--world` flags name the supported problem-model JSON files; they do not invoke the registered Interactive World runtime. Use `--emit-run-plan` on `intake-models`, `world-models`, `review-models`, and `operation-models` to validate endpoint configuration before calling providers.
 
-It also exposes provider-free comparison and evidence-lifecycle surfaces:
+The provider-free comparison surface includes:
 
 ```bash
 uv run aec-bench meta-harness recipe \
@@ -298,18 +319,9 @@ uv run aec-bench meta-harness recipe \
   --output comparison-recipe
 uv run aec-bench meta-harness compare --help
 uv run aec-bench meta-harness example --output comparison-example
-uv run aec-bench meta-harness lifecycle-start \
-  --package lifecycle-package \
-  --run-dir lifecycle-run
-uv run aec-bench meta-harness lifecycle-submit \
-  --package lifecycle-package \
-  --run-dir lifecycle-run
-uv run aec-bench meta-harness lifecycle-status \
-  --package lifecycle-package \
-  --run-dir lifecycle-run
 ```
 
-Use the lifecycle commands to control checkpoints or run typed ablation and calibration-freeze studies. Lifecycle progression remains lifecycle-owned; the task verifier remains authoritative.
+Lifecycle execution and lifecycle-specific studies are under `aec-bench task lifecycle`, not `meta-harness`. The meta-harness remains runtime-neutral and can compare lifecycle candidates through returned `TrialRecord` evidence.
 
 See [Meta-Harness Composition](/docs/advanced/meta-harness-runtime) for the Python API, comparison workflow, and problem-model governance boundaries.
 

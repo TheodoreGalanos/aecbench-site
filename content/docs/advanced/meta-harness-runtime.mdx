@@ -94,7 +94,30 @@ def evaluate_candidate(candidate):
     )
 ```
 
-Future lifecycle and Interactive World experiment runners can supply equivalent evaluators without changing the meta-harness core. Harness-program studies retain their fixed-kernel compilation, Harbor execution, reports, and qualification rules while using the same composition functions for candidate evaluation.
+Finite lifecycles connect through the implemented lifecycle evaluator:
+
+```python
+from aec_bench.experimentation.lifecycle_studies.meta_harness import (
+    LifecycleHarnessCandidate,
+    evaluate_lifecycle_candidate,
+)
+from aec_bench.experimentation.meta_harness import HarnessCandidate
+from aec_bench.harness.lifecycle_local import run_local_lifecycle
+from aec_bench.lifecycles.catalogue import verify_lifecycle
+
+candidate = HarnessCandidate(
+    candidate_id="persistent-context",
+    value=LifecycleHarnessCandidate(
+        trials=tuple(lifecycle_trials),
+        execute=run_local_lifecycle,
+        verify=verify_lifecycle,
+    ),
+)
+
+records = evaluate_lifecycle_candidate(candidate)
+```
+
+The evaluator calls the normal lifecycle experiment boundary and returns its `TrialRecord` values. It does not add a lifecycle-specific meta-harness runtime. Interactive World runners can supply an equivalent evaluator without changing the core. Harness-program studies retain their fixed-kernel compilation, Harbor execution, reports, and qualification rules while using the same composition functions for candidate evaluation.
 
 ## CLI comparison
 
@@ -181,7 +204,7 @@ Use `autonomous` only when queued artefacts or model endpoints can resolve waiti
 
 ## Lifecycle and Harbor boundaries
 
-The lifecycle commands under `aec-bench meta-harness` are an application-level CLI surface. Lifecycle progression, checkpoint visibility, branching, ablation, and calibration freeze remain lifecycle-owned; they are not part of the functional meta-harness core. See [Finite Lifecycles](/docs/core/lifecycles).
+All lifecycle commands are under `aec-bench task lifecycle`. Lifecycle progression, checkpoint visibility, branching, ablation, and calibration freeze remain lifecycle-owned; they are not part of the functional meta-harness core. The generic core receives only candidate identities and returned `TrialRecord` evidence. See [Finite Lifecycles](/docs/core/lifecycles).
 
 `meta-harness harbor-task` materialises a Harbor-shaped operation-orchestrator package:
 

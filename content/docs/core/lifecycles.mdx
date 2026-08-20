@@ -68,6 +68,112 @@ aec-bench task lifecycle materialize hydraulic-interaction-lifecycle-review \
   --output artefacts/lifecycles/hydraulic-review-tailwater
 ```
 
+## Control a lifecycle run
+
+All lifecycle host controls are under `aec-bench task lifecycle`:
+
+```bash
+aec-bench task lifecycle start \
+  --package artefacts/lifecycles/hydraulic-review \
+  --run-dir artefacts/lifecycle-runs/hydraulic-review
+
+aec-bench task lifecycle status \
+  --package artefacts/lifecycles/hydraulic-review \
+  --run-dir artefacts/lifecycle-runs/hydraulic-review
+
+aec-bench task lifecycle submit \
+  --package artefacts/lifecycles/hydraulic-review \
+  --run-dir artefacts/lifecycle-runs/hydraulic-review
+```
+
+`start` creates a run when required and releases its next checkpoint. The actor must write the required submission before `submit` archives it. `status` reads the current state without advancing it.
+
+Revisit an accepted checkpoint without changing the active checkpoint:
+
+```bash
+aec-bench task lifecycle revisit \
+  --package artefacts/lifecycles/hydraulic-review \
+  --run-dir artefacts/lifecycle-runs/hydraulic-review \
+  --checkpoint-id checkpoint-1 \
+  --reason "Review the accepted evidence"
+```
+
+Create a derived run from a submitted checkpoint:
+
+```bash
+aec-bench task lifecycle branch \
+  --package artefacts/lifecycles/hydraulic-review \
+  --parent-run-dir artefacts/lifecycle-runs/hydraulic-review \
+  --branch-run-dir artefacts/lifecycle-runs/hydraulic-review-alternative \
+  --checkpoint-id checkpoint-2 \
+  --branch-id alternative-review \
+  --reason "Test a different decision"
+```
+
+A branch receives the accepted prefix through the selected checkpoint, reopens that checkpoint, and leaves its parent unchanged. The host rejects an unsubmitted branch point. There is no `start_at` option that bypasses the accepted history.
+
+Run or resume the lifecycle with a local agent harness:
+
+```bash
+aec-bench task lifecycle run \
+  --package artefacts/lifecycles/hydraulic-review \
+  --run-dir artefacts/lifecycle-runs/hydraulic-review \
+  --model gpt-4.1-mini \
+  --mode persistent_context
+```
+
+Use `--mode fresh_context` to create a separate agent session for each checkpoint attempt. Persistent context keeps one session across checkpoints. These modes are distinct treatments with different memory and recovery rules.
+
+## Functional Python API
+
+Python callers can control checkpoints through direct functions:
+
+```python
+from aec_bench.lifecycles.application import (
+    branch_lifecycle,
+    read_lifecycle,
+    release_checkpoint,
+    revisit_checkpoint,
+    run_lifecycle,
+    submit_checkpoint,
+)
+```
+
+`release_checkpoint()` and `submit_checkpoint()` use the same coordinator as the CLI. `read_lifecycle()` returns the canonical state. `revisit_checkpoint()` is read-only, while `branch_lifecycle()` creates a separate run with a validated accepted prefix. `run_lifecycle()` resumes normal fresh-context progression from the current state.
+
+Lifecycle execution and trial composition use ordinary in-memory values:
+
+```python
+from aec_bench.harness.lifecycle_local import run_local_lifecycle
+from aec_bench.lifecycles.application import (
+    LifecycleExecution,
+    LifecycleTrial,
+    run_lifecycle_experiment,
+    run_lifecycle_trial,
+)
+
+record = run_lifecycle_trial(
+    trial=lifecycle_trial,
+    execute=run_local_lifecycle,
+    verify=verify_lifecycle,
+)
+```
+
+`LifecycleTrial` binds one `PlannedTrial` to its materialised package, run directory, execution mode, and visibility policy. `run_local_lifecycle()` keeps the fresh-session and persistent-session implementations separate and returns `LifecycleExecution` evidence.
+
+`run_lifecycle_trial()` executes, verifies, builds, and returns one normal `TrialRecord`. It persists the record only when the caller supplies a persistence function. `run_lifecycle_experiment()` applies the same operation to planned trials in declared order and returns their `TrialRecord` values directly.
+
+## Lifecycle studies
+
+Lifecycle-specific study policy remains under the lifecycle command group:
+
+```bash
+aec-bench task lifecycle study ablation --config lifecycle-ablation.yaml --dry-run
+aec-bench task lifecycle study calibration-freeze --config lifecycle-ablation.yaml
+```
+
+Ablation uses the common lifecycle trial and experiment functions. It retains its study-specific planning, immutable snapshots, recovery, and selection policy. Meta-harness can consume lifecycle records through an evaluator, but it does not own lifecycle execution.
+
 ## Conditional work
 
 A checkpoint can declare a bounded set of conditional operations. The actor chooses from task-owned operations, but the host enforces the operation budget and prerequisites.

@@ -60,6 +60,9 @@ describe('library documentation coverage', () => {
     expect(worlds).toContain('Domain termination and host truncation are separate');
     expect(lifecycles).toContain('One stage is active at a time');
     expect(lifecycles).toContain('task lifecycle run-smoke');
+    expect(lifecycles).toContain('branch_lifecycle()');
+    expect(lifecycles).toContain('run_lifecycle_trial()');
+    expect(lifecycles).toContain('LifecycleTrial');
   });
 
   it('documents current execution integrations without removed extension APIs', () => {
@@ -95,9 +98,25 @@ describe('library documentation coverage', () => {
     expect(runtime).toContain('world_generation_request');
     expect(runtime).not.toContain('aec_bench.meta_harness');
     expect(runtime).not.toContain('build_aecbench_harbor_task_run_resolver');
+    expect(runtime).toContain('evaluate_lifecycle_candidate');
+    expect(runtime).toContain('aec-bench task lifecycle');
     expect(cli).toContain('aec-bench meta-harness recipe');
     expect(cli).toContain('aec-bench meta-harness process');
-    expect(cli).toContain('aec-bench meta-harness lifecycle-start');
+    expect(cli).toContain('aec-bench task lifecycle study ablation');
+
+    for (const retiredRoute of [
+      'meta-harness lifecycle-start',
+      'meta-harness lifecycle-submit',
+      'meta-harness lifecycle-status',
+      'meta-harness lifecycle-revisit',
+      'meta-harness lifecycle-branch',
+      'meta-harness lifecycle-run-local',
+      'meta-harness lifecycle-ablation',
+      'meta-harness lifecycle-calibration-freeze',
+    ]) {
+      expect(runtime).not.toContain(retiredRoute);
+      expect(cli).not.toContain(retiredRoute);
+    }
   });
 
   it('uses the current CLI commands and removes retired flags', () => {
@@ -109,7 +128,18 @@ describe('library documentation coverage', () => {
     expect(quickstart).toContain('aec-bench generate task terzaghi-bearing-capacity');
     expect(cli).toContain('aec-bench init --update-skills');
     expect(cli).toContain('aec-bench generate dockerfiles');
-    expect(cli).toContain('aec-bench task lifecycle');
+    for (const lifecycleRoute of [
+      'aec-bench task lifecycle start',
+      'aec-bench task lifecycle submit',
+      'aec-bench task lifecycle status',
+      'aec-bench task lifecycle revisit',
+      'aec-bench task lifecycle branch',
+      'aec-bench task lifecycle run',
+      'aec-bench task lifecycle study ablation',
+      'aec-bench task lifecycle study calibration-freeze',
+    ]) {
+      expect(cli).toContain(lifecycleRoute);
+    }
     expect(cli).toContain('aec-bench prime export-lifecycle');
     expect(cli).not.toContain('--legacy-script');
     expect(cli).not.toContain('generate dataset');

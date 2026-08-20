@@ -61,6 +61,14 @@ A finite lifecycle is a third coordination shape within the existing task execut
 
 Use a lifecycle when the work has known stages and controlled evidence release. Use an Interactive World when actions change an ongoing causal state. Use an artefact task when one workspace or submission is sufficient.
 
+Finite lifecycles use one checkpoint coordinator and one functional application surface. `release_checkpoint()`, `submit_checkpoint()`, `read_lifecycle()`, `revisit_checkpoint()`, `branch_lifecycle()`, and `run_lifecycle()` control canonical state. A branch can start only from a submitted checkpoint. It receives the accepted prefix through that checkpoint and continues through the same coordinator.
+
+`LifecycleTrial` binds one `PlannedTrial` to a materialised lifecycle package, run directory, execution mode, and visibility policy. `run_local_lifecycle()` dispatches to separate fresh-session and persistent-session implementations because their memory and recovery rules differ. Both return `LifecycleExecution`, which contains canonical state and the agent and tool evidence needed to construct a trial.
+
+`run_lifecycle_trial()` executes, verifies, constructs one normal `TrialRecord`, optionally persists it, and returns it. `run_lifecycle_experiment()` applies that operation to lifecycle trials in declared order and returns the records directly. Lifecycle studies use these functions while keeping study design, immutable snapshots, recovery, and selection policy under `aec_bench.experimentation.lifecycle_studies`.
+
+Lifecycle composition does not implement meta-harness. A lifecycle evaluator returns normal `TrialRecord` values to the separate runtime-neutral meta-harness API.
+
 See [Finite Lifecycles](/docs/core/lifecycles).
 
 ## Meta-harness composition
@@ -77,7 +85,8 @@ Meta-harness results are normal in-memory Python values. They do not add a persi
 |---------|-------|----------|
 | Task meaning | Task, template, lifecycle, or world | Keeps engineering inputs, actions, and verifier rules together |
 | Artefact-task orchestration | `run_experiment()` and `run_trial()` | Own planning, attempt tracking, selection, official verification, optional review, retained artefacts, and cleanup |
-| Lifecycle and world orchestration | Lifecycle host or episode host | Applies the task family's progression and recording rules; task owners retain task semantics |
+| Lifecycle orchestration | `aec_bench.lifecycles.application` and the lifecycle host | Applies checkpoint progression, local execution, trial construction, and optional persistence without moving task-owned semantics |
+| Interactive World orchestration | Episode host | Applies the world's action, progression, and recording rules; world owners retain task semantics |
 | Harness studies and refinement | `aec_bench.experimentation.meta_harness` | Composes caller-owned candidates, `TrialRecord` evidence, and injected policies without defining a common runtime or metric |
 | Agent execution | Agent harness and provider integration | Translates model and tool protocols; task and evaluation owners retain benchmark policy |
 | Evaluation | Evaluation | Owns reward, validity, breakdowns, behavioural analysis, and review evidence; task verifiers supply task-owned evidence |
@@ -113,6 +122,7 @@ Dependencies follow ownership:
 - task definitions and task worlds remain provider-neutral;
 - shared world-runtime code remains independent of concrete worlds;
 - artefact-task orchestration can depend on task and runtime boundaries while `HarnessSpec` remains an execution-capability description;
+- lifecycle application composition depends on the lifecycle coordinator, normal trial contracts, and explicit execution effects, not task, world, provider, Harbor, or Prime implementations;
 - meta-harness composition depends on `TrialRecord` and caller-supplied functions, not concrete runtimes, providers, or task families;
 - evaluation owns policy and consumes verifier evidence, while persistence stores the resulting records; and
 - CLI, TUI, web, and reports compose lower-level capabilities.

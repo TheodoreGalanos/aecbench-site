@@ -236,6 +236,12 @@ Provider transcripts remain separate when an external or sealed workflow require
 
 Lifecycle run records keep session identity, execution mode, memory visibility, status, usage, and content-bound artefacts. The final trial references that evidence, while lifecycle state remains in its producing record.
 
+`LifecycleTrial` and `LifecycleExecution` are ordinary in-memory application values, not persisted schemas. `LifecycleTrial` carries the planned trial, package and run locations, execution mode, and visibility policy. `LifecycleExecution` carries canonical lifecycle state plus the agent and tool evidence required for trial construction.
+
+`run_lifecycle_trial()` converts one execution and its verifier result to the normal protected `TrialRecord`. Persistence is an explicit optional effect. `run_lifecycle_experiment()` returns the records that it creates, so callers do not query the ledger to recover their immediate results.
+
+One branch can start only from a submitted checkpoint. It inherits the accepted prefix through that checkpoint, reopens the selected checkpoint in a new run, and leaves the parent unchanged. A revisit records read access to accepted material without changing lifecycle progression. The runtime does not provide a `start_at` shortcut that reconstructs or bypasses accepted history.
+
 See [Finite Lifecycles](/docs/core/lifecycles).
 
 ## Interactive World contracts

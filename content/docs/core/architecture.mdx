@@ -19,11 +19,21 @@ An artefact task gives an agent an instruction and an execution environment. The
 | Stage | What happens |
 |-------|--------------|
 | **Define** | `task.toml`, `instruction.md`, the environment, and verifier define one runnable task |
-| **Resolve** | The loader validates the task and binds it to an exact source revision |
-| **Stage** | Files, fixtures, tools, and resource limits are prepared for execution |
-| **Execute** | A provider-neutral agent harness runs locally, through Harbor, or through the separate Prime integration |
-| **Score** | The task verifier supplies task-owned reward and diagnostic evidence; evaluation validates it and interprets validity |
-| **Aggregate** | The result enters the append-only ledger and becomes available to reports and review tools |
+| **Resolve** | The loader validates the task and produces a `ResolvedTaskInstance` bound to exact source paths |
+| **Plan** | `run_experiment()` applies the selected attempt recipe to each `PlannedTrial` |
+| **Attempt** | Each `runtime.run_once()` call runs one agent execution in one isolated workspace and returns a `TaskAttempt` |
+| **Select and verify** | `run_trial()` selects one attempt, runs the official verifier once on its output, and can run the optional post-verifier reviewer |
+| **Retain and report** | `run_trial()` materialises the `TrialRecord` and retained artefacts before it removes attempt workspaces |
+
+The normal Python execution path is:
+
+```text
+run_experiment() -> run_trial() -> runtime.run_once()
+```
+
+`AttemptRecipe` controls whether one trial runs one attempt or several candidates. It receives only a tracked `AttemptRunner`; it cannot call the official verifier or inspect reward. The runtime still performs exactly one agent execution per call. This keeps attempt branching and selection outside `HarnessSpec`, which describes runtime capabilities, bindings, contracts, and budgets.
+
+With best-of execution, several `TaskAttempt` candidates belong to one planned trial. The selector uses only its permitted candidate view. The official verifier evaluates the selected output once. Selection evidence is retained with the trial, and the selected output and trajectory remain resolvable after every temporary attempt workspace is removed.
 
 Templates and suites produce deterministic task instances before this flow starts. The generator can write replay inputs once in `generation-manifest.json` at the output root. Runnable tasks do not copy this provenance, and normal loading and execution do not depend on the sidecar.
 
@@ -58,7 +68,8 @@ See [Finite Lifecycles](/docs/core/lifecycles).
 | Concern | Owner | Boundary |
 |---------|-------|----------|
 | Task meaning | Task, template, lifecycle, or world | Keeps engineering inputs, actions, and verifier rules together |
-| Orchestration | Harness, lifecycle host, or episode host | Applies limits and records identity; task owners retain task semantics |
+| Artefact-task orchestration | `run_experiment()` and `run_trial()` | Own planning, attempt tracking, selection, official verification, optional review, retained artefacts, and cleanup |
+| Lifecycle and world orchestration | Lifecycle host or episode host | Applies the task family's progression and recording rules; task owners retain task semantics |
 | Agent execution | Agent harness and provider integration | Translates model and tool protocols; task and evaluation owners retain benchmark policy |
 | Evaluation | Evaluation | Owns reward, validity, breakdowns, behavioural analysis, and review evidence; task verifiers supply task-owned evidence |
 | Durable evidence | Ledger and producing domain | Stores immutable trial, dataset, and content-addressed evidence records |
@@ -66,9 +77,9 @@ See [Finite Lifecycles](/docs/core/lifecycles).
 
 ### Local and remote execution
 
-`run-local` executes one artefact task on the local host. Production local execution selects from a fixed set of agent-harness builders.
+`run-local` executes one artefact task through the shared `run_experiment()` application boundary and a `LocalTaskRuntime`. Production local execution selects from a fixed set of agent-harness builders.
 
-`run` lowers an experiment to the one Harbor dispatch-and-import workflow. Docker, Modal, Morph, e2b, and Daytona are Harbor environment backends.
+`run` uses the same artefact-task application boundary with a `HarborExperimentRuntime`, which dispatches and imports the Harbor work. Docker, Modal, Morph, e2b, and Daytona are Harbor environment backends.
 
 Prime is separate from Harbor. Prime Lab exports public artefact tasks into packages for hosted evaluation and training. Its finite-lifecycle export is local-only and keeps references to the source packages and checkout. Prime Agent runs the upstream executable directly for local artefact tasks or through bounded ACP sessions for supported Interactive Worlds.
 
@@ -76,7 +87,7 @@ See [Execution Backends](/docs/advanced/backends), [Prime Lab](/docs/advanced/pr
 
 ## Evidence boundaries
 
-`RunManifest` owns the source, dataset, agent, environment, provider route, expected authorities, and other identity shared by a run. Each `TrialRecord` refers to it through `run_id` and records one task attempt.
+`RunManifest` owns the source, dataset, agent, environment, provider route, expected authorities, and other identity shared by a run. Each `TrialRecord` refers to it through `run_id` and records one planned trial result. A trial can use one `TaskAttempt` or select from several candidates.
 
 `TrialRecord` keeps execution, evaluation, and evidence status separate. `TrialOutput` separates normal termination from host truncation and records the final reason. `CostRecord` owns model calls, token and cache use, advisor use, and estimated cost. Retained bytes use `ArtifactRef`, which includes the artefact ID, SHA-256, byte size, and media type.
 
@@ -92,7 +103,7 @@ Dependencies follow ownership:
 
 - task definitions and task worlds remain provider-neutral;
 - shared world-runtime code remains independent of concrete worlds;
-- orchestration can depend on task and execution boundaries while task owners retain task semantics;
+- artefact-task orchestration can depend on task and runtime boundaries while `HarnessSpec` remains an execution-capability description;
 - evaluation owns policy and consumes verifier evidence, while persistence stores the resulting records; and
 - CLI, TUI, web, and reports compose lower-level capabilities.
 

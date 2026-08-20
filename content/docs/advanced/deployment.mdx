@@ -112,5 +112,5 @@ uv run aec-bench run import run-001.tar.zst
 - Harbor creates the execution environment and runs the generated job; AEC-Bench owns planning and ledger import.
 - `aec-bench run` is attached. Keep the calling process alive until Harbor returns.
 - AEC-Bench adds no retry or pre-emption policy around Harbor; any such policy belongs to Harbor or the selected provider.
-- `RunManifest` records shared run identity once. Each `TrialRecord` stores one attempt and refers to the run.
+- `RunManifest` records shared run identity once. Each `TrialRecord` stores one planned trial result and refers to the run.
 - Completed execution and evaluation, plus verified or not-required evidence, are the basis for comparison and leaderboard aggregation.

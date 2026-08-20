@@ -64,7 +64,7 @@ test.describe('Documentation', () => {
     ).toHaveCount(0);
     await expect(
       page.getByRole('img', {
-        name: /benchmark run flow from define task through aggregate and report/i,
+        name: /benchmark run flow from define task through retain and report/i,
       }),
     ).toBeVisible();
 

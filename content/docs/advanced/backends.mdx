@@ -3,18 +3,18 @@ title: Backends
 description: A Harbor execution backend places each trial in a container or sandbox on the selected compute platform.
 ---
 
-`aec-bench run` uses one execution path. It builds a Harbor job, dispatches the job through Harbor, waits for completion, and imports the results into the ledger. `--backend` selects the Harbor execution environment; all backend values use the same aec-bench runner.
+`aec-bench run` builds a Harbor job, dispatches it through Harbor, waits for completion, and imports the results into the ledger. `--backend` selects the Harbor execution environment.
 
-Use `aec-bench run-local` when you need an in-process development path on the local host.
+Use `aec-bench run-local` when you need an in-process development path on the local host. Both commands enter the shared `run_experiment()` application boundary; they differ at the runtime implementation.
 
 ## Execution paths
 
 | Command | Runtime boundary | Result handling |
 |---------|------------------|-----------------|
-| `aec-bench run` | Harbor environment | Dispatches the job and imports the completed Harbor job directory |
-| `aec-bench run-local` | Local host process | Runs one task and imports the local result unless `--no-import` is set |
+| `aec-bench run` | `HarborExperimentRuntime` | Dispatches each planned trial and imports the completed Harbor job directory |
+| `aec-bench run-local` | `LocalTaskRuntime` | Runs isolated local attempts and imports the trial unless `--no-import` is set |
 
-Both paths use the selected agent harness and the same task-owned verifier, which defines correctness in every environment.
+Both paths use `run_experiment()` and `run_trial()` for ordinary artefact tasks. They use the selected agent harness and the same task-owned verifier, which defines correctness in every environment.
 
 ## Provider boundary
 
@@ -93,7 +93,7 @@ Harbor still owns task staging, agent invocation, artefact collection, and verif
 
 ## Local development
 
-`run-local` creates a temporary workspace, runs one agent harness on the host, runs the verifier, and imports the result. It is useful for harness iteration and verifier debugging because failures remain on the local process boundary.
+`run-local` creates an isolated workspace for each agent attempt. By default it runs one attempt; `--best-of K` can run several candidates and select one inside the same trial. `run_trial()` then runs the verifier once on the selected output, materialises retained output and trajectory artefacts, removes temporary workspaces unless `--keep-workspace` is set, and imports the result. It is useful for harness iteration and verifier debugging because failures remain on the local process boundary.
 
 ```bash
 uv run aec-bench run-local tasks/electrical/voltage-drop \

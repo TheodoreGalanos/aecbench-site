@@ -42,7 +42,7 @@ describe('library documentation coverage', () => {
     expect(reviewing).toContain('automated reward');
     expect(reviewing).toContain('holdout-sensitive');
     expect(adaptiveHarnesses).toContain('Fixed kernel');
-    expect(adaptiveHarnesses).toContain('Harness instance');
+    expect(adaptiveHarnesses).toContain('Harness specification and instance');
     expect(adaptiveHarnesses).toContain('Execution program');
     expect(adaptiveHarnesses).not.toContain('Phase 9');
   });

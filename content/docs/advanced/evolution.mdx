@@ -107,9 +107,25 @@ The default strategy is hill-climbing: mutate from the best-scoring workspace se
 
 ## Backend independence
 
-Evolution delegates solving through the same harness boundary as normal experiments. A candidate workspace can be evaluated locally during development and on a larger backend when the loop needs scale.
+Evolution delegates fitness evaluation through the same artefact-task application functions as normal experiments. The CLI calls `run_evolution_from_config()`, which assembles the workspace, engine, evaluator, and selection strategy before it calls `run_evolution()`.
+
+```text
+aec-bench evolve run
+  -> run_evolution_from_config()
+  -> run_evolution()
+  -> CandidateEvaluator
+  -> run_experiment()
+  -> run_trial()
+  -> runtime.run_once()
+```
+
+`run_evolution()` is a functional application entry point. It receives its dependencies and returns an `EvolutionResult`; it does not own a builder or a second task-execution stack. `CandidateEvaluator` receives one immutable `WorkspaceSnapshot` and a batch size, then returns the resulting `TrialRecord` values. The local evaluator expresses the snapshot as explicit agent configuration, plans trials, and calls `run_experiment()`.
+
+A candidate workspace can be evaluated locally during development and on a Harbor backend when the loop needs scale. Evolution does not mutate task directories.
 
 The task verifier remains the reward authority. Evolution changes prompts and skills while the base model and task correctness stay fixed.
+
+Evolution candidates and task attempts are separate identities. A candidate can use best-of attempts inside each scored trial, but those `attempt_id` values do not become evolution `candidate_id` values. Attempt recipes cannot access the official verifier or reward.
 
 ## When to use it
 

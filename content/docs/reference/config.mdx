@@ -246,9 +246,14 @@ batch_size: 5
 max_cycles: 10
 improvement_threshold: 0.01
 stagnation_window: 5
+strategy: hill_climb
+structural_weight: 0.3
+discipline_balanced: false
 timeout: 1800
 harness_config: experiment.yaml      # optional
 ```
+
+`strategy` accepts `hill_climb` or `qd`. `structural_weight` and `discipline_balanced` configure quality-diversity scoring. The `solver` block controls task execution, while the classifier and evolver models remain separate.
 
 ## `suite.toml` — generated-suite config
 

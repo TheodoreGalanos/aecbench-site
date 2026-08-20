@@ -5,7 +5,7 @@ description: Agent harnesses define how a model attempts a task, from a single d
 
 An agent harness is the strategy used to drive a model during a task. It answers practical questions: does the model get one call or many, can it use tools, does it keep persistent state, and is the output assembled by a structured workflow?
 
-aec-bench exposes six local harness names: `direct`, `tool_loop`, `pydantic_ai`, `rlm`, `lambda-rlm`, and `prime-agent`. `pydantic_ai` selects the PydanticAI-backed tool loop. `prime-agent` launches the separately installed Prime Agent executable. The other names select repository-owned execution strategies.
+aec-bench exposes seven local harness names: `direct`, `tool_loop`, `pydantic_ai`, `rlm`, `lambda-rlm`, `prime-agent`, and `deepseek_harness`. `pydantic_ai` selects the PydanticAI-backed tool loop. `prime-agent` launches the separately installed Prime Agent executable. `deepseek_harness` launches the qualified official DeepSeek Harness runtime. The other names select repository-owned execution strategies.
 
 They share an internal `Adapter` boundary, so the benchmark runner can schedule, execute, score, and compare them through the same trial pipeline. Harness suitability depends on the task's required capabilities. A task with mandatory source lookup or shell execution usually needs a tool-capable harness.
 
@@ -59,6 +59,7 @@ class AdapterResult:
 | **RLM** | Recursive | Python REPL | Iterative analysis, long-context work |
 | **Lambda-RLM** | Structured phases | Template pipeline | Reports, scopes, and known document workflows |
 | **Prime Agent** | External process | Prime runtime | Artefact tasks through the upstream Prime Agent executable |
+| **DeepSeek Harness** | Harness session | Coding tools | Qualified Azure and DeepSeek provider routes through the official runtime |
 
 ## Direct
 
@@ -171,6 +172,23 @@ Current Lambda-RLM runs can use:
 - **Best-of-K synthesis** where multiple candidate blocks can be generated and synthesised into a final section
 
 Lambda-RLM trades free-form exploration for repeatable extraction and composition. It is a poor fit for open-ended tasks where the agent must decide the workflow from scratch.
+
+## DeepSeek Harness
+
+DeepSeek Harness uses the official Harness SDK and runtime through the `deepseek_harness` adapter. Install the optional execution support, then select an explicit provider route:
+
+```bash
+uv sync --extra execution --extra deepseek-harness
+
+uv run aec-bench run-local tasks/electrical/voltage-drop \
+  --harness deepseek_harness \
+  --model "azure:<deployment-name>" \
+  --max-tokens 8192
+```
+
+The current qualified model prefixes are `azure:` and `deepseek:`. The adapter retains redacted runtime evidence under `logs/deepseek-harness/`. Provider credentials remain in the selected environment and are not serialised into the execution bundle.
+
+Use the [CLI reference](/docs/reference/cli#run-local) for best-of local attempts. DeepSeek Harness also supports ordinary Harbor experiment manifests; it does not add a separate provider-specific task runner.
 
 ## Prime Agent
 

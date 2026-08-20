@@ -33,7 +33,7 @@ The ledger stores the manifest once. Each trial uses `run_id` instead of copying
 
 ## The trial result
 
-`TrialRecord` stores facts for one task attempt:
+`TrialRecord` stores facts for one planned trial. The trial can contain one agent attempt or select from several best-of candidates:
 
 ```python
 class TrialRecord(StrictModel):
@@ -60,6 +60,8 @@ class TrialRecord(StrictModel):
 ```
 
 `TrialInput` carries the instruction, task revision, task kind, visibility, and optional input-file references. `TrialOutput` references the retained raw output, conversation, trajectory, and other output artefacts with `ArtifactRef`.
+
+The `attempt` field is the planned repetition number. Internal `TaskAttempt` candidates use separate `attempt_id` values. When a trial uses candidate selection, its extension references include the retained selection evidence and the trajectory points to the selected attempt.
 
 ## Result status
 

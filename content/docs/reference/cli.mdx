@@ -206,14 +206,20 @@ Useful options:
 |------|---------|
 | `--output DIR` | Save local run output in a specific directory |
 | `--timeout SECONDS` | Set the whole local run timeout |
+| `--max-tokens N` | Set the maximum output tokens for harnesses that support the limit |
+| `--best-of K` | Run `K` independent candidate attempts inside one trial |
+| `--selector self` | Select the first candidate that completed with a primary output |
 | `--keep-workspace` | Preserve the temporary workspace for debugging |
 | `--no-verify` | Skip verifier execution after the agent run |
 | `--no-import` | Do not import the local result into the ledger |
 | `--no-normalise` | Skip canonical-reference normalisation before verification |
 | `--constitutional-model MODEL` | Override the constitutional inference model for RLM tasks that declare one |
+| `--reviewer` | Run the optional post-verifier LLM reviewer stage |
 | `--reviewer-model MODEL` | Enable the optional post-verifier LLM reviewer with one model |
 | `--reviewer-models-config PATH` | Enable the reviewer with JSON or YAML endpoint configuration |
 | `--fail-on-reviewer-error` | Fail the run if the reviewer stage cannot complete |
+
+Best-of candidates use separate isolated workspaces but belong to one planned trial. The built-in `self` selector is deterministic and reward-blind: it selects the first candidate that completed with a primary output. The official task verifier runs once on the selected output. `--best-of` does not replace experiment repetitions; each repetition is still a separate trial.
 
 ### `import`, `import-local`, and `import-prime-eval`
 

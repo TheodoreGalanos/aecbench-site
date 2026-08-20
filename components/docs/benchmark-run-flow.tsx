@@ -3,10 +3,10 @@
 const stages = [
   { label: 'Define Task', accent: 'teal' },
   { label: 'Resolve Instance', accent: 'teal' },
-  { label: 'Stage Environment', accent: 'teal' },
-  { label: 'Execute Agent', accent: 'amber' },
-  { label: 'Score Output', accent: 'amber' },
-  { label: 'Aggregate & Report', accent: 'amber' },
+  { label: 'Plan Trial', accent: 'teal' },
+  { label: 'Run Attempt(s)', accent: 'amber' },
+  { label: 'Select & Verify', accent: 'amber' },
+  { label: 'Retain & Report', accent: 'amber' },
 ] as const;
 
 type StageAccent = (typeof stages)[number]['accent'];
@@ -65,7 +65,7 @@ export function BenchmarkRunFlow() {
     <div
       className="not-prose my-6"
       role="img"
-      aria-label="Benchmark run flow from Define Task through Aggregate and Report"
+      aria-label="Benchmark run flow from Define Task through Retain and Report"
       data-testid="benchmark-run-flow"
     >
       <div className="space-y-0 md:hidden">

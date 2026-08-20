@@ -20,11 +20,11 @@ The **fixed kernel** (`K`) is the versioned code allowed to execute in an adapti
 
 Kernel membership follows executable ownership, independent of a shared checkout. Executable kernel changes produce a new identity, and candidates remain bound to the recorded identity.
 
-## Harness instance
+## Harness specification and instance
 
-The **Harness instance** (`Hx`) is the content-addressed configuration of the agent
-harness used for a candidate. It selects declared agent bindings and their bounded
-runtime settings while executable code remains in the fixed kernel.
+`HarnessSpec` is the declarative input for one harness. It describes runtime capabilities, bindings, contracts, recursion policy, and budgets. It does not own artefact-task attempt branching, selection, or verification.
+
+Deterministic compilation against one fixed kernel produces the **compiled harness instance** (`Hx`). `CompiledHarnessInstance` is immutable and content-addressed. It selects declared agent bindings and their bounded runtime settings while executable code remains in the fixed kernel.
 
 Typical fields include:
 
@@ -39,7 +39,9 @@ from the incumbent run.
 
 ## Execution program
 
-The **execution program** (`px`) is a validated graph of task operations. The fixed kernel compiles it into a `RunBundle` and sends it through the normal aec-bench execution path.
+The **execution program** (`px`) is a validated graph of task operations for governed adaptive or meta-harness studies. The fixed kernel compiles it into a `RunBundle` for the adaptive execution path.
+
+This is not the ordinary artefact-task API. Normal task execution uses `run_experiment()` and `run_trial()` and does not pass through `run_batch.v1` or a generic execution-program bridge.
 
 A program can express bounded patterns such as:
 
@@ -78,9 +80,7 @@ The compiler fails closed before execution when a candidate:
 - refers to an incompatible task or harness profile; or
 - cannot bind every execution dependency to the frozen identities.
 
-Successful compilation produces an immutable run bundle. Harbor remains the execution
-substrate, and adaptive runs continue through normal task packaging, workspace
-isolation, verifier execution, output collection, and trial import.
+Successful compilation produces an immutable run bundle. Harbor remains the execution substrate for this adaptive path. The host still preserves task packaging, workspace isolation, verifier authority, output collection, and trial import.
 
 ## Evidence and authority
 

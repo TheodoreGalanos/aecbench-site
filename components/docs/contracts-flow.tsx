@@ -1,5 +1,5 @@
-// ABOUTME: Visual diagram showing how the four core contracts connect.
-// ABOUTME: Staircase layout: TaskDefinition → AgentOutput → EvaluationResult → TrialRecord with action labels.
+// ABOUTME: Visual diagram showing how the core artefact-task contracts connect.
+// ABOUTME: Staircase layout: ResolvedTaskInstance → TaskAttempt(s) → EvaluationResult → TrialRecord.
 'use client';
 
 interface ContractNodeProps {
@@ -28,25 +28,25 @@ export function ContractsFlow() {
     <div
       className="not-prose my-8"
       role="img"
-      aria-label="Contract data flow from TaskDefinition through AgentOutput and EvaluationResult to TrialRecord"
+      aria-label="Contract data flow from ResolvedTaskInstance through TaskAttempt candidates and EvaluationResult to TrialRecord"
       data-testid="contracts-flow"
     >
       {/* Mobile: vertical */}
       <div className="flex flex-col items-center gap-1 md:hidden">
-        <ContractNode label="TaskDefinition" color="border-[#38b2ac]/80" />
+        <ContractNode label="ResolvedTaskInstance" color="border-[#38b2ac]/80" />
         <svg viewBox="0 0 16 20" className="h-5 w-4" aria-hidden="true">
           <defs><marker id="cf-m-arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M 0 0 L 6 3 L 0 6 z" fill="#94a3b8" /></marker></defs>
           <line x1="8" y1="0" x2="8" y2="18" stroke="#94a3b8" strokeWidth="1.5" markerEnd="url(#cf-m-arr)" />
         </svg>
-        <ActionLabel label="sent to agent" />
+        <ActionLabel label="run in isolated workspace" />
         <svg viewBox="0 0 16 20" className="h-5 w-4" aria-hidden="true">
           <line x1="8" y1="0" x2="8" y2="18" stroke="#94a3b8" strokeWidth="1.5" markerEnd="url(#cf-m-arr)" />
         </svg>
-        <ContractNode label="AgentOutput" color="border-[#38b2ac]/80" />
+        <ContractNode label="TaskAttempt candidate(s)" color="border-[#38b2ac]/80" />
         <svg viewBox="0 0 16 20" className="h-5 w-4" aria-hidden="true">
           <line x1="8" y1="0" x2="8" y2="18" stroke="#94a3b8" strokeWidth="1.5" markerEnd="url(#cf-m-arr)" />
         </svg>
-        <ActionLabel label="scored by verifier" />
+        <ActionLabel label="selected output verified" />
         <svg viewBox="0 0 16 20" className="h-5 w-4" aria-hidden="true">
           <line x1="8" y1="0" x2="8" y2="18" stroke="#94a3b8" strokeWidth="1.5" markerEnd="url(#cf-m-arr)" />
         </svg>
@@ -74,13 +74,13 @@ export function ContractsFlow() {
               <path d="M 0 0 L 5 2.5 L 0 5 z" fill="#94a3b8" />
             </marker>
           </defs>
-          {/* TaskDefinition → AgentOutput (horizontal, centered between boxes) */}
+          {/* ResolvedTaskInstance → TaskAttempt candidates */}
           <line x1="40" y1="5" x2="60" y2="5" stroke="#94a3b8" strokeWidth="0.4" markerEnd="url(#cf-arrow)" />
-          <text x="49.5" y="3" textAnchor="middle" fill="#94a3b8" fontSize="2.5" fontStyle="italic">sent to agent</text>
+          <text x="49.5" y="3" textAnchor="middle" fill="#94a3b8" fontSize="2.5" fontStyle="italic">run once</text>
 
-          {/* AgentOutput → EvaluationResult (elbow: right edge down, across, down to left box) */}
+          {/* TaskAttempt candidates → EvaluationResult */}
           <path d="M 90 13 V 22 H 10 V 30" fill="none" stroke="#94a3b8" strokeWidth="0.4" strokeLinecap="round" strokeLinejoin="round" markerEnd="url(#cf-arrow)" />
-          <text x="50" y="20.5" textAnchor="middle" fill="#94a3b8" fontSize="2.5" fontStyle="italic">scored by verifier</text>
+          <text x="50" y="20.5" textAnchor="middle" fill="#94a3b8" fontSize="2.5" fontStyle="italic">selected output verified</text>
 
           {/* EvaluationResult → TrialRecord (horizontal, centered between boxes) */}
           <line x1="40" y1="40" x2="60" y2="40" stroke="#94a3b8" strokeWidth="0.4" markerEnd="url(#cf-arrow)" />
@@ -90,10 +90,10 @@ export function ContractsFlow() {
 
         {/* Contract nodes */}
         <div className="absolute left-0 top-0 w-[42%]">
-          <ContractNode label="TaskDefinition" color="border-[#38b2ac]/80" />
+          <ContractNode label="ResolvedTaskInstance" color="border-[#38b2ac]/80" />
         </div>
         <div className="absolute right-0 top-0 w-[42%]">
-          <ContractNode label="AgentOutput" color="border-[#38b2ac]/80" />
+          <ContractNode label="TaskAttempt candidate(s)" color="border-[#38b2ac]/80" />
         </div>
         <div className="absolute bottom-0 left-0 w-[42%]">
           <ContractNode label="EvaluationResult" color="border-[#e8a838]/80" />

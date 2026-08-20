@@ -7,7 +7,7 @@ import { ContractsFlow } from '@/components/docs/contracts-flow';
 
 Contracts sit at real trust boundaries: imported task material, provider results, cross-process calls, and persisted evidence. Ordinary Python values remain suitable inside one owner.
 
-The common artefact-task path connects four contracts:
+The common artefact-task path resolves the task, runs one or more isolated attempts, verifies the selected output, and builds one reportable trial:
 
 <ContractsFlow />
 
@@ -59,6 +59,20 @@ class AgentOutput(StrictModel):
 ```
 
 The harness reports completion and location. Evaluation owns parsing and scoring the task-specific output.
+
+## ResolvedTaskInstance and PlannedTrial — what will run
+
+`ResolvedTaskInstance` combines the validated `TaskDefinition` with the exact task directory and resolved environment, verifier, and tool paths. It is the direct task input to artefact-task execution.
+
+`PlannedTrial` carries the trial identity, run identity, task identity, agent configuration, repetition number, and effective timeout. `run_experiment()` matches each plan to its resolved task and calls `run_trial()`.
+
+## TaskAttempt — one isolated agent execution
+
+Each call to `runtime.run_once()` returns one `TaskAttempt`. The attempt records its unique `attempt_id`, optional `parent_attempt_id`, workspace, output, timing, and runtime diagnostics.
+
+An `AttemptRecipe` receives only the tracked `AttemptRunner`. It can request one attempt, retry from a parent attempt, or produce candidates for selection. It cannot access the official verifier or reward. Evolution candidate identity is separate and is never reused as attempt identity.
+
+`TaskAttempt` is an internal execution result. `TrialRecord` is the selected, verified, and reportable trial result.
 
 ## EvaluationResult — how it scored
 
@@ -112,7 +126,7 @@ The exact source, agent configuration, environment, provider route, and dataset 
 
 ## TrialRecord — one trial result
 
-`TrialRecord` stores facts that can differ for each attempt:
+`TrialRecord` stores facts that can differ for each planned trial:
 
 ```python
 class TrialRecord(StrictModel):
@@ -136,6 +150,8 @@ class TrialRecord(StrictModel):
     extension_refs: tuple[TrialExtensionRef, ...]
 ```
 
+The retained `attempt` field is the planned repetition number. It is not a `TaskAttempt.attempt_id`.
+
 The three statuses do not collapse into one generic completeness flag:
 
 | Status | Question |
@@ -149,6 +165,8 @@ Publication policy evaluates these facts with the run manifest. A reportable res
 Finite lifecycle, Interactive World, adaptation, proposal-session, and meta-harness details use typed extension references. The main trial does not copy each optional forensic structure.
 
 Once accepted, a trial record is immutable. Temporary workspaces and internal builders remain replaceable implementation.
+
+One trial can contain several candidate attempts. This is different from experiment repetitions, which create separate planned trials. When selection occurs, the trial retains typed attempt-selection evidence and the official verifier evaluates only the selected output.
 
 ### Output state
 
@@ -168,6 +186,8 @@ class TrialOutput(StrictModel):
 ```
 
 Termination and truncation are mutually exclusive. Provider completion, truncation, and error facts determine execution status independently of reward.
+
+`run_trial()` materialises these references before it removes attempt workspaces. A returned record must therefore resolve its retained output and trajectory artefacts after cleanup.
 
 ### Artefact integrity
 

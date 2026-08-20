@@ -40,7 +40,7 @@ from aec_bench.experimentation.meta_harness import (
 baseline = HarnessCandidate(candidate_id="baseline", value=baseline_config)
 candidate = HarnessCandidate(candidate_id="candidate-a", value=candidate_config)
 
-study = run_harness_study(
+study = await run_harness_study(
     baseline=baseline,
     candidates=[candidate],
     evaluate=evaluate_candidate,
@@ -48,7 +48,7 @@ study = run_harness_study(
 )
 ```
 
-`evaluate_candidate` connects each generic candidate value to its real runtime and returns that runtime's normal `TrialRecord` values. `assess_candidates` owns the comparison result. It can return a metric summary, study conclusion, decision object, or another normal Python value.
+`evaluate_candidate` connects each generic candidate value to its real runtime and returns that runtime's normal `TrialRecord` values. It can be a synchronous function or an asynchronous function. `assess_candidates` owns the comparison result. It can return a metric summary, study conclusion, decision object, or another normal Python value.
 
 The selector is not part of a one-shot study. The caller interprets `study.assessment` or uses the bounded refinement API when selection belongs inside the process.
 
@@ -59,7 +59,7 @@ Use `run_meta_harness()` for repeated proposal and refinement:
 ```python
 from aec_bench.experimentation.meta_harness import run_meta_harness
 
-result = run_meta_harness(
+result = await run_meta_harness(
     initial=baseline,
     propose=propose_candidates,
     evaluate=evaluate_candidate,
@@ -77,7 +77,7 @@ The proposal, assessment, selection, refinement, and stopping policies remain wi
 
 ## Runtime evaluators
 
-The functional core never imports artifact-task, lifecycle, Interactive World, adapter, provider, Harbor, or Prime implementations. A runtime participates through an evaluator function.
+The functional core never imports artefact-task, lifecycle, Interactive World, adapter, provider, Harbor, or Prime implementations. A runtime participates through an evaluator function. `run_harness_study()` and `run_meta_harness()` are asynchronous through this one API; there are no parallel `*_async` functions or hidden event-loop wrappers.
 
 For artefact tasks, the evaluator can call the normal `run_experiment()` boundary directly:
 
@@ -117,7 +117,26 @@ candidate = HarnessCandidate(
 records = evaluate_lifecycle_candidate(candidate)
 ```
 
-The evaluator calls the normal lifecycle experiment boundary and returns its `TrialRecord` values. It does not add a lifecycle-specific meta-harness runtime. Interactive World runners can supply an equivalent evaluator without changing the core. Harness-program studies retain their fixed-kernel compilation, Harbor execution, reports, and qualification rules while using the same composition functions for candidate evaluation.
+The evaluator calls the normal lifecycle experiment boundary and returns its `TrialRecord` values. It does not add a lifecycle-specific meta-harness runtime.
+
+Interactive Worlds use their normal experiment boundary in the same way:
+
+```python
+from functools import partial
+
+from aec_bench.harness.world_routing import run_selected_world
+from aec_bench.harness.world_trials import run_world_experiment
+
+async def evaluate_world_candidate(candidate):
+    value = candidate.value
+    return await run_world_experiment(
+        tasks=value.tasks,
+        trials=value.trials,
+        run_trial=partial(run_selected_world, work_root=value.work_root),
+    )
+```
+
+The evaluator returns complete world `TrialRecord` values. It does not treat an action or provider session as a trial. Prime refinement qualification now uses this normal world evaluation and meta-harness composition path. Harness-program studies retain their fixed-kernel compilation, Harbor execution, reports, and qualification rules while using the same composition functions for candidate evaluation.
 
 ## CLI comparison
 

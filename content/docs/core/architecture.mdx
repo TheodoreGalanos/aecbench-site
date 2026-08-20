@@ -1,12 +1,12 @@
 ---
 title: Architecture
-description: aec-bench supports artefact tasks and Interactive Worlds through shared authoring, evaluation, evidence, and reporting boundaries.
+description: aec-bench supports artefact tasks, finite lifecycles, and Interactive Worlds through shared planning, evidence, and reporting boundaries.
 ---
 
 import { BenchmarkRunFlow } from '@/components/docs/benchmark-run-flow';
 import { CoreDomains } from '@/components/docs/core-domains';
 
-aec-bench has two execution families. They share experiment identity, agent and provider configuration, resource limits, evaluation, provenance, and reporting. Each task family retains its own low-level runtime.
+aec-bench has three execution families: artefact tasks, finite lifecycles, and Interactive Worlds. They share planning, experiment identity, `TrialRecord` evidence, provenance, and reporting. Each family retains its own execution and evaluation semantics.
 
 <CoreDomains />
 
@@ -46,10 +46,13 @@ An Interactive World repeatedly shows an actor-visible observation and accepts a
 The boundary is deliberately small:
 
 - the world owns state, observations, action meaning, transitions, domain termination, and evaluation;
-- the episode host owns decision correlation, recording, accepted-step advancement, limits, and truncation; and
-- evaluation runs after the live transition completes.
+- the shared actor boundary owns decision correlation and the provider-facing exchange;
+- the task-owned application owns its journey, controls, persistence, verification, and evaluation; and
+- the complete trial function retains evidence and returns one normal `TrialRecord`.
 
-The current catalogue contains wastewater pump-station stewardship and dam-seepage monitoring. Both use the same episode host, but each defines its own state, actions, persistence, and provider integration.
+The current catalogue contains wastewater pump-station stewardship and dam-seepage monitoring. Both reuse the world core and one Prime actor-session implementation. They do not share state, journeys, controls, persistence, verification, evaluation, or provider-specific task semantics.
+
+`WorldTask` binds an objective to an exact registered world build and profile. `plan_trials()` creates the common `PlannedTrial` values. A complete dam, pump, or Harbor world-trial function then returns a `TrialRecord`. Asynchronous `run_world_experiment()` applies that operation in plan order and can persist each completed record.
 
 Persistence, recovery, host controls, branching, rollouts, staged evidence, and provider integration are optional capabilities. Add these capabilities when the world requires them.
 
@@ -57,7 +60,7 @@ See [Interactive Worlds](/docs/core/interactive-worlds) for the contributor-faci
 
 ## Finite lifecycles
 
-A finite lifecycle is a third coordination shape within the existing task execution families. It declares a bounded sequence of evidence stages before execution. The task owns each stage's objective, visible evidence, required result, and verifier rules. The host owns release, progression, failure, and finalisation.
+A finite lifecycle is a separate execution family. It declares a bounded sequence of evidence stages before execution. The task owns each stage's objective, visible evidence, required result, and verifier rules. The host owns release, progression, failure, and finalisation.
 
 Use a lifecycle when the work has known stages and controlled evidence release. Use an Interactive World when actions change an ongoing causal state. Use an artefact task when one workspace or submission is sufficient.
 
@@ -86,7 +89,7 @@ Meta-harness results are normal in-memory Python values. They do not add a persi
 | Task meaning | Task, template, lifecycle, or world | Keeps engineering inputs, actions, and verifier rules together |
 | Artefact-task orchestration | `run_experiment()` and `run_trial()` | Own planning, attempt tracking, selection, official verification, optional review, retained artefacts, and cleanup |
 | Lifecycle orchestration | `aec_bench.lifecycles.application` and the lifecycle host | Applies checkpoint progression, local execution, trial construction, and optional persistence without moving task-owned semantics |
-| Interactive World orchestration | Episode host | Applies the world's action, progression, and recording rules; world owners retain task semantics |
+| Interactive World orchestration | World trial application and task-owned host | Uses the shared actor boundary, then applies task-owned journeys, controls, persistence, verification, evaluation, evidence retention, and trial construction |
 | Harness studies and refinement | `aec_bench.experimentation.meta_harness` | Composes caller-owned candidates, `TrialRecord` evidence, and injected policies without defining a common runtime or metric |
 | Agent execution | Agent harness and provider integration | Translates model and tool protocols; task and evaluation owners retain benchmark policy |
 | Evaluation | Evaluation | Owns reward, validity, breakdowns, behavioural analysis, and review evidence; task verifiers supply task-owned evidence |
@@ -121,6 +124,7 @@ Dependencies follow ownership:
 
 - task definitions and task worlds remain provider-neutral;
 - shared world-runtime code remains independent of concrete worlds;
+- direct trial planning uses `plan_trials()` for all runnable task families;
 - artefact-task orchestration can depend on task and runtime boundaries while `HarnessSpec` remains an execution-capability description;
 - lifecycle application composition depends on the lifecycle coordinator, normal trial contracts, and explicit execution effects, not task, world, provider, Harbor, or Prime implementations;
 - meta-harness composition depends on `TrialRecord` and caller-supplied functions, not concrete runtimes, providers, or task families;

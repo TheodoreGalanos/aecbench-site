@@ -47,17 +47,26 @@ describe('library documentation coverage', () => {
     expect(adaptiveHarnesses).not.toContain('Phase 9');
   });
 
-  it('documents both execution families and their separate coordination models', () => {
+  it('documents all three execution families and their separate coordination models', () => {
     const architecture = readDoc('core/architecture.mdx');
     const worlds = readDoc('core/interactive-worlds.mdx');
     const lifecycles = readDoc('core/lifecycles.mdx');
 
-    expect(architecture).toContain('two execution families');
+    expect(architecture).toContain('three execution families');
     expect(architecture).toContain('Artefact and workspace tasks');
+    expect(architecture).toContain('Finite lifecycles');
     expect(architecture).toContain('Interactive Worlds');
     expect(architecture).not.toContain('seven domains');
     expect(worlds).toContain('rejection that leaves state unchanged');
     expect(worlds).toContain('Domain termination and host truncation are separate');
+    expect(worlds).toContain('from aec_bench import worlds');
+    expect(worlds).toContain('WorldTask');
+    expect(worlds).toContain('world.toml');
+    expect(worlds).toContain('plan_trials');
+    expect(worlds).toContain('run_world_experiment');
+    expect(worlds).toContain('A world action is not a trial');
+    expect(worlds).toContain('aec-bench task world pump-station');
+    expect(worlds).not.toContain('aec-bench task pump-station-world');
     expect(lifecycles).toContain('One stage is active at a time');
     expect(lifecycles).toContain('task lifecycle run-smoke');
     expect(lifecycles).toContain('branch_lifecycle()');
@@ -90,6 +99,9 @@ describe('library documentation coverage', () => {
     expect(runtime).toContain('aec_bench.experimentation.meta_harness');
     expect(runtime).toContain('run_harness_study()');
     expect(runtime).toContain('run_meta_harness()');
+    expect(runtime).toContain('study = await run_harness_study(');
+    expect(runtime).toContain('result = await run_meta_harness(');
+    expect(runtime).toContain('await run_world_experiment(');
     expect(runtime).toContain('max_rounds=3');
     expect(runtime).toContain('Failed and invalid trials remain evidence');
     expect(runtime).toContain('not a universal runtime');
@@ -128,6 +140,10 @@ describe('library documentation coverage', () => {
     expect(quickstart).toContain('aec-bench generate task terzaghi-bearing-capacity');
     expect(cli).toContain('aec-bench init --update-skills');
     expect(cli).toContain('aec-bench generate dockerfiles');
+    expect(cli).toContain('aec-bench task world list');
+    expect(cli).toContain('aec-bench task world run');
+    expect(cli).toContain('aec-bench task world pump-station branch');
+    expect(cli).not.toContain('aec-bench task pump-station-world');
     for (const lifecycleRoute of [
       'aec-bench task lifecycle start',
       'aec-bench task lifecycle submit',
@@ -188,6 +204,9 @@ describe('library documentation coverage', () => {
     expect(datasets).toContain('dataset publish electrical-core --label public-2026');
     expect(datasets).toContain('One repository commit and manifest path');
     expect(datasets).toContain('`ArtifactRef`');
+    expect(datasets).toContain('task_kind: "world"');
+    expect(datasets).toContain('world.toml');
+    expect(datasets).toContain('`dataset create` command discovers artefact tasks');
     expect(datasets).not.toContain('content_hash');
   });
 
@@ -201,6 +220,8 @@ describe('library documentation coverage', () => {
     expect(contracts).toContain('RunManifest');
     expect(contracts).toContain('execution_status');
     expect(contracts).toContain('provider_evidence');
+    expect(contracts).toContain('WorldTask');
+    expect(contracts).toContain('plan_trials()');
     expect(traces).toContain('evidence_status');
     expect(traces).not.toContain('Completeness');
     expect(templates).toContain('generation-manifest.json');

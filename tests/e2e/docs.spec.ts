@@ -26,6 +26,7 @@ test.describe('Documentation', () => {
     await expect(page.getByRole('heading', { name: 'Meta-Harness Composition' })).toBeVisible();
     await expect(page.getByText(/runtime-neutral composition layer/)).toBeVisible();
     await expect(page.locator('code').filter({ hasText: 'max_rounds=3' })).toBeVisible();
+    await expect(page.locator('code').filter({ hasText: 'await run_world_experiment' })).toBeVisible();
     await expect(page.getByText('uv run aec-bench meta-harness process')).toBeVisible();
     await expect(page.locator('code').filter({ hasText: 'world_generation_request' }).first()).toBeVisible();
     await expect(page.locator('code').filter({ hasText: 'evaluate_lifecycle_candidate' }).first()).toBeVisible();
@@ -37,6 +38,14 @@ test.describe('Documentation', () => {
     await expect(page.getByText('aec-bench task lifecycle branch')).toBeVisible();
     await expect(page.locator('code').filter({ hasText: 'run_lifecycle_trial' }).first()).toBeVisible();
     await expect(page.getByText(/There is no start_at option/)).toBeVisible();
+  });
+
+  test('renders public Interactive World discovery and execution paths', async ({ page }) => {
+    await page.goto('/docs/core/interactive-worlds');
+    await expect(page.getByRole('heading', { name: 'Public discovery and task API' })).toBeVisible();
+    await expect(page.locator('code').filter({ hasText: 'from aec_bench import worlds' })).toBeVisible();
+    await expect(page.getByText('aec-bench task world pump-station branch --help')).toBeVisible();
+    await expect(page.getByText(/A world action is not a trial/)).toBeVisible();
   });
 
   test('renders the public guides migrated from the library', async ({ page }) => {
@@ -65,6 +74,8 @@ test.describe('Documentation', () => {
     await page.goto('/docs/core/architecture');
     await expect(page.getByTestId('benchmark-run-flow')).toBeVisible();
     await expect(page.getByTestId('core-domains')).toBeVisible();
+    await expect(page.getByTestId('core-domains-desktop').getByText('Finite lifecycles', { exact: true })).toBeVisible();
+    await expect(page.getByText(/aec-bench has three execution families/)).toBeVisible();
     await expect(
       page.getByText(
         'aec-bench supports artefact tasks and Interactive Worlds through shared authoring, evaluation, evidence, and reporting boundaries.',

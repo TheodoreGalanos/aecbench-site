@@ -63,6 +63,14 @@ Use a lifecycle when the work has known stages and controlled evidence release. 
 
 See [Finite Lifecycles](/docs/core/lifecycles).
 
+## Meta-harness composition
+
+`aec_bench.experimentation.meta_harness` composes candidate studies across the existing execution families. It evaluates caller-owned `HarnessCandidate` values through injected functions that return normal `TrialRecord` evidence. The same functional boundary supports one-shot baseline comparisons and bounded propose, evaluate, assess, select, and refine processes.
+
+The core does not know how a candidate runs or what its assessment means. Artefact-task, lifecycle, Interactive World, adaptive, and repair code retain their own execution and evidence rules. Evaluation owns metric meaning; governance owns approval. Failed and invalid trials remain available to the caller's assessment function.
+
+Meta-harness results are normal in-memory Python values. They do not add a persisted study schema, common runtime abstraction, or workflow configuration format. See [Meta-Harness Composition](/docs/advanced/meta-harness-runtime).
+
 ## Capability ownership
 
 | Concern | Owner | Boundary |
@@ -70,6 +78,7 @@ See [Finite Lifecycles](/docs/core/lifecycles).
 | Task meaning | Task, template, lifecycle, or world | Keeps engineering inputs, actions, and verifier rules together |
 | Artefact-task orchestration | `run_experiment()` and `run_trial()` | Own planning, attempt tracking, selection, official verification, optional review, retained artefacts, and cleanup |
 | Lifecycle and world orchestration | Lifecycle host or episode host | Applies the task family's progression and recording rules; task owners retain task semantics |
+| Harness studies and refinement | `aec_bench.experimentation.meta_harness` | Composes caller-owned candidates, `TrialRecord` evidence, and injected policies without defining a common runtime or metric |
 | Agent execution | Agent harness and provider integration | Translates model and tool protocols; task and evaluation owners retain benchmark policy |
 | Evaluation | Evaluation | Owns reward, validity, breakdowns, behavioural analysis, and review evidence; task verifiers supply task-owned evidence |
 | Durable evidence | Ledger and producing domain | Stores immutable trial, dataset, and content-addressed evidence records |
@@ -104,6 +113,7 @@ Dependencies follow ownership:
 - task definitions and task worlds remain provider-neutral;
 - shared world-runtime code remains independent of concrete worlds;
 - artefact-task orchestration can depend on task and runtime boundaries while `HarnessSpec` remains an execution-capability description;
+- meta-harness composition depends on `TrialRecord` and caller-supplied functions, not concrete runtimes, providers, or task families;
 - evaluation owns policy and consumes verifier evidence, while persistence stores the resulting records; and
 - CLI, TUI, web, and reports compose lower-level capabilities.
 

@@ -277,7 +277,7 @@ Use remediation when the verifier can point to a concrete gap and the original t
 
 ### `meta-harness`
 
-Run the meta-harness process for task-world construction, verifier/schema debugging, reviewer interpretation, operation planning, and governed repair loops:
+Run meta-harness studies and the specialist problem-model workflow for verifier/schema debugging, reviewer interpretation, operation planning, and governed repair loops:
 
 ```bash
 uv run aec-bench meta-harness logic-evaluate --world world.json --run task-run.json
@@ -288,7 +288,7 @@ uv run aec-bench meta-harness process "Create a diagnostic task." --brief brief.
 uv run aec-bench meta-harness autonomous --task-text "Create a diagnostic task." --brief brief.json --world world.json --max-iterations 3
 ```
 
-The command group is pauseable: briefs, worlds, task runs, operation plans, and governance decisions that require input enter `awaiting_*` states. Use `--emit-run-plan` on `intake-models`, `world-models`, `review-models`, and `operation-models` to validate endpoint configuration before calling providers.
+`recipe`, `compare`, and `example` use the runtime-neutral functional study API. The process commands are pauseable: briefs, problem models, task runs, operation plans, and governance decisions that require input enter `awaiting_*` states. Existing `--world` flags name the supported problem-model JSON files; they do not invoke the registered Interactive World runtime. Use `--emit-run-plan` on `intake-models`, `world-models`, `review-models`, and `operation-models` to validate endpoint configuration before calling providers.
 
 It also exposes provider-free comparison and evidence-lifecycle surfaces:
 
@@ -309,9 +309,9 @@ uv run aec-bench meta-harness lifecycle-status \
   --run-dir lifecycle-run
 ```
 
-Use the lifecycle commands to control checkpoints or run typed ablation and calibration-freeze studies; the task verifier remains authoritative.
+Use the lifecycle commands to control checkpoints or run typed ablation and calibration-freeze studies. Lifecycle progression remains lifecycle-owned; the task verifier remains authoritative.
 
-See [Meta-Harness Runtime](/docs/advanced/meta-harness-runtime) for the two-loop process and governance boundaries.
+See [Meta-Harness Composition](/docs/advanced/meta-harness-runtime) for the Python API, comparison workflow, and problem-model governance boundaries.
 
 ## Interactive Surfaces
 

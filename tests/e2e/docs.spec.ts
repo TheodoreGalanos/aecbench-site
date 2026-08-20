@@ -21,11 +21,11 @@ test.describe('Documentation', () => {
     ).toBeVisible();
   });
 
-  test('renders the meta-harness runtime page', async ({ page }) => {
+  test('renders the meta-harness composition page', async ({ page }) => {
     await page.goto('/docs/advanced/meta-harness-runtime');
-    await expect(page.getByRole('heading', { name: 'Meta-Harness Runtime' })).toBeVisible();
-    await expect(page.getByText('pauseable process runner')).toBeVisible();
-    await expect(page.getByText('bounded autonomous supervisor')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Meta-Harness Composition' })).toBeVisible();
+    await expect(page.getByText(/runtime-neutral composition layer/)).toBeVisible();
+    await expect(page.locator('code').filter({ hasText: 'max_rounds=3' })).toBeVisible();
     await expect(page.getByText('uv run aec-bench meta-harness process')).toBeVisible();
     await expect(page.locator('code').filter({ hasText: 'world_generation_request' }).first()).toBeVisible();
   });

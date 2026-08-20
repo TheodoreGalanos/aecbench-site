@@ -61,12 +61,11 @@ AEC-Bench currently supports:
 - one dam-seepage monitoring episode; and
 - one fresh Prime session per checkpoint for the hydraulic-review lifecycle.
 
-Current session access uses these Python entry points:
+Dam and pump sessions use the shared `run_prime_world_actor_session()` actor boundary. A complete benchmark call uses `run_dam_seepage_trial()` or `run_pump_station_trial()` instead. These functions run the task-owned journey, verify and evaluate the result, retain the evidence artefacts, and return one `TrialRecord`.
 
-- `aec_bench.harness.pump_station_prime.session.run_pump_station_prime_session`
-- `aec_bench.harness.dam_seepage_prime.session.run_dam_seepage_prime_session`
+Use asynchronous `run_world_experiment()` to apply a complete world trial function to an ordered plan. A provider session is only part of one trial, and one world action is not a trial. Returned `TrialRecord` artefacts remain available after temporary session cleanup.
 
-The pump session receives a host-selected world request. The dam session receives one exact registered world profile. After the actor process closes, the host replays accepted typed actions and runs task evaluation outside the actor endpoint.
+The pump trial receives a host-selected world request. The dam trial receives one exact registered world profile. After the actor process closes, the task owner replays accepted typed actions and runs verification and evaluation outside the actor endpoint.
 
 Task termination, host truncation, model completion, and provider error remain separate facts.
 
@@ -74,7 +73,7 @@ Task termination, host truncation, model completion, and provider error remain s
 
 World sessions install only explicit generic skills by default. Prime receives the task objective, actor-visible starting material, and the allowed actor capability. Task-family methods or hidden solution plans are not present unless a study selects a declared treatment.
 
-The pump-station journey can close Prime at an Operations boundary, apply one deterministic task-owned host control, and start a fresh session from the exact new snapshot. The host chooses and applies that control.
+The pump-station journey can close Prime at an Operations boundary, apply one deterministic task-owned host control, and start a fresh session from the exact new snapshot. The host chooses and applies that control. Dam and pump state, journeys, controls, persistence, verification, and evaluation remain separate and task-owned.
 
 Prime runtime state is isolated for each session. World state, replay, and verification remain with the task owner.
 

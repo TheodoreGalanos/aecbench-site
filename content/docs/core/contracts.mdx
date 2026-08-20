@@ -32,7 +32,15 @@ task/
 
 Task-specific output meaning remains with the task and its verifier.
 
-Executable Interactive Worlds use a registered world definition and profile; static artefact tasks use `TaskDefinition`. Both task families can enter the same experiment, evaluation, evidence, and reporting layers.
+Executable Interactive Worlds use `WorldTask`; static artefact tasks use `TaskDefinition`. Both can enter the same planning, dataset, evidence, and reporting layers without sharing a task runtime.
+
+## WorldTask — one world objective
+
+`WorldTask` binds one provider-neutral instruction to an exact `WorldBuildRef` and `InteractiveWorldProfileRef`. It carries task identity, a derived semantic revision, normal catalogue metadata, and tags. Task state, provider configuration, and execution state do not belong in this value.
+
+A file-backed world task contains `instruction.md` and `world.toml`. The TOML document has exact `[world]` and `[profile]` references plus registered `[metadata]`. `load_world_task()` rejects stale build or profile content and metadata that does not match the registered profile.
+
+The same world task can enter `plan_trials()`, direct `run_world_experiment()` composition, or a dataset manifest entry with `task_kind: "world"`.
 
 ### Lifecycle and visibility
 
@@ -64,7 +72,7 @@ The harness reports completion and location. Evaluation owns parsing and scoring
 
 `ResolvedTaskInstance` combines the validated `TaskDefinition` with the exact task directory and resolved environment, verifier, and tool paths. It is the direct task input to artefact-task execution.
 
-`PlannedTrial` carries the trial identity, run identity, task identity, agent configuration, repetition number, and effective timeout. `run_experiment()` matches each plan to its resolved task and calls `run_trial()`.
+`PlannedTrial` carries trial, experiment, and task identity; agent and compute configuration; the repetition number; and typed planning extensions. `plan_trials()` is the one direct planner for runnable task families. Artefact `run_experiment()` and world `run_world_experiment()` match each plan to the correct task through their separate application boundaries.
 
 ## TaskAttempt — one isolated agent execution
 
@@ -163,6 +171,10 @@ The three statuses do not collapse into one generic completeness flag:
 Publication policy evaluates these facts with the run manifest. A reportable result normally needs completed execution, completed evaluation, a completed verifier, and evidence that is `verified` or `not_required`.
 
 Finite lifecycle, Interactive World, adaptation, and proposal-session details use typed extension references. The main trial does not copy each optional forensic structure. Functional meta-harness results are normal in-memory composition values; each participating runtime returns its existing `TrialRecord` evidence instead of writing a universal meta-harness schema.
+
+A complete Interactive World trial returns one `TrialRecord`. A world action and a provider session are lower-level events, not trials. The dam, pump, and Harbor trial functions retain their task-owned authority evidence and provider evidence before temporary session cleanup.
+
+World branch creation is also separate from trial execution. It materialises child branches through rollout control and the task's branch port. It does not execute, evaluate, select, merge, or change the parent.
 
 Once accepted, a trial record is immutable. Temporary workspaces and internal builders remain replaceable implementation.
 

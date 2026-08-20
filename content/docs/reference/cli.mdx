@@ -124,13 +124,16 @@ Single-task and task-tree extraction support heuristic, evidence, and LLM modes.
 
 ### Evidence lifecycles and Interactive Worlds
 
-Inspect finite evidence lifecycles and the installed pump-station world:
+Inspect finite evidence lifecycles and registered Interactive Worlds:
 
 ```bash
 uv run aec-bench task lifecycle list
 uv run aec-bench task lifecycle list-variants <template-id>
 uv run aec-bench task lifecycle materialize <template-id> --output <package-dir>
-uv run aec-bench task pump-station-world --help
+uv run aec-bench task world list
+uv run aec-bench task world find seepage
+uv run aec-bench task world show dam-seepage-monitoring
+uv run aec-bench task world profiles dam-seepage-monitoring
 ```
 
 The complete lifecycle command hierarchy is:
@@ -152,6 +155,38 @@ aec-bench task lifecycle study calibration-freeze
 ```
 
 `start` releases the next checkpoint. `submit` archives the active checkpoint submission. `status` reads state, and `revisit` reads an accepted checkpoint without changing progression. `branch` creates a separate run from a submitted checkpoint and inherits the accepted prefix. `run` resumes from the current lifecycle state. It does not accept a `start_at` override.
+
+The Interactive World hierarchy is:
+
+```text
+aec-bench task world list
+aec-bench task world find
+aec-bench task world show
+aec-bench task world profiles
+aec-bench task world run
+aec-bench task world pump-station actor-interface
+aec-bench task world pump-station control-interface
+aec-bench task world pump-station verify
+aec-bench task world pump-station branch
+aec-bench task world pump-station evaluate
+aec-bench task world pump-station export-harbor
+aec-bench task world pump-station run-harbor
+aec-bench task world pump-station import-harbor-trial
+```
+
+`task world run` creates one provider-neutral `WorldTask`, plans its repetitions, validates the world and provider route, and then runs the complete trials. Use `--dry-run` to validate and inspect the plan without calling a provider:
+
+```bash
+uv run aec-bench task world run dam-seepage-monitoring \
+  --profile synthetic-rising-seepage \
+  --instruction "Monitor the dam and respond as conditions evolve." \
+  --model <provider/model> \
+  --adapter prime-agent \
+  --repetitions 3 \
+  --dry-run
+```
+
+The pump-station subcommands expose task-owned actor, control, verification, branching, evaluation, and Harbor application functions. Branch creation does not run, evaluate, select, merge, or change the parent.
 
 See [Finite Lifecycles](/docs/core/lifecycles) and [Interactive Worlds](/docs/core/interactive-worlds) for their separate execution contracts.
 
@@ -187,6 +222,8 @@ Run an experiment manifest:
 ```bash
 uv run aec-bench run --config experiment.yaml --tasks-root tasks
 ```
+
+The dataset manifest can contain `task_kind: "artifact"` and `task_kind: "world"` entries. `run` loads each task through its declared kind, groups execution by runtime family, and returns results in the planned order. Unsupported world and provider combinations fail before execution.
 
 For a config-backed run, the manifest owns the model, harness, backend, and repetitions. The accepted CLI overrides are `--tasks-root`, `--dry-run`, `--no-verify`, and the reviewer options.
 

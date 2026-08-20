@@ -1,4 +1,4 @@
-// ABOUTME: Ownership diagram for the two aec-bench execution families.
+// ABOUTME: Ownership diagram for the three aec-bench execution families.
 // ABOUTME: Shows shared authoring, evaluation, evidence, and presentation boundaries.
 'use client';
 
@@ -25,14 +25,15 @@ export function CoreDomains() {
     <div
       className="not-prose my-8"
       role="img"
-      aria-label="AEC-Bench ownership flow from task sources through artefact tasks or Interactive Worlds to evaluation, evidence, and presentation"
+      aria-label="AEC-Bench ownership flow from task sources through artefact tasks, finite lifecycles, or Interactive Worlds to evaluation, evidence, and presentation"
       data-testid="core-domains"
     >
       <div className="flex flex-col items-center gap-2 lg:hidden">
         <DomainNode label="Task sources & world profiles" accent="amber" />
         <DomainNode label="Authoring & validation" accent="teal" />
-        <div className="grid w-full max-w-sm grid-cols-2 gap-2">
+        <div className="grid w-full max-w-lg grid-cols-1 gap-2 sm:grid-cols-3">
           <DomainNode label="Artefact & workspace tasks" accent="teal" />
+          <DomainNode label="Finite lifecycles" accent="teal" />
           <DomainNode label="Interactive Worlds" accent="teal" />
         </div>
         <DomainNode label="Evaluation & task verification" accent="teal" />
@@ -53,10 +54,12 @@ export function CoreDomains() {
             </marker>
           </defs>
           <line x1="50" y1="10" x2="50" y2="19" stroke="#94a3b8" strokeWidth="0.35" markerEnd="url(#cd-arrow)" />
-          <line x1="44" y1="30" x2="25" y2="39" stroke="#94a3b8" strokeWidth="0.35" markerEnd="url(#cd-arrow)" />
-          <line x1="56" y1="30" x2="75" y2="39" stroke="#94a3b8" strokeWidth="0.35" markerEnd="url(#cd-arrow)" />
-          <line x1="25" y1="50" x2="44" y2="61" stroke="#94a3b8" strokeWidth="0.35" markerEnd="url(#cd-arrow)" />
-          <line x1="75" y1="50" x2="56" y2="61" stroke="#94a3b8" strokeWidth="0.35" markerEnd="url(#cd-arrow)" />
+          <line x1="44" y1="30" x2="16" y2="39" stroke="#94a3b8" strokeWidth="0.35" markerEnd="url(#cd-arrow)" />
+          <line x1="50" y1="30" x2="50" y2="39" stroke="#94a3b8" strokeWidth="0.35" markerEnd="url(#cd-arrow)" />
+          <line x1="56" y1="30" x2="84" y2="39" stroke="#94a3b8" strokeWidth="0.35" markerEnd="url(#cd-arrow)" />
+          <line x1="16" y1="50" x2="44" y2="61" stroke="#94a3b8" strokeWidth="0.35" markerEnd="url(#cd-arrow)" />
+          <line x1="50" y1="50" x2="50" y2="61" stroke="#94a3b8" strokeWidth="0.35" markerEnd="url(#cd-arrow)" />
+          <line x1="84" y1="50" x2="56" y2="61" stroke="#94a3b8" strokeWidth="0.35" markerEnd="url(#cd-arrow)" />
           <line x1="50" y1="72" x2="50" y2="74" stroke="#94a3b8" strokeWidth="0.35" markerEnd="url(#cd-arrow)" />
           <line x1="50" y1="85" x2="50" y2="87" stroke="#94a3b8" strokeWidth="0.35" markerEnd="url(#cd-arrow)" />
         </svg>
@@ -67,10 +70,13 @@ export function CoreDomains() {
         <div className="absolute left-1/2 top-[20%] w-[34%] -translate-x-1/2">
           <DomainNode label="Authoring & validation" accent="teal" />
         </div>
-        <div className="absolute left-[2%] top-[40%] w-[40%]">
+        <div className="absolute left-0 top-[40%] w-[29%]">
           <DomainNode label="Artefact & workspace tasks" accent="teal" />
         </div>
-        <div className="absolute right-[2%] top-[40%] w-[40%]">
+        <div className="absolute left-1/2 top-[40%] w-[29%] -translate-x-1/2">
+          <DomainNode label="Finite lifecycles" accent="teal" />
+        </div>
+        <div className="absolute right-0 top-[40%] w-[29%]">
           <DomainNode label="Interactive Worlds" accent="teal" />
         </div>
         <div className="absolute left-1/2 top-[62%] w-[34%] -translate-x-1/2">

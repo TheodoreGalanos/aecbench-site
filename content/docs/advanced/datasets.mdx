@@ -31,6 +31,11 @@ A label such as `public-2026` does not define dataset identity. The label cannot
       "task_id": "electrical/cable-sizing/voltage-drop/example",
       "path": "tasks/electrical/cable-sizing/voltage-drop/example",
       "task_kind": "artifact"
+    },
+    {
+      "task_id": "civil/dam-monitoring",
+      "path": "tasks/civil/dam-monitoring",
+      "task_kind": "world"
     }
   ],
   "generation": {
@@ -40,7 +45,7 @@ A label such as `public-2026` does not define dataset identity. The label cannot
 }
 ```
 
-The manifest contains semantic task identity and repository-relative paths. It does not copy task hashes, dataset hashes, package versions, or creation times.
+The manifest contains semantic task identity and repository-relative paths. `task_kind: "artifact"` selects `task.toml` loading. `task_kind: "world"` selects an `instruction.md` and `world.toml` package. The manifest does not copy task hashes, dataset hashes, package versions, or creation times.
 
 The optional `generation` field records replay inputs for the selection. Exact source or byte identity stays in the published dataset reference.
 
@@ -72,6 +77,8 @@ Creation is local and write-once for one `dataset_id`. Publish it under a new la
 uv run aec-bench dataset publish electrical-core --label public-2026
 ```
 
+The current `dataset create` command discovers artefact tasks through the task registry. To compose a mixed or world-only dataset today, use the Python dataset API or write the exact semantic manifest with `task_kind: "world"`, then validate and publish it. This is a creation-surface limit; dataset loading and `aec-bench run` support world entries.
+
 The default publication stores a deterministic detached bundle and references its exact bytes with `ArtifactRef`. Use `--repository` to bind the manifest to the current full Git commit and repository path instead:
 
 ```bash
@@ -97,6 +104,8 @@ uv run aec-bench run --config experiment.yaml
 ```
 
 `dataset config` resolves the interactive label before it writes `experiment.yaml`. Persisted run identity contains the exact repository or bundle reference, not the mutable idea of a current release.
+
+At execution time, `aec-bench run` loads each entry through its declared task kind, plans all tasks with `plan_trials()`, groups artefact and world work behind their existing application functions, and restores the declared plan order in the returned records. Unsupported world and provider combinations fail before execution begins.
 
 ## Inspect and move datasets
 

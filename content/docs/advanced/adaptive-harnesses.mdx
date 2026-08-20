@@ -39,7 +39,7 @@ from the incumbent run.
 
 ## Execution program
 
-The **execution program** (`px`) is a validated graph of task operations for governed adaptive or meta-harness studies. The fixed kernel compiles it into a `RunBundle` for the adaptive execution path.
+The **execution program** (`px`) is a validated graph of task operations for governed adaptive and harness-program studies. The fixed kernel compiles it into a `RunBundle` for the adaptive execution path.
 
 This is not the ordinary artefact-task API. Normal task execution uses `run_experiment()` and `run_trial()` and does not pass through `run_batch.v1` or a generic execution-program bridge.
 
@@ -69,6 +69,14 @@ fixed K
 
 Vary either `Hx` or `px` in one comparison while holding the other and `K` fixed. The
 task snapshot, verifier, seeds, repetitions, and shared budget must also remain explicit.
+
+## Functional composition boundary
+
+K / Hx / px is one specialist candidate shape, not a requirement of the generic meta-harness API. Harness-program studies use `run_harness_study()` to evaluate their materialised candidates while retaining fixed-kernel compilation, Harbor execution, trial receipts, statistical analysis, and study reports.
+
+The adaptive cycle uses `run_meta_harness()` for its bounded candidate selection and refinement shape. Repair still owns diagnosis and typed patch creation. Motif learning and promotion remain with their governance owners.
+
+Other callers can use different candidate values and runtimes through the same functional API. They need only return non-empty `TrialRecord` evidence and supply their own assessment policy.
 
 ## Compilation and execution
 

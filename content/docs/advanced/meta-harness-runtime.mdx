@@ -1,69 +1,104 @@
 ---
-title: Meta-Harness Runtime
-description: The meta-harness runtime turns task prose, run evidence, reviewer judgement, operations, and governance into a pauseable process for evolving benchmark worlds.
+title: Meta-Harness Composition
+description: Compose harness candidate evaluation, comparison, selection, and bounded refinement across existing aec-bench runtimes.
 ---
 
-The meta-harness runtime builds task-world descriptions and helps diagnose benchmark failures. It connects task prose, run evidence, verifier output, reviewer notes, operation plans, and governance decisions while preserving missing decisions as explicit waiting states.
+The meta-harness is the runtime-neutral composition layer for studying harness candidates. It proposes, evaluates, compares, selects, and refines caller-owned candidate values from `TrialRecord` evidence.
 
-The runtime is a **pauseable process runner**. When a stage needs an artefact that is not available, it returns an `awaiting_*` state and the packet needed to continue. Model-backed stages are optional. A bounded autonomous supervisor can resolve waiting states when providers or queued artefacts are available, but it stops at explicit limits and governance gates.
+The public Python facade is `aec_bench.experimentation.meta_harness`. It does not define a universal runtime, environment, metric, workflow language, or persisted meta-harness format. Artefact tasks, finite lifecycles, Interactive Worlds, and specialist qualification studies keep their own execution and evidence rules.
 
-The supported public entry point is `aec-bench meta-harness`.
+The `aec-bench meta-harness` command group remains the public application surface for comparison recipes and the specialist problem-model workflow.
 
-## The two loops
+## Functional boundary
 
-| Loop | Purpose | Output |
-|------|---------|--------|
-| **operation loop** | Inspect a task world and run evidence, then apply a declared operation or record a bounded proposal | Derived world, operation history, or proposal |
-| **governance loop** | Decide whether a proposal is local to one run or changes the world schema or generator | Run directive, rejection, or `world_generation_request` |
+The core works with three inputs:
 
-The operation loop can be deterministic or agentic. Deterministic operations use declared handles such as projection, difference, subset, or product. An agentic proposal is appropriate when the evidence shows a real issue that needs a change beyond the declared deterministic handles.
+- a `HarnessCandidate` that gives a caller-owned value a unique identity;
+- a candidate evaluator that returns a non-empty sequence of `TrialRecord` values; and
+- caller-supplied functions for assessment and, when required, proposal, selection, refinement, and stopping.
 
-Governance is the only boundary that can approve schema or generator change. An operation agent identifies pressure on the world and routes proposed definition changes to governance. Governance either keeps the action local to the current run or emits a fresh `world_generation_request`.
+| Value | Purpose |
+|-------|---------|
+| `HarnessCandidate` | One generic candidate identity and its runtime-specific value |
+| `HarnessCandidateTrials` | One evaluated candidate and all trial evidence returned for it |
+| `HarnessStudyResult` | One baseline, one or more evaluated candidates, and the caller's assessment |
+| `MetaHarnessRound` | One complete propose, evaluate, assess, and select round |
+| `MetaHarnessResult` | The initial evidence, completed rounds, final evaluated selection, and stop reason |
 
-## Process shape
+Failed and invalid trials remain evidence. The core does not discard them, convert them to successes, or require a positive reward. It rejects empty evidence and duplicate `trial_id` values from one candidate evaluation.
 
-The executable sequence is:
+## One-shot studies
 
-1. Task prose becomes a `problem_space_brief`.
-2. The brief becomes a task-world generation request.
-3. A world card declares the task unit, logic and operation profiles, evidence expectations, and governance policy.
-4. A task run produces verifier evidence and, when enabled, reviewer evidence.
-5. The operation loop applies declared operations or records proposals.
-6. The governance loop accepts, rejects, blocks, or routes a proposal back to world generation.
+Use `run_harness_study()` when the baseline and candidate set are already known:
 
-The world card is a construction and review artefact. It is separate from the registered [Interactive World runtime](/docs/core/interactive-worlds), which owns actor actions, host controls, replay, and task-world state during an interactive benchmark.
+```python
+from aec_bench.experimentation.meta_harness import (
+    HarnessCandidate,
+    run_harness_study,
+)
 
-```text
-prose
-  -> problem_space_brief
-  -> world card
-  -> task-run evidence
-  -> operation loop
-  -> governance loop
-  -> world_generation_request, when approved
+baseline = HarnessCandidate(candidate_id="baseline", value=baseline_config)
+candidate = HarnessCandidate(candidate_id="candidate-a", value=candidate_config)
+
+study = run_harness_study(
+    baseline=baseline,
+    candidates=[candidate],
+    evaluate=evaluate_candidate,
+    assess=assess_candidates,
+)
 ```
 
-## Waiting and terminal states
+`evaluate_candidate` connects each generic candidate value to its real runtime and returns that runtime's normal `TrialRecord` values. `assess_candidates` owns the comparison result. It can return a metric summary, study conclusion, decision object, or another normal Python value.
 
-| State | Meaning |
-|-------|---------|
-| `awaiting_problem_space_brief` | Prose exists, but no structured brief is available |
-| `awaiting_world_generation` | A brief exists, but no world card is available |
-| `awaiting_task_run` | A world exists, but no run evidence is available |
-| `awaiting_operation_plan` | Run evidence exists, but no operation plan is available |
-| `awaiting_governance_decision` | A proposal exists, but governance has not decided |
-| `accepted_for_run` | Governance accepted a run-only directive |
-| `accepted_for_world_generation` | Governance approved a schema or generator repair and emitted a new request |
+The selector is not part of a one-shot study. The caller interprets `study.assessment` or uses the bounded refinement API when selection belongs inside the process.
 
-These states make task construction and verifier debugging inspectable. Missing model output keeps the process in a waiting state until real output is available.
+## Bounded refinement
 
-## Authority
+Use `run_meta_harness()` for repeated proposal and refinement:
 
-`aec-bench meta-harness` coordinates the process. Evaluation stays separate from operations and governance, agents propose changes, and governance owns approval. Run evidence also remains separate from world definitions.
+```python
+from aec_bench.experimentation.meta_harness import run_meta_harness
 
-## Start with recipe and compare
+result = run_meta_harness(
+    initial=baseline,
+    propose=propose_candidates,
+    evaluate=evaluate_candidate,
+    assess=assess_candidates,
+    select=select_candidate,
+    refine=refine_candidate,
+    stop=stop_when_sufficient,
+    max_rounds=3,
+)
+```
 
-For a public candidate-versus-baseline workflow, start with `recipe`:
+`max_rounds` is required and always bounds execution. Each round can select only the current candidate or an evaluated proposal. A changed refined candidate receives a new `candidate_id` and becomes the evaluated baseline for the next round. It cannot become the final selection before evaluation.
+
+The proposal, assessment, selection, refinement, and stopping policies remain with the caller. Evaluation continues to own metric meaning, and governance continues to own approval.
+
+## Runtime evaluators
+
+The functional core never imports artifact-task, lifecycle, Interactive World, adapter, provider, Harbor, or Prime implementations. A runtime participates through an evaluator function.
+
+For artefact tasks, the evaluator can call the normal `run_experiment()` boundary directly:
+
+```python
+from aec_bench.harness.artifact_tasks import run_experiment
+
+def evaluate_candidate(candidate):
+    value = candidate.value
+    return run_experiment(
+        runtime=value.runtime,
+        tasks=value.tasks,
+        trials=value.trials,
+        recipe=value.attempt_recipe,
+    )
+```
+
+Future lifecycle and Interactive World experiment runners can supply equivalent evaluators without changing the meta-harness core. Harness-program studies retain their fixed-kernel compilation, Harbor execution, reports, and qualification rules while using the same composition functions for candidate evaluation.
+
+## CLI comparison
+
+For a scriptable candidate-versus-baseline workflow, start with `recipe`:
 
 ```bash
 uv run aec-bench meta-harness recipe \
@@ -71,7 +106,7 @@ uv run aec-bench meta-harness recipe \
   --output artefacts/meta-harness/demo
 ```
 
-The command writes a scriptable workspace for the brief, baseline and candidate worlds, task-run evidence, model endpoint configuration, and comparison output. Existing world, run, or experiment files can be supplied when they already exist.
+The command writes a workspace for the brief, baseline and candidate problem models, task-run evidence, model endpoint configuration, and comparison output. Existing problem-model, run, or experiment files can be supplied when they already exist.
 
 After both evidence sets are complete, compare them deterministically:
 
@@ -85,9 +120,52 @@ uv run aec-bench meta-harness compare \
   --output comparison
 ```
 
-`compare` requires complete baseline and candidate evidence. Use `example --output <directory>` for a provider-free worked comparison before connecting model endpoints.
+The supported file flags retain `world` in their names. In this workflow, those files contain generated problem representations; they are not registered Interactive Worlds. `compare` delegates candidate evaluation and assessment to the functional study API. Use `example --output <directory>` for a provider-free worked comparison before connecting model endpoints.
 
-## Advanced process commands
+## Problem-model workflow
+
+The pauseable CLI process builds a problem model and helps diagnose benchmark failures. It connects task prose, run evidence, verifier output, reviewer notes, operation plans, and governance decisions while preserving missing inputs as explicit waiting states.
+
+This is one application of the generic meta-harness API, not a universal runtime. Model-backed stages are optional. A bounded autonomous supervisor can resolve waiting states when providers or queued artefacts are available, but it stops at explicit limits and governance gates.
+
+### Operation and governance loops
+
+| Loop | Purpose | Output |
+|------|---------|--------|
+| **operation loop** | Inspect a problem model and run evidence, then apply a declared operation or record a bounded proposal | Derived problem model, operation history, or proposal |
+| **governance loop** | Decide whether a proposal is local to one run or changes the problem-model schema or generator | Run directive, rejection, or `world_generation_request` |
+
+Deterministic operations use declared handles such as projection, difference, subset, or product. An agentic proposal is appropriate when the evidence shows a real issue that needs a change beyond those handles.
+
+Governance is the only boundary that can approve schema or generator change. It either keeps the action local to the current run or emits a fresh `world_generation_request`.
+
+The process shape is:
+
+```text
+prose
+  -> problem_space_brief
+  -> problem model
+  -> task-run evidence
+  -> operation loop
+  -> governance loop
+  -> world_generation_request, when approved
+```
+
+The problem model uses the existing world-card JSON contract to declare the task unit, logic and operation profiles, evidence expectations, and governance policy. It is separate from the registered [Interactive World runtime](/docs/core/interactive-worlds), which owns actor actions, host controls, replay, and task-world state during an interactive benchmark.
+
+### Waiting and terminal states
+
+| State | Meaning |
+|-------|---------|
+| `awaiting_problem_space_brief` | Prose exists, but no structured brief is available |
+| `awaiting_world_generation` | A brief exists, but no problem model is available |
+| `awaiting_task_run` | A problem model exists, but no run evidence is available |
+| `awaiting_operation_plan` | Run evidence exists, but no operation plan is available |
+| `awaiting_governance_decision` | A proposal exists, but governance has not decided |
+| `accepted_for_run` | Governance accepted a run-only directive |
+| `accepted_for_world_generation` | Governance approved a schema or generator repair and emitted a new request |
+
+Missing model output keeps the process in a waiting state until real output is available.
 
 Use `process` when you need to supply or inspect each pauseable artefact directly:
 
@@ -99,23 +177,11 @@ uv run aec-bench meta-harness process "Create a diagnostic task." \
   --output process-output
 ```
 
-If the next required artefact is absent, the result stays in its waiting state. See the [CLI Reference](/docs/reference/cli#meta-harness) for commands that inspect or apply one stage at a time.
+Use `autonomous` only when queued artefacts or model endpoints can resolve waiting states. Its limits cover iterations, problem-model regenerations, governance actions, cost, and stagnation. By default, automation can accept `run_only` directives. `world_schema` and `world_generator` changes require human governance.
 
-Use `autonomous` only when queued artefacts or model endpoints can resolve waiting states. Its limits cover iterations, world regenerations, governance actions, cost, and stagnation.
+## Lifecycle and Harbor boundaries
 
-By default, automation can accept `run_only` directives. `world_schema` and `world_generator` changes require human governance.
-
-The supervisor's selection signal combines verifier reward, logic-profile certification, reviewer completion, evidence completeness, and penalties for unresolved waits or governance churn. A higher score is comparable only when task difficulty and verifier strictness remain stable.
-
-## Evidence lifecycles
-
-Evidence lifecycles provide staged checkpoints. Use `lifecycle-start`, `lifecycle-submit`, and `lifecycle-status` for normal progression.
-
-The lifecycle can also revisit a submitted checkpoint, create a derived branch, or run locally. The local runner uses one persistent conversation by default or fresh context per checkpoint. See the [CLI Reference](/docs/reference/cli#meta-harness) for these commands.
-
-Lifecycle ablation uses typed, resumable plans. Calibration freeze selects one condition from complete, immutable public records.
-
-## Harbor package boundary
+The lifecycle commands under `aec-bench meta-harness` are an application-level CLI surface. Lifecycle progression, checkpoint visibility, branching, ablation, and calibration freeze remain lifecycle-owned; they are not part of the functional meta-harness core. See [Finite Lifecycles](/docs/core/lifecycles).
 
 `meta-harness harbor-task` materialises a Harbor-shaped operation-orchestrator package:
 
@@ -127,12 +193,12 @@ uv run aec-bench meta-harness harbor-task \
   --output operation-task
 ```
 
-The package contains `job.yaml`, `agent/input.json`, `agent/output.md`, `agent_result.json`, and `result.json`. `harbor-task` writes this package as the external-execution hand-off. External execution produces completed task-run JSON, which `process` or `autonomous` accepts through `--task-run`; these are the supported public hand-off surfaces.
+The package contains `job.yaml`, `agent/input.json`, `agent/output.md`, `agent_result.json`, and `result.json`. External execution produces completed task-run JSON, which `process` or `autonomous` accepts through `--task-run`. Harbor execution remains under the harness boundary.
 
-## Verifier and reviewer authority
+## Evidence and authority
 
-The task verifier remains the source of task-owned scoring evidence. Evaluation owns the result. The meta-harness helps attribute failures to agent behaviour, parsing, tolerance settings, or the evidence schema.
+The task verifier remains the source of task-owned scoring evidence. Evaluation owns metric meaning and the assessment policy supplied to a study. The meta-harness retains returned trial evidence and coordinates caller-owned functions; it does not reinterpret task results.
 
-Explicit checks remain authoritative. The reviewer can support a run-only note, a verifier-schema proposal, or a world-generation repair, while governance owns any change to future task definitions. Trial records and benchmark claims remain subject to the normal provenance and repeatability controls.
+Repair diagnosis and patch creation remain repair-owned. Motif learning and promotion remain with their governance owners. Agents can propose changes, but governance owns approval. Trial records and benchmark claims remain subject to the normal provenance and repeatability controls.
 
-Use this runtime when a benchmark failure should inform improvements to the task world or its evidence boundary.
+Use the functional API when different runtimes need the same candidate-study shape. Use the CLI process when task prose and run evidence should inform a governed problem-model repair.

@@ -80,15 +80,19 @@ describe('library documentation coverage', () => {
     expect(scoring).toContain('experimental');
   });
 
-  it('documents the current meta-harness ownership and pauseable process', () => {
+  it('documents the functional meta-harness ownership and specialist process', () => {
     const runtime = readDoc('advanced/meta-harness-runtime.mdx');
     const cli = readDoc('reference/cli.mdx');
 
-    expect(runtime).toContain('pauseable process runner');
+    expect(runtime).toContain('aec_bench.experimentation.meta_harness');
+    expect(runtime).toContain('run_harness_study()');
+    expect(runtime).toContain('run_meta_harness()');
+    expect(runtime).toContain('max_rounds=3');
+    expect(runtime).toContain('Failed and invalid trials remain evidence');
+    expect(runtime).toContain('not a universal runtime');
     expect(runtime).toContain('operation loop');
     expect(runtime).toContain('governance loop');
     expect(runtime).toContain('world_generation_request');
-    expect(runtime).toContain('Evaluation stays separate from operations and governance');
     expect(runtime).not.toContain('aec_bench.meta_harness');
     expect(runtime).not.toContain('build_aecbench_harbor_task_run_resolver');
     expect(cli).toContain('aec-bench meta-harness recipe');

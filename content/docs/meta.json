@@ -1,5 +1,6 @@
 {
   "root": true,
   "title": "aec-bench",
+  "description": "Open-source platform for creating, running, and evaluating Architecture, Engineering and Construction benchmark tasks for AI agents.",
   "pages": ["---Start---", "...start", "---Core---", "...core", "---Agents---", "...agents", "---Evaluation---", "...evaluation", "---Advanced---", "...advanced", "---Reference---", "...reference"]
 }

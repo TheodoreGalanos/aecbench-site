@@ -6,7 +6,7 @@ description: aec-bench supports artefact tasks, finite lifecycles, and Interacti
 import { BenchmarkRunFlow } from '@/components/docs/benchmark-run-flow';
 import { CoreDomains } from '@/components/docs/core-domains';
 
-aec-bench has three execution families: artefact tasks, finite lifecycles, and Interactive Worlds. They share planning, experiment identity, `TrialRecord` evidence, provenance, and reporting. Each family retains its own execution and evaluation semantics.
+aec-bench has three execution families: artefact tasks, finite lifecycles, and Interactive Worlds. They share planning, experiment identity, [`TrialRecord`](/docs/core/contracts#trialrecord--one-trial-result) evidence, provenance, and reporting. Each family retains its own execution and evaluation semantics.
 
 <CoreDomains />
 
@@ -31,7 +31,7 @@ The normal Python execution path is:
 run_experiment() -> run_trial() -> runtime.run_once()
 ```
 
-`AttemptRecipe` controls whether one trial runs one attempt or several candidates. It receives only a tracked `AttemptRunner`; it cannot call the official verifier or inspect reward. The runtime still performs exactly one agent execution per call. This keeps attempt branching and selection outside `HarnessSpec`, which describes runtime capabilities, bindings, contracts, and budgets.
+[`AttemptRecipe`](/docs/core/contracts#taskattempt--one-isolated-agent-execution) controls whether one trial runs one attempt or several candidates. It receives only a tracked `AttemptRunner`; it cannot call the official verifier or inspect reward. The runtime still performs exactly one agent execution per call. This keeps attempt branching and selection outside `HarnessSpec`, which describes runtime capabilities, bindings, contracts, and budgets.
 
 With best-of execution, several `TaskAttempt` candidates belong to one planned trial. The selector uses only its permitted candidate view. The official verifier evaluates the selected output once. Selection evidence is retained with the trial, and the selected output and trajectory remain resolvable after every temporary attempt workspace is removed.
 
@@ -43,16 +43,11 @@ See [Tasks](/docs/core/tasks) and [Templates](/docs/core/templates) for the auth
 
 An Interactive World repeatedly shows an actor-visible observation and accepts an action that changes task-owned state. Interactive Worlds suit causal decisions over time; artefact tasks cover a final workspace submission.
 
-The boundary is deliberately small:
+The world owns its state, rules, and evaluation. The runner connects the agent to the world, records the evidence, and returns a standard `TrialRecord`.
 
-- the world owns state, observations, action meaning, transitions, domain termination, and evaluation;
-- the shared actor boundary owns decision correlation and the provider-facing exchange;
-- the task-owned application owns its journey, controls, persistence, verification, and evaluation; and
-- the complete trial function retains evidence and returns one normal `TrialRecord`.
+The current catalogue includes wastewater pump-station stewardship and dam-seepage monitoring. Both use the same world interfaces, while each task keeps its own state, rules, and evaluation.
 
-The current catalogue contains wastewater pump-station stewardship and dam-seepage monitoring. Both reuse the world core and one Prime actor-session implementation. They do not share state, journeys, controls, persistence, verification, evaluation, or provider-specific task semantics.
-
-`WorldTask` binds an objective to an exact registered world build and profile. `plan_trials()` creates the common `PlannedTrial` values. A complete dam, pump, or Harbor world-trial function then returns a `TrialRecord`. Asynchronous `run_world_experiment()` applies that operation in plan order and can persist each completed record.
+[`WorldTask`](/docs/core/interactive-worlds#worldtask-and-file-backed-tasks) binds an objective to an exact registered world build and profile. `plan_trials()` creates the common `PlannedTrial` values. A complete dam, pump, or Harbor world-trial function then returns a `TrialRecord`. Asynchronous `run_world_experiment()` applies that operation in plan order and can persist each completed record.
 
 Persistence, recovery, host controls, branching, rollouts, staged evidence, and provider integration are optional capabilities. Add these capabilities when the world requires them.
 
@@ -66,7 +61,7 @@ Use a lifecycle when the work has known stages and controlled evidence release. 
 
 Finite lifecycles use one checkpoint coordinator and one functional application surface. `release_checkpoint()`, `submit_checkpoint()`, `read_lifecycle()`, `revisit_checkpoint()`, `branch_lifecycle()`, and `run_lifecycle()` control canonical state. A branch can start only from a submitted checkpoint. It receives the accepted prefix through that checkpoint and continues through the same coordinator.
 
-`LifecycleTrial` binds one `PlannedTrial` to a materialised lifecycle package, run directory, execution mode, and visibility policy. `run_local_lifecycle()` dispatches to separate fresh-session and persistent-session implementations because their memory and recovery rules differ. Both return `LifecycleExecution`, which contains canonical state and the agent and tool evidence needed to construct a trial.
+[`LifecycleTrial`](/docs/core/lifecycles#functional-python-api) binds one `PlannedTrial` to a materialised lifecycle package, run directory, execution mode, and visibility policy. `run_local_lifecycle()` dispatches to separate fresh-session and persistent-session implementations because their memory and recovery rules differ. Both return `LifecycleExecution`, which contains canonical state and the agent and tool evidence needed to construct a trial.
 
 `run_lifecycle_trial()` executes, verifies, constructs one normal `TrialRecord`, optionally persists it, and returns it. `run_lifecycle_experiment()` applies that operation to lifecycle trials in declared order and returns the records directly. Lifecycle studies use these functions while keeping study design, immutable snapshots, recovery, and selection policy under `aec_bench.experimentation.lifecycle_studies`.
 

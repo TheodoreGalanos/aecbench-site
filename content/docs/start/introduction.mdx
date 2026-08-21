@@ -30,15 +30,21 @@ aec-bench provides:
 
 ## Mental model
 
-The core loop is:
+Start with the engineering behaviour that you want to test:
 
-1. Define or generate tasks.
+- **Artefact task:** an agent produces an answer or workspace artefact.
+- **Finite lifecycle:** an agent completes controlled stages and evidence submissions.
+- **Interactive World:** an agent observes state, acts, and receives the next state.
+
+Each task family has its own execution model. All families produce task-owned verification, trial evidence, evaluation results, and reports.
+
+The common outer loop is:
+
+1. Choose the task family and task.
 2. Freeze a dataset when you need comparability.
-3. Run an agent harness against the selected tasks.
-4. Verify outputs and write trial records.
-5. Evaluate, report, and inspect traces.
-
-Artefact tasks, Interactive Worlds, and finite lifecycles share evaluation, trial evidence, and reporting boundaries while each task family retains its own execution model.
+3. Run the task through its execution model.
+4. Verify and evaluate the result.
+5. Record the evidence, then inspect and report it.
 
 ## Next Steps
 

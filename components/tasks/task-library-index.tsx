@@ -8,6 +8,14 @@ import { CATALOGUE_DISCIPLINE_ORDER, DISCIPLINE_META } from '@/lib/disciplines';
 
 interface TaskLibraryIndexProps {
   catalogue: LibraryCatalogue;
+  filters?: TaskLibraryFilters;
+}
+
+interface TaskLibraryFilters {
+  discipline?: string;
+  category?: string;
+  standard?: string;
+  tag?: string;
 }
 
 interface DisciplineNavigationItem {
@@ -25,12 +33,29 @@ function prettify(slug: string): string {
     .join(' ');
 }
 
-export function TaskLibraryIndex({ catalogue }: TaskLibraryIndexProps) {
+function matchesFilters(
+  entry: LibraryCatalogue['templates'][number],
+  filters: TaskLibraryFilters,
+) {
+  return (!filters.discipline || entry.discipline === filters.discipline)
+    && (!filters.category || entry.category === filters.category)
+    && (!filters.standard || entry.standards.includes(filters.standard))
+    && (!filters.tag || entry.tags?.includes(filters.tag));
+}
+
+export function TaskLibraryIndex({ catalogue, filters = {} }: TaskLibraryIndexProps) {
   const totalTasks = catalogue.counts.total_templates + catalogue.counts.total_seeds;
-  const disciplineNavigation = CATALOGUE_DISCIPLINE_ORDER.map((discipline) => ({
+  const activeFilters = Object.entries(filters).filter((entry): entry is [string, string] => Boolean(entry[1]));
+  const filteredTemplates = catalogue.templates.filter((entry) => matchesFilters(entry, filters));
+  const filteredSeeds = catalogue.seeds.filter((entry) => matchesFilters(entry, filters));
+  const visibleDisciplines = CATALOGUE_DISCIPLINE_ORDER.filter((discipline) =>
+    [...filteredTemplates, ...filteredSeeds].some((entry) => entry.discipline === discipline),
+  );
+  const disciplineNavigation = visibleDisciplines.map((discipline) => ({
     discipline,
     name: DISCIPLINE_META[discipline].name,
-    ...catalogue.counts.by_discipline[discipline],
+    templates: filteredTemplates.filter((entry) => entry.discipline === discipline).length,
+    seeds: filteredSeeds.filter((entry) => entry.discipline === discipline).length,
   }));
 
   return (
@@ -68,6 +93,15 @@ export function TaskLibraryIndex({ catalogue }: TaskLibraryIndexProps) {
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-8" aria-labelledby="task-sitemap-heading">
+        {activeFilters.length > 0 && (
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded border border-accent-teal/40 bg-accent-teal/5 px-4 py-3">
+            <p className="text-sm text-landing-muted">
+              Showing {filteredTemplates.length + filteredSeeds.length} matching tasks:{' '}
+              <span className="text-landing-text">{activeFilters.map(([key, value]) => `${key} = ${value}`).join(' · ')}</span>
+            </p>
+            <Link href="/tasks" className="text-sm text-accent-teal hover:text-landing-text">Clear filters</Link>
+          </div>
+        )}
         <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="anno">disciplines</p>
@@ -84,13 +118,17 @@ export function TaskLibraryIndex({ catalogue }: TaskLibraryIndexProps) {
           <DisciplineNavigation items={disciplineNavigation} />
 
           <div className="grid gap-4">
-            {CATALOGUE_DISCIPLINE_ORDER.map((discipline) => (
+            {visibleDisciplines.map((discipline) => (
               <DisciplineBlock
                 key={discipline}
                 discipline={discipline}
                 catalogue={catalogue}
+                filters={filters}
               />
             ))}
+            {visibleDisciplines.length === 0 && (
+              <p className="rounded border border-landing-border bg-[#070707] p-6 text-sm text-landing-muted">No tasks match these filters.</p>
+            )}
           </div>
         </div>
       </section>
@@ -137,13 +175,15 @@ function DisciplineNavigation({ items }: { items: DisciplineNavigationItem[] }) 
 function DisciplineBlock({
   discipline,
   catalogue,
+  filters,
 }: {
   discipline: CatalogueDiscipline;
   catalogue: LibraryCatalogue;
+  filters: TaskLibraryFilters;
 }) {
   const meta = DISCIPLINE_META[discipline];
-  const templates = catalogue.templates.filter((entry) => entry.discipline === discipline);
-  const seeds = catalogue.seeds.filter((entry) => entry.discipline === discipline);
+  const templates = catalogue.templates.filter((entry) => entry.discipline === discipline && matchesFilters(entry, filters));
+  const seeds = catalogue.seeds.filter((entry) => entry.discipline === discipline && matchesFilters(entry, filters));
   const entries = [...templates, ...seeds];
   const categories = Array.from(new Set(entries.map((entry) => entry.category))).sort((a, b) =>
     prettify(a).localeCompare(prettify(b)),

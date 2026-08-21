@@ -9,6 +9,22 @@ export const metadata: Metadata = {
   description: 'Browse AEC-Bench task templates and proposed task seeds by discipline and category.',
 };
 
-export default function TasksPage() {
-  return <TaskLibraryIndex catalogue={getCatalogue()} />;
+export default async function TasksPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = searchParams ? await searchParams : {};
+  const first = (value: string | string[] | undefined) => Array.isArray(value) ? value[0] : value;
+  return (
+    <TaskLibraryIndex
+      catalogue={getCatalogue()}
+      filters={{
+        discipline: first(params.discipline),
+        category: first(params.category),
+        standard: first(params.standard),
+        tag: first(params.tag),
+      }}
+    />
+  );
 }

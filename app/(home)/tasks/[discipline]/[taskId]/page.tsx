@@ -9,9 +9,11 @@ import {
 import {
   getCatalogue,
   getCatalogueEntry,
+  getTemplateNeighbours,
   getTemplateVariants,
 } from '@/lib/aec-bench/library-catalogue';
 import { getTemplateDetailSupplement } from '@/lib/aec-bench/template-detail-supplements';
+import { getTemplateArtifact } from '@/lib/aec-bench/template-artifacts';
 import { TaskTemplateDetail } from '@/components/template-detail/task-template-detail';
 
 function isValidDiscipline(slug: string): slug is CatalogueDiscipline {
@@ -62,12 +64,15 @@ export default async function TaskTemplatePage({
   const entry = getCatalogueEntry(discipline, taskId, catalogue);
   if (!entry || entry.status !== 'built') notFound();
 
+  const neighbours = getTemplateNeighbours(entry, catalogue);
   return (
     <TaskTemplateDetail
       entry={entry}
       detail={getTemplateDetailSupplement(discipline, taskId)}
+      artifact={getTemplateArtifact(discipline, taskId)}
       variants={getTemplateVariants(taskId, catalogue)}
-      canonicalPath={`/tasks/${entry.discipline}/${entry.task_id}`}
+      previousTask={neighbours.previous}
+      nextTask={neighbours.next}
     />
   );
 }

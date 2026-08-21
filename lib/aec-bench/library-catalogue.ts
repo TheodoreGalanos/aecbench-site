@@ -213,3 +213,18 @@ export function getTemplateVariants(
 ): LibraryCatalogueEntry[] {
   return catalogue.templates.filter((entry) => entry.task_id === taskId);
 }
+
+export function getTemplateNeighbours(
+  entry: LibraryCatalogueEntry,
+  catalogue: LibraryCatalogue = getCatalogue(),
+) {
+  const disciplineTemplates = catalogue.templates.filter(
+    (candidate) => candidate.discipline === entry.discipline,
+  );
+  const index = disciplineTemplates.findIndex((candidate) => candidate.task_id === entry.task_id);
+  if (index < 0 || disciplineTemplates.length < 2) return { previous: null, next: null };
+  return {
+    previous: disciplineTemplates[(index - 1 + disciplineTemplates.length) % disciplineTemplates.length],
+    next: disciplineTemplates[(index + 1) % disciplineTemplates.length],
+  };
+}

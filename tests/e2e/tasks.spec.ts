@@ -25,11 +25,26 @@ test.describe('Task library', () => {
     await expect(page.getByRole('heading', { level: 3, name: 'Ground' })).toBeInViewport();
   });
 
-  test('/tasks/electrical/voltage-drop renders generated template anatomy', async ({ page }) => {
+  test('/tasks/electrical/voltage-drop renders the task contract and source bundle', async ({ page }) => {
     await page.goto('/tasks/electrical/voltage-drop');
     await expect(page.getByRole('heading', { level: 1, name: /Voltage Drop/i })).toBeVisible();
-    await expect(page.getByText('Parameter Map')).toBeVisible();
-    await expect(page.getByText('Generation Preview')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Parameters' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Example task' })).toBeVisible();
     await expect(page.getByText('conductor_material').first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Task bundle' })).toBeVisible();
+    await page.getByRole('tab', { name: 'Contract source' }).click();
+    await expect(page.getByRole('tabpanel')).toContainText('[params.conductor_material]');
+    await page.getByRole('tab', { name: 'Scoring' }).click();
+    await expect(page.getByRole('link', { name: /Reference implementation/i })).toHaveAttribute(
+      'href',
+      /4bb4073db1bc364bd7c4219c0abec4e903c5e9db/,
+    );
+  });
+
+  test('/tasks accepts standard and tag filters from detail-page links', async ({ page }) => {
+    await page.goto('/tasks?standard=ARR&tag=hydrology');
+    await expect(page.getByText(/Showing 1 matching tasks/)).toBeVisible();
+    await expect(page.getByRole('link', { name: /^Rational Method$/ })).toBeVisible();
+    await expect(page.getByRole('link', { name: /^Voltage Drop$/ })).toHaveCount(0);
   });
 });

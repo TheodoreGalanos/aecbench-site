@@ -1,4 +1,4 @@
-// ABOUTME: Fails CI if the /leaderboard or /leaderboard/[discipline] route bundles exceed the gzip budget.
+// ABOUTME: Fails CI if leaderboard or task-detail route bundles exceed the gzip budget.
 // ABOUTME: Reads the Turbopack page_client-reference-manifest.js and sums unique chunk gzip sizes per entry.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -35,6 +35,15 @@ const ROUTES: RouteSpec[] = [
     patterns: [
       /app\/\(home\)\/leaderboard\/\[discipline\]\/page$/,
       /app\/leaderboard\/\[discipline\]\/page$/,
+    ],
+  },
+  {
+    label: 'task-detail',
+    manifestPath:
+      '.next/server/app/(home)/tasks/[discipline]/[taskId]/page_client-reference-manifest.js',
+    patterns: [
+      /app\/\(home\)\/tasks\/\[discipline\]\/\[taskId\]\/page$/,
+      /app\/tasks\/\[discipline\]\/\[taskId\]\/page$/,
     ],
   },
 ];

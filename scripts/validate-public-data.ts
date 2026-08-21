@@ -3,6 +3,8 @@
 import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { DOMAINS, LeaderboardArtefactSchema, LeaderboardEntrySchema } from '@/lib/aec-bench/contracts';
+import { getTemplateArtifact } from '@/lib/aec-bench/template-artifacts';
+import { getTemplateDetailArtefact } from '@/lib/aec-bench/template-detail-supplements';
 
 async function readJson(path: string): Promise<unknown> {
   return JSON.parse(await readFile(path, 'utf-8'));
@@ -30,9 +32,15 @@ async function main() {
     LeaderboardEntrySchema.parse(model);
   }
 
+  const templateDetails = getTemplateDetailArtefact();
+  for (const key of Object.keys(templateDetails.templates)) {
+    const [discipline, taskId] = key.split('/');
+    getTemplateArtifact(discipline, taskId);
+  }
+
   process.stdout.write(
     `[data:validate] ${leaderboard.entries.length} models, ${leaderboard.run_status.tasks} tasks, ` +
-      `${leaderboard.is_mock ? 'preview' : 'real'} data\n`,
+      `${templateDetails.template_count} template artefacts, ${leaderboard.is_mock ? 'preview' : 'real'} data\n`,
   );
 }
 

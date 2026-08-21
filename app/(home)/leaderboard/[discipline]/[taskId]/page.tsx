@@ -6,9 +6,11 @@ import { DOMAINS, type Domain } from '@/lib/aec-bench/contracts';
 import {
   getCatalogue,
   getCatalogueEntry,
+  getTemplateNeighbours,
   getTemplateVariants,
 } from '@/lib/aec-bench/library-catalogue';
 import { getTemplateDetailSupplement } from '@/lib/aec-bench/template-detail-supplements';
+import { getTemplateArtifact } from '@/lib/aec-bench/template-artifacts';
 import { TaskTemplateDetail } from '@/components/template-detail/task-template-detail';
 
 function isValidDiscipline(slug: string): slug is Domain {
@@ -60,13 +62,16 @@ export default async function TaskTemplatePage({
 
   const detail = getTemplateDetailSupplement(discipline, taskId);
   const variants = getTemplateVariants(taskId, catalogue);
+  const neighbours = getTemplateNeighbours(entry, catalogue);
 
   return (
     <TaskTemplateDetail
       entry={entry}
       detail={detail}
+      artifact={getTemplateArtifact(discipline, taskId)}
       variants={variants}
-      canonicalPath={`/tasks/${entry.discipline}/${entry.task_id}`}
+      previousTask={neighbours.previous}
+      nextTask={neighbours.next}
     />
   );
 }

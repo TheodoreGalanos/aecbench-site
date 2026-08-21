@@ -130,7 +130,7 @@ Use RLM when the model needs to inspect documents in chunks, run calculations, p
 
 ## Lambda-RLM
 
-Lambda-RLM follows a fixed, structured report workflow. It is designed for tasks where the output shape is known before the run starts: scopes, compliance reports, design notes, fee proposals, and other templated technical documents.
+[Lambda-RLM](https://github.com/TheodoreGalanos/aec-bench/tree/main/src/aec_bench/adapters/lambda_rlm) follows a fixed, structured report workflow. It is designed for tasks where the output shape is known before the run starts: scopes, compliance reports, design notes, fee proposals, and other templated technical documents.
 
 The high-level phases are:
 
@@ -175,7 +175,7 @@ Lambda-RLM trades free-form exploration for repeatable extraction and compositio
 
 ## DeepSeek Harness
 
-DeepSeek Harness uses the official Harness SDK and runtime through the `deepseek_harness` adapter. Install the optional execution support, then select an explicit provider route:
+[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) uses the official Harness SDK and runtime through the `deepseek_harness` adapter. Install the optional execution support, then select an explicit provider route:
 
 ```bash
 uv sync --extra execution --extra deepseek-harness
@@ -192,7 +192,7 @@ Use the [CLI reference](/docs/reference/cli#run-local) for best-of local attempt
 
 ## Prime Agent
 
-Prime Agent is an external-process harness. aec-bench stages the task, starts the upstream executable in JSON mode, and then uses the normal output, verifier, evaluation, and ledger-import path.
+[Prime Agent](https://github.com/PrimeIntellect-ai/prime-agent) is an external-process harness. aec-bench stages the task, starts the upstream executable in JSON mode, and then uses the normal output, verifier, evaluation, and ledger-import path.
 
 ```bash
 pip install aec-bench

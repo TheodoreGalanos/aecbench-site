@@ -1,9 +1,9 @@
 ---
 title: Quickstart
-description: The quickstart is a short path from a fresh install to generating a task, running a local trial, and evaluating the imported ledger.
+description: Install aec-bench, generate and validate one engineering task, run a model-backed agent, and evaluate the recorded trial.
 ---
 
-This walkthrough uses the published package for the shortest path to a local trial.
+This guide takes you from a fresh installation to one evaluated trial. You will generate and validate an engineering task, run a model-backed agent from your machine, and inspect the recorded result.
 Use the source checkout when you are changing aec-bench itself.
 
 ## Prerequisites
@@ -36,7 +36,7 @@ aec-bench generate task terzaghi-bearing-capacity \
   --output tasks/generated
 ```
 
-Generated instances are normal task directories with an instruction, task config, and verifier files. The output root also contains an optional `generation-manifest.json` sidecar with replay inputs. Task loading and execution ignore this sidecar.
+Generated instances are normal task directories with an instruction, task config, and verifier files. The output root also contains `generation-config.json` and `generation-manifest.json` for deterministic replay. Task loading and execution do not read these sidecars.
 
 ## Validate
 
@@ -63,8 +63,8 @@ export OPENAI_API_KEY="..."
 
 aec-bench run-local \
   tasks/generated/ground/shallow-foundations/terzaghi-bearing-capacity/perth-coastal-medium-dense-sand-00 \
-  --model gpt-4.1-mini \
-  --harness direct
+  --model openai:gpt-4.1-mini \
+  --harness tool_loop
 ```
 
 Use `--harness rlm` for a recursive-language-model harness, or `--keep-workspace` when debugging the temporary workspace after a run.

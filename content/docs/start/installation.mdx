@@ -8,7 +8,6 @@ description: Install the provider-free aec-bench package, then add only the exec
 - **Python:** 3.13 or later
 - **Package installer:** `pip` for the published package; `uv` for source development
 - **OS:** macOS, Linux, or Windows through WSL
-- **Memory:** 4 GB RAM minimum, 8 GB recommended for larger generated suites
 
 Docker, Modal, Morph Cloud, Prime, and Harbor are optional. Install or configure the tool that matches your selected execution or training path.
 
@@ -31,6 +30,7 @@ Install only the features you use:
 |---------|-----------------|
 | Harbor execution and import | `pip install "aec-bench[execution]"` |
 | Harbor on Morph Cloud | `pip install "aec-bench[execution,morph]"` |
+| DeepSeek Harness adapter | `pip install "aec-bench[deepseek-harness]"` |
 | Local model-backed agent harnesses and reviewers | `pip install "aec-bench[local-agents]"` |
 | Prime CLI, export, and hosted evaluation | `pip install "aec-bench[prime]"` |
 | Prime Agent interactive worlds over ACP | `pip install "aec-bench[prime-agent]"` |
@@ -63,13 +63,14 @@ Set credentials for the provider used by your model or endpoint alias:
 | OpenAI | `OPENAI_API_KEY` |
 | Azure OpenAI or Azure AI Foundry v1 | `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT`; optional `AZURE_OPENAI_API_VERSION` |
 | Together AI | `TOGETHER_API_KEY` |
+| DeepSeek API or compatible gateway | `DEEPSEEK_API_KEY`; optional `DEEPSEEK_BASE_URL` |
 | AWS Bedrock | `AWS_BEARER_TOKEN_BEDROCK`, `AWS_REGION` or `AWS_DEFAULT_REGION` |
 | Morph Cloud | `MORPH_API_KEY` |
 | Prime hosted eval/training | authenticated `prime` CLI session |
 
-aec-bench loads `.env` from the project root at startup. Existing shell variables take precedence.
+Set credentials in your shell. In a source checkout, aec-bench also loads the repository `.env` at startup. Existing shell variables take precedence.
 
-For Azure AI Foundry deployments that expose the v1 OpenAI-compatible API, use the `/openai/v1/` endpoint and pass the deployment name as `--model`. For Together AI, use an explicit `together:` model prefix.
+For OpenAI, use an explicit `openai:` model prefix, such as `openai:gpt-4.1-mini`. For Azure AI Foundry deployments that expose the v1 OpenAI-compatible API, use the `/openai/v1/` endpoint and pass the deployment name as `--model`. For Together AI, use an explicit `together:` model prefix.
 
 ## Verify Installation
 

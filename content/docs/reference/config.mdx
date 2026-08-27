@@ -213,7 +213,7 @@ enabled = true
 
 ## `evolution.yaml`
 
-Drives the evolution loop (see [Evolution](/docs/advanced/evolution)):
+Drives the evolution loop (see [Evolution](/docs/advanced/evolution) and [Agentic Variation](/docs/advanced/avo)):
 
 ```yaml
 workspace_path: workspaces/voltage-drop-evo
@@ -253,7 +253,9 @@ timeout: 1800
 harness_config: experiment.yaml      # optional
 ```
 
-`strategy` accepts `hill_climb` or `qd`. `structural_weight` and `discipline_balanced` configure quality-diversity scoring. The `solver` block controls task execution, while the classifier and evolver models remain separate.
+`strategy` accepts `hill_climb` or `qd`. `structural_weight` and `discipline_balanced` configure quality-diversity scoring. The `solver` block controls task execution. The classifier enriches observations, and the evolver model runs the built-in AVO candidate proposer.
+
+The YAML composition creates separate selection and revision checks from the selected public tasks. Holdout qualification remains a separate operation.
 
 ## `suite.toml` — generated-suite config
 
@@ -340,7 +342,7 @@ heartbeat:
   pivot_after: 5
 ```
 
-See [Swarm](/docs/advanced/swarm) for the runtime model and event log.
+Each worker uses AVO to propose a candidate, while shared selection checks and the manager own scoring and archive effects. See [Swarm](/docs/advanced/swarm) for the runtime model and [Agentic Variation](/docs/advanced/avo) for the proposer boundary.
 
 ## Prime environment args
 

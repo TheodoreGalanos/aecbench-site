@@ -22,6 +22,7 @@ describe('library documentation coverage', () => {
     expect(advancedMeta).toContain('"adaptive-harnesses"');
     expect(advancedMeta).toContain('"prime-lab"');
     expect(advancedMeta).toContain('"swarm"');
+    expect(advancedMeta).toContain('"avo"');
     expect(agentsMeta).toContain('"prime-agent"');
     expect(coreMeta).toContain('"lifecycles"');
     expect(coreMeta).toContain('"interactive-worlds"');
@@ -159,8 +160,43 @@ describe('library documentation coverage', () => {
     expect(cli).toContain('aec-bench prime export-lifecycle');
     expect(cli).not.toContain('--legacy-script');
     expect(cli).not.toContain('generate dataset');
-    expect(swarm).toContain('as informational commands');
-    expect(swarm).toContain('`stop` prints a message');
+    expect(swarm).toContain('provides `run`, `status`, and `history`');
+    expect(swarm).toContain('The CLI has no `stop` or `resume` command');
+    expect(cli).not.toContain('aec-bench swarm resume');
+    expect(cli).not.toContain('aec-bench swarm stop');
+  });
+
+  it('documents functional evolution and the bounded AVO proposer', () => {
+    const evolution = readDoc('advanced/evolution.mdx');
+    const avo = readDoc('advanced/avo.mdx');
+    const advisor = readDoc('advanced/advisor.mdx');
+    const swarm = readDoc('advanced/swarm.mdx');
+
+    expect(evolution).toContain('CandidateChecks');
+    expect(evolution).toContain('selection_checks=selection_checks');
+    expect(evolution).toContain('propose=propose');
+    expect(evolution).toContain('build_avo(');
+    expect(evolution).toContain('Selection checks');
+    expect(evolution).toContain('Revision checks');
+    expect(evolution).toContain('Qualification checks');
+    expect(evolution).toContain('draft feedback');
+    expect(evolution).toContain('promotion decision');
+    expect(evolution).toContain('Only selection evidence reaches `gate_candidate()`');
+    expect(evolution).not.toContain('CandidateEvaluator');
+
+    expect(avo).toContain('arxiv.org/abs/2603.24517');
+    expect(avo).toContain('inspect_parent_results');
+    expect(avo).toContain('test_candidate');
+    expect(avo).toContain('submit_candidate');
+    expect(avo).toContain('at most 24 structured memory facts');
+    expect(avo).toContain('checkpoint schema `2`');
+    expect(avo).toContain('protected `development_*` and `supervisor_*` field names');
+    expect(avo).toContain('Claims about model quality, cost, or candidate improvement require');
+
+    expect(advisor).toContain('AVO advisor');
+    expect(swarm).toContain('SwarmAssignment');
+    expect(swarm).toContain('CandidateProposal');
+    expect(swarm).toContain('It does not report an authoritative score');
   });
 
   it('documents the provider-free package and current optional extras', () => {
@@ -211,17 +247,23 @@ describe('library documentation coverage', () => {
   });
 
   it('documents current run, generation, review, and candidate boundaries', () => {
+    const architecture = readDoc('core/architecture.mdx');
     const contracts = readDoc('core/contracts.mdx');
     const traces = readDoc('evaluation/traces.mdx');
     const templates = readDoc('core/templates.mdx');
     const reviewing = readDoc('evaluation/reviewing.mdx');
     const evolution = readDoc('advanced/evolution.mdx');
 
+    expect(architecture).toContain('run_evolution()');
+    expect(architecture).toContain('CandidateChecks');
+    expect(architecture).toContain('CandidateProposal');
     expect(contracts).toContain('RunManifest');
     expect(contracts).toContain('execution_status');
     expect(contracts).toContain('provider_evidence');
     expect(contracts).toContain('WorldTask');
     expect(contracts).toContain('plan_trials()');
+    expect(contracts).toContain('CandidateProposalRequest');
+    expect(contracts).toContain('EvaluatedCandidate');
     expect(traces).toContain('evidence_status');
     expect(traces).not.toContain('Completeness');
     expect(templates).toContain('generation-manifest.json');

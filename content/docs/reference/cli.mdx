@@ -410,14 +410,13 @@ Multi-agent QD swarm evolution:
 
 ```bash
 uv run aec-bench swarm run swarm.yaml
-uv run aec-bench swarm history
+uv run aec-bench swarm status <run-id> --state-dir workspaces/my-ws/_swarm_runs
+uv run aec-bench swarm history --state-dir workspaces/my-ws/_swarm_runs
 ```
 
-The CLI lists `status`, `resume`, and `stop` as informational commands. `status`
-reads the flat event log, while `resume` and `stop` print messages. Keep `swarm run`
-attached for process supervision; these commands cannot stop paid work or resume a run.
+`status` validates the explicit persisted swarm state and exact candidate material. The current CLI has no `stop` or `resume` command. Keep `swarm run` attached for process supervision.
 
-See [Evolution](/docs/advanced/evolution) and [Swarm](/docs/advanced/swarm).
+See [Evolution](/docs/advanced/evolution), [Agentic Variation](/docs/advanced/avo), and [Swarm](/docs/advanced/swarm).
 
 ## Prime Lab
 

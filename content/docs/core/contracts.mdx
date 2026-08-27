@@ -82,6 +82,16 @@ An `AttemptRecipe` receives only the tracked `AttemptRunner`. It can request one
 
 `TaskAttempt` is an internal execution result. `TrialRecord` is the selected, verified, and reportable trial result.
 
+## Evolution candidates — exact workspace and evidence
+
+`WorkspaceSnapshot.candidate_id` identifies a specific prompt-and-skill candidate. It is separate from trial and attempt identity.
+
+`CandidateChecks` plans a candidate-independent batch, runs it, optionally enriches its observations, and returns an `EvaluatedCandidate`. A parent and child remain separate evaluated values and must use the same ordered evaluation cases before comparison. `TrialRecord` remains the evidence authority.
+
+`CandidateProposalRequest` supplies a selected parent, authorised inspirations, goal, strategy, history, and bounded memory to a proposer. A submitted `CandidateProposal` carries the child snapshot, mutation summary, and evaluated revision attempt. An abstained, budget-exhausted, or cancelled proposal carries no child material.
+
+The proposer changes scratch only. The application can write canonical workspace state only after selection checks pass and the search gate accepts the child. See [Evolution](/docs/advanced/evolution) and [Agentic Variation](/docs/advanced/avo).
+
 ## EvaluationResult — how it scored
 
 `EvaluationResult` owns the normalised reward and the evidence needed to interpret it:

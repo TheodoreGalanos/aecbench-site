@@ -77,6 +77,14 @@ The core does not know how a candidate runs or what its assessment means. Artefa
 
 Meta-harness results are normal in-memory Python values. They do not add a persisted study schema, common runtime abstraction, or workflow configuration format. See [Meta-Harness Composition](/docs/advanced/meta-harness-runtime).
 
+## Agent workspace evolution
+
+`run_evolution()` coordinates changes to versioned prompt-and-skill workspaces. It receives a `CandidateChecks` capability and a candidate proposer. Checks own batch planning, execution, and optional observation enrichment. The proposer owns scratch work and returns a `CandidateProposal`; it does not own scoring, acceptance, or persistence.
+
+The built-in proposer is [Agentic Variation](/docs/advanced/avo). AVO can make and check several bounded scratch revisions before submission. The outer application checks the submitted child against its selected parent, applies the search policy, and only then updates canonical workspace, archive, graveyard, and lineage state.
+
+Swarm uses the same proposal and evidence boundaries concurrently. Each worker has private AVO state. The manager owns shared selection checks, budget, archive effects, and immutable `SwarmState`.
+
 ## Capability ownership
 
 | Concern | Owner | Boundary |
@@ -86,6 +94,7 @@ Meta-harness results are normal in-memory Python values. They do not add a persi
 | Lifecycle orchestration | `aec_bench.lifecycles.application` and the lifecycle host | Applies checkpoint progression, local execution, trial construction, and optional persistence without moving task-owned semantics |
 | Interactive World orchestration | World trial application and task-owned host | Uses the shared actor boundary, then applies task-owned journeys, controls, persistence, verification, evaluation, evidence retention, and trial construction |
 | Harness studies and refinement | `aec_bench.experimentation.meta_harness` | Composes caller-owned candidates, `TrialRecord` evidence, and injected policies without defining a common runtime or metric |
+| Agent workspace evolution | `aec_bench.evolution` | Runs candidate checks, bounded proposals, selection, and persistence |
 | Agent execution | Agent harness and provider integration | Translates model and tool protocols; task and evaluation owners retain benchmark policy |
 | Evaluation | Evaluation | Owns reward, validity, breakdowns, behavioural analysis, and review evidence; task verifiers supply task-owned evidence |
 | Durable evidence | Ledger and producing domain | Stores immutable trial, dataset, and content-addressed evidence records |
@@ -123,6 +132,7 @@ Dependencies follow ownership:
 - artefact-task orchestration can depend on task and runtime boundaries while `HarnessSpec` remains an execution-capability description;
 - lifecycle application composition depends on the lifecycle coordinator, normal trial contracts, and explicit execution effects, not task, world, provider, Harbor, or Prime implementations;
 - meta-harness composition depends on `TrialRecord` and caller-supplied functions, not concrete runtimes, providers, or task families;
+- evolution composition depends on check and proposal capabilities; AVO can propose candidates but cannot select or persist them;
 - evaluation owns policy and consumes verifier evidence, while persistence stores the resulting records; and
 - CLI, TUI, web, and reports compose lower-level capabilities.
 

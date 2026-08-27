@@ -1,0 +1,132 @@
+---
+title: Agentic Variation (AVO)
+description: Use a bounded agent loop to inspect, edit, check, repair, and submit one evolution candidate.
+---
+
+Agentic Variation (AVO) is the built-in candidate proposer for AEC-Bench evolution. It implements the agentic variation pattern introduced by Chen et al. in [“AVO: Agentic Variation Operators for Autonomous Evolutionary Search”](https://arxiv.org/abs/2603.24517).
+
+AVO can inspect evidence, edit a scratch workspace, run revision checks, diagnose failures, restore an earlier revision, and try again before submission. It returns a candidate to `run_evolution()` for selection checks.
+
+## How AVO fits
+
+AVO handles a proposal call within the evolution search:
+
+| Responsibility | Owner |
+|----------------|-------|
+| Select the parent, inspirations, goal, and strategy | Evolution search policy |
+| Edit and check scratch revisions | AVO |
+| Define and run revision checks | Injected `CandidateChecks` |
+| Compare the submitted child with its parent | Selection checks |
+| Accept, reject, persist, archive, or bury a candidate | Evolution application |
+| Run holdout qualification | Separate qualification operation |
+
+`run_evolution()` changes the canonical workspace only after the gate accepts the submitted candidate.
+
+## Proposal flow
+
+A `CandidateProposalRequest` supplies the selected parent evidence, authorised inspirations, goal, strategy, prior cycle summaries, rejected-candidate summaries, and bounded memory.
+
+AVO then:
+
+1. plans a fixed public revision batch;
+2. checks the selected parent at revision `0`;
+3. creates an isolated scratch workspace;
+4. lets the agent inspect, edit, check, diagnose, and restore revisions;
+5. permits submission only for the current changed revision with exact evidence; and
+6. returns a `CandidateProposal`.
+
+The proposal status is `submitted`, `abstained`, `budget_exhausted`, or `cancelled`. Only `submitted` can contain child material. `run_evolution()` still runs selection checks before it can persist the child.
+
+## Tool surface
+
+The agent receives these typed tools:
+
+| Tool | Purpose |
+|------|---------|
+| `inspect_parent_results` | Read the exact selected-parent evidence |
+| `inspect_current_candidate` | Read current scratch material |
+| `inspect_inspirations` | Read authorised inspiration snapshots |
+| `inspect_previous_cycles` | Read approved evolution history |
+| `inspect_rejected_candidates` | Read rejected-candidate summaries |
+| `read_program_guidance` | Read the approved knowledge source |
+| `edit_candidate` | Apply validated prompt or skill edits in scratch |
+| `test_candidate` | Run the fixed revision checks for the current revision |
+| `restore_candidate` | Restore exact material from an evaluated attempt |
+| `submit_candidate` | Submit the current evaluated revision |
+| `abstain` | Finish without a child |
+| `request_advice` | Ask for a new direction when the current approach is exhausted |
+
+AVO has no canonical workspace handle. `edit_candidate` changes scratch only, and each new edit invalidates evidence from the previous material.
+
+## Revision evidence
+
+Each AVO call uses the same ordered public evaluation cases for every revision. A `RevisionAttempt` binds:
+
+- revision and attempt IDs;
+- the tested `WorkspaceSnapshot`;
+- the mutation summary and hypothesis;
+- the resulting `TrialRecord` evidence; and
+- usage after that check.
+
+This prevents evidence from a tested revision being attached to different candidate material. Holdout tasks cannot be used for revision checks or enter AVO memory or advice.
+
+## Limits
+
+An `AVOBudget` uses these defaults:
+
+| Limit | Default |
+|-------|---------|
+| Model requests | 12 |
+| Tool calls | 40 |
+| Revision checks | 7 |
+| Elapsed time | 1,800 seconds |
+| Consecutive evaluation errors | 2 |
+| Stagnant revision checks | 3 |
+| Advisor interventions | 0 |
+
+`build_avo()` enables one conditional advisor intervention by default. Token and USD limits are optional. If a configured limit needs a token count or cost that the provider did not report, AVO stops. A `0.0` cost means known free usage; `None` means unknown.
+
+## Conditional advice
+
+The AVO advisor is separate from the [trial-level Advisor tool](/docs/advanced/advisor). It can run after three valid checks without progress, after two consecutive invalid or failed checks, or when the main agent calls `request_advice`.
+
+The advisor receives the goal, selected parent ID, strategy, bounded attempt summaries, remaining budget, and trigger reason. It can suggest one to three directions or confirm a validation failure. It has no workspace, tools, evaluator, or authority over selection and persistence.
+
+## Memory and resume
+
+AVO retains at most 24 structured memory facts. It prioritises the best current attempt, recent distinct failure categories, a recent successful direction, and then recent remaining facts.
+
+Durable calls use checkpoint schema `2`. A checkpoint binds the run, AVO call, selected parent, revision-case order, evidence, scratch material, configuration identity, budget, usage, memory, advice, incomplete external effects, and any terminal proposal.
+
+Resume rejects identity or material mismatches. An interrupted model request, revision check, compaction, or advisor request must be reconciled before retry. A terminal checkpoint restores the recorded proposal without repeating paid work.
+
+Checkpoint and usage JSON keep the protected `development_*` and `supervisor_*` field names. Python composition uses revision-check and advisor terms.
+
+## Python composition
+
+`build_avo()` returns the proposer expected by `run_evolution()`:
+
+```python
+from aec_bench.evolution import build_avo
+
+propose = build_avo(
+    model=proposal_model,
+    model_identity=proposal_model_id,
+    revision_checks=revision_checks,
+    batch_size=5,
+    advisor_model=advisor_model,              # optional
+    advisor_model_identity=advisor_model_id,  # optional
+)
+```
+
+When no advisor model is supplied, AVO reuses the proposal model. The `aec-bench evolve run` command creates these boundaries from YAML configuration.
+
+## Evidence status
+
+Provider-free tests cover the AVO protocol, budgets, state transitions, checkpoint rules, and evidence boundaries. Claims about model quality, cost, or candidate improvement require an approved public-task development run and separate holdout qualification.
+
+## Further reading
+
+- Terry Chen et al. [“AVO: Agentic Variation Operators for Autonomous Evolutionary Search.”](https://arxiv.org/abs/2603.24517) arXiv:2603.24517, 2026.
+- [Evolution](/docs/advanced/evolution) for the complete search loop.
+- [Swarm](/docs/advanced/swarm) for parallel quality-diversity search with AVO workers.

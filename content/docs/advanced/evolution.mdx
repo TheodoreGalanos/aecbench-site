@@ -1,26 +1,28 @@
 ---
 title: Evolution
-description: Evolution is a closed-loop system that mutates an agent workspace, mainly its system prompt and skill library, based on trial failures.
+description: Run candidate checks, bounded proposals, and selection over versioned agent workspaces.
 ---
 
-Evolution improves the workspace an agent reads. Evolution holds the base model fixed; prompts and skills change under version control, then each candidate workspace is evaluated against tasks.
+Evolution improves the workspace an agent reads while keeping the base model and benchmark tasks fixed. Prompts and skills change under version control. Each candidate is checked against selected public AEC-Bench tasks before the search policy decides what to keep.
 
-Use single-workspace evolution when you want a controlled hill-climb. Use [Swarm](/docs/advanced/swarm) when you want multiple agents exploring a quality-diversity frontier.
+Use the YAML workflow for a standard run. Use the Python API when you want to replace the candidate checks, the candidate proposer, or both without rebuilding the evolution loop.
 
 ## The cycle
 
-Each evolution cycle runs six phases:
+Each cycle has six responsibilities:
 
-| Phase | What happens |
-|-------|-------------|
-| **Classify** | Read recent trials and tag turns, failures, and behavioural patterns |
-| **Analyse** | Identify repeated failure modes and the prompt or skill surface implicated |
-| **Evolve** | Propose structured prompt or skill mutations |
-| **Apply** | Write the candidate workspace source |
-| **Gate** | Run the candidate on a batch of tasks and compare with the incumbent |
-| **Register** | Record the candidate ID, exact source revision, lineage, score, and optional label |
+| Step | Owner | What happens |
+|------|-------|--------------|
+| **Select** | Search policy | Choose the parent and any authorised inspirations |
+| **Check parent** | `CandidateChecks` | Plan a candidate-independent batch and bind its `TrialRecord` evidence to the parent |
+| **Propose** | Candidate proposer | Work in scratch and return a candidate, abstain, or finish because the budget is exhausted |
+| **Check child** | `CandidateChecks` | Run the child on the same ordered cases used for the parent |
+| **Gate** | Search policy | Accept, reject, or skip from exact evidence |
+| **Persist** | Application shell | Commit accepted material and update lineage, archive, graveyard, and reports |
 
-The loop stops when `max_cycles` is reached or the configured stagnation window produces no improvement.
+The canonical workspace changes only after acceptance. A proposer cannot score its own child, commit it, or update search state.
+
+The built-in proposer is [Agentic Variation (AVO)](/docs/advanced/avo). It can inspect, edit, test, diagnose, and repair several scratch revisions before it submits a candidate.
 
 ## Setup
 
@@ -32,17 +34,11 @@ uv run aec-bench evolve init workspaces/voltage-drop-evo \
   --harness rlm
 ```
 
-The workspace contains a manifest, system prompt, and skill directory. Treat it like source code: review diffs, keep changes scoped, and avoid contaminating benchmark task definitions with answer leakage.
-
-## Candidate identity
-
-Each candidate has one `candidate_id`. Its `source_revision` is the full Git commit that contains its source. `parent_candidate_id` records explicit lineage. An optional label can help a person find the candidate, but the label is immutable and is not candidate identity.
-
-The baseline can have the label `evo-0`. This label does not create a second version or identity layer.
+The workspace contains a manifest, system prompt, and skill directory. Treat it like source code: review diffs, keep changes scoped, and keep benchmark answers out of prompts and skills.
 
 ## Configuration
 
-Evolution is driven by a YAML file:
+Evolution is normally driven by YAML:
 
 ```yaml
 workspace_path: workspaces/voltage-drop-evo
@@ -66,74 +62,124 @@ batch_size: 5
 max_cycles: 10
 improvement_threshold: 0.01
 stagnation_window: 5
+strategy: hill_climb
 timeout: 1800
 ```
 
-Run it with:
+Run and inspect it with:
 
 ```bash
 uv run aec-bench evolve run --config evolution.yaml --tasks-root tasks
 uv run aec-bench evolve history workspaces/voltage-drop-evo
 ```
 
-Pass `--tasks-root` to bind the YAML selectors to runnable tasks. Task-backed benchmark evidence requires this binding; other runs exercise the evolution workflow and produce diagnostic output.
+`--tasks-root` binds the YAML selectors to runnable public tasks. A run without task-backed evidence exercises composition only; it does not establish benchmark performance.
 
-Rollback accepts a candidate ID or immutable label. It restores that candidate's exact source as a new Git commit. It does not change the original candidate.
+## Three kinds of checks
+
+The checks use the same task-running machinery, but they run at different points and have different authority.
+
+| Check | When it runs | What it can do |
+|-------|--------------|----------------|
+| **Revision checks** | Inside AVO, while it edits a scratch candidate | Give the proposer feedback for another edit, restore, abstain, or submit |
+| **Selection checks** | Outside AVO, after one child is submitted | Compare the parent and child and decide whether the child is accepted |
+| **Qualification checks** | After evolution is complete | Measure the finished candidate on separate holdout tasks |
+
+Think of revision checks as **draft feedback** and selection checks as the **promotion decision**:
+
+```text
+AVO:
+  edit draft -> revision check -> edit again -> revision check
+  -> submit child
+
+Evolution:
+  selected parent + submitted child -> selection checks
+  -> accept or reject
+```
+
+AVO uses revision checks because it is still developing the child. It does not receive the final selection capability and cannot accept its own work. Evolution uses selection checks because it only needs to assess the submitted child; earlier scratch revisions are not candidates for promotion.
+
+Both check types use public tasks. They can share a public batch or use different batches, but their evidence and experiment identities remain separate. Qualification is outside adaptation: holdout material cannot enter AVO context, advice, or memory.
+
+## Functional composition
+
+Both runtime roles use `CandidateChecks`, so local composition calls `build_local_checks()` twice. The first instance belongs to AVO's private revision loop. The second belongs to the outer evolution gate.
+
+```python
+from aec_bench.evolution import build_avo, build_local_checks, run_evolution
+
+# Draft feedback: AVO can run these checks after each scratch edit.
+revision_checks = build_local_checks(
+    task_dirs=task_dirs,
+    model=solver_model,
+    experiment_id="revision",
+    workspace_root=workspace.root,
+    candidate_identity=False,  # AVO assigns evidence IDs to each exact revision.
+)
+
+propose = build_avo(
+    model=proposal_model,
+    model_identity=proposal_model_id,
+    revision_checks=revision_checks,
+    batch_size=config.batch_size,
+)
+
+# Promotion decision: Evolution runs these checks on the parent and submitted child.
+selection_checks = build_local_checks(
+    task_dirs=task_dirs,
+    model=solver_model,
+    experiment_id="selection",
+    workspace_root=workspace.root,
+)
+
+result = run_evolution(
+    workspace=workspace,
+    config=config,
+    selection_checks=selection_checks,
+    propose=propose,
+)
+```
+
+`run_evolution()` gives the selected parent to `propose`. The AVO proposer uses `revision_checks` while it works and returns a `CandidateProposal`. `run_evolution()` then uses `selection_checks` to assess the returned child against its parent. Only selection evidence reaches `gate_candidate()`.
+
+`CandidateChecks` groups batch planning, execution, and optional observation enrichment for both roles. Separate instances keep draft feedback apart from promotion evidence.
+
+| API | Meaning |
+|-----|---------|
+| `CandidateChecks` | Plan and run one consistent set of candidate checks |
+| `build_local_checks()` | Use local AEC-Bench tasks as a check capability |
+| `build_avo()` | Create the built-in candidate proposer |
+| `gate_candidate()` | Return a pure accept, reject, or skip decision |
+| `next_evolution_state()` | Return the next search state without applying effects |
+| `run_evolution()` | Coordinate checks, proposals, decisions, and persistence |
+
+## Search strategies
+
+`strategy: hill_climb` selects the best evaluated candidate as the next parent. A valid child can continue until the configured stagnation window is reached. Clearing the improvement threshold resets the stagnation counter and updates the best candidate.
+
+`strategy: qd` uses a quality-diversity archive. A valid candidate can enter a new archive cell or improve an occupied cell without becoming the global best. The host owns the shortlist, mutation strategy, archive insertion, and strategy-bandit feedback.
+
+Use [Swarm](/docs/advanced/swarm) when several independent agents should explore this archive in parallel.
+
+## Candidate identity and evidence
+
+Each candidate has one stable `candidate_id`. Its `source_revision` is the full Git commit containing its source. `parent_candidate_id` records explicit evolutionary lineage. An optional immutable label helps people find a candidate but is not its identity.
+
+Parent and child evidence remain separate. Both must use the same ordered evaluation cases before comparison. The task verifier remains the reward authority, and `TrialRecord` remains the evidence authority.
+
+Rollback accepts a candidate ID or immutable label. It restores that candidate's exact source as a new Git commit; it does not change the original candidate.
 
 ```bash
 uv run aec-bench evolve rollback workspaces/voltage-drop-evo <candidate-id>
 ```
 
-## Mutations
-
-The evolver emits these structured workspace edits:
-
-```python
-@dataclass(frozen=True)
-class MutationAction:
-    action_type: str                 # write_skill | modify_skill | delete_skill | modify_prompt
-    skill_name: str | None = None
-    skill_description: str | None = None
-    skill_discipline: str | None = None
-    skill_body: str | None = None
-    prompt_content: str | None = None
-```
-
-Each mutation is validated before application. Registered candidates can be evaluated, compared, archived, or restored.
-
-## Selection strategy
-
-The default strategy is hill-climbing: mutate from the best-scoring workspace seen so far. That is deliberately conservative and easy to interpret. More exploratory strategies belong in the swarm path, where diversity is a first-class objective.
-
-## Backend independence
-
-Evolution delegates fitness evaluation through the same artefact-task application functions as normal experiments. The CLI calls `run_evolution_from_config()`, which assembles the workspace, engine, evaluator, and selection strategy before it calls `run_evolution()`.
-
-```text
-aec-bench evolve run
-  -> run_evolution_from_config()
-  -> run_evolution()
-  -> CandidateEvaluator
-  -> run_experiment()
-  -> run_trial()
-  -> runtime.run_once()
-```
-
-`run_evolution()` is a functional application entry point. It receives its dependencies and returns an `EvolutionResult`; it does not own a builder or a second task-execution stack. `CandidateEvaluator` receives one immutable `WorkspaceSnapshot` and a batch size, then returns the resulting `TrialRecord` values. The local evaluator expresses the snapshot as explicit agent configuration, plans trials, and calls `run_experiment()`.
-
-A candidate workspace can be evaluated locally during development and on a Harbor backend when the loop needs scale. Evolution does not mutate task directories.
-
-The task verifier remains the reward authority. Evolution changes prompts and skills while the base model and task correctness stay fixed.
-
-Evolution candidates and task attempts are separate identities. A candidate can use best-of attempts inside each scored trial, but those `attempt_id` values do not become evolution `candidate_id` values. Attempt recipes cannot access the official verifier or reward.
-
 ## When to use it
 
 Evolution is useful when:
 
-- Failures repeat across tasks in a narrow domain.
-- The agent workspace has editable prompts and skills.
-- You have enough tasks and budget for a signal beyond one lucky run.
-- You can inspect promoted changes before trusting the next generation.
+- failures repeat across a meaningful public task set;
+- the agent workspace has editable prompts and skills;
+- you have enough tasks and budget to distinguish a real signal from one lucky run; and
+- a person can review promoted changes before broader use.
 
-For one-off benchmark runs, use a fixed harness. For broad exploration where multiple strategies should survive, use [Swarm](/docs/advanced/swarm).
+For a benchmark run without evolution, use a fixed harness. For multi-step work inside a proposal, use [AVO](/docs/advanced/avo). For parallel quality-diversity search, use [Swarm](/docs/advanced/swarm).

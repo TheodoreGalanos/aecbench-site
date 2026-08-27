@@ -14,7 +14,7 @@ Use swarm when:
 - You have enough budget for parallel evaluation.
 - You can review archive entries before promoting a candidate.
 
-Use [Evolution](/docs/advanced/evolution) for a simpler one-workspace loop.
+Use [Evolution](/docs/advanced/evolution) for one search loop. Each swarm worker uses its own [AVO candidate proposer](/docs/advanced/avo), scratch workspace, cancellation signal, bounded memory, and checkpoint identity.
 
 ## Setup
 
@@ -68,39 +68,49 @@ Swarm state is written under the workspace's `_swarm_runs/` directory:
 ```text
 _swarm_runs/
 ├── events.jsonl
+├── swarm_state.json
+├── candidates.json
 ├── archive.json
 ├── graveyard.json
 ├── lineage.json
 ├── notes.json
+├── budget.json
 └── summary.json
 ```
 
-`events.jsonl` records observed events and supports event-log history. Full state lives in the separately persisted archive, graveyard, and lineage snapshots.
+`swarm_state.json` is the decision authority. `candidates.json` retains exact candidate material. Archive, graveyard, lineage, notes, and budget remain separate owned state. `events.jsonl` reports what happened; replaying the event log does not recreate authoritative state.
 
 The current output layout uses one flat state directory. A later run in the same workspace uses the same snapshot paths and appends to the same event log. Use a separate workspace when runs must remain isolated.
 
-## Current control limitations
+## Status and current control limits
 
-The CLI lists `status`, `resume`, and `stop` as informational commands:
+The current CLI provides `run`, `status`, and `history`:
 
-- `status` replays the single `events.jsonl` in `--state-dir`; its `run-id` argument is currently informational.
-- `resume` checks for an event log and prints a message.
-- `stop` prints a message.
+```bash
+uv run aec-bench swarm status <run-id> \
+  --state-dir workspaces/my-swarm/_swarm_runs
 
-Process supervision uses the attached `swarm run` process. Interrupting it stops the foreground process, but it is not a graceful checkpointed stop and the current CLI cannot resume the run. `history` provides a read-only view of the shared event log.
+uv run aec-bench swarm history \
+  --state-dir workspaces/my-swarm/_swarm_runs
+```
+
+`status` validates `swarm_state.json` and its supporting candidate, archive, graveyard, lineage, note, and budget material. It rejects a different run ID or unresolved candidate identity. `history` scans validated persisted swarm states.
+
+`swarm run` is still a foreground process. The CLI has no `stop` or `resume` command. Keep the process attached until completion, and use a separate workspace when runs must remain isolated.
 
 ## How coordination works
 
-Each agent runs an independent loop:
+Each agent receives a `SwarmAssignment` with a parent, authorised inspirations, a mutation strategy, a goal, and an assignment ID. It runs AVO in its private workspace and returns only a `CandidateProposal` plus agent usage. It does not report an authoritative score, behaviour descriptor, or archive decision.
 
-1. Solve the task with its current workspace.
-2. Classify the trace and compute reward.
-3. Analyse repeated failures and behavioural descriptors.
-4. Propose a prompt or skill mutation.
-5. Gate the candidate.
-6. Report score, cost, descriptors, and lineage back to the manager.
+The manager then:
 
-The manager updates a shared archive and gives agents archive context before subsequent cycles. That context can include top performers, coverage gaps, relevant failures, and pivot instructions.
+1. plans a shared selection batch;
+2. checks the assigned parent and submitted child outside the shared-state lock;
+3. binds the resulting `TrialRecord` evidence to the exact candidates;
+4. applies archive, graveyard, budget, lineage, and pure state-reducer effects in one short locked section; and
+5. persists explicit shared state and candidate material.
+
+Evaluation runs concurrently outside the shared lock. `SwarmState`, not the event log or an agent claim, is the decision authority.
 
 ## Behaviour descriptors
 

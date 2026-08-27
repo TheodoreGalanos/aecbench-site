@@ -1,4 +1,4 @@
 {
   "title": "Advanced",
-  "pages": ["evolution", "meta-harness-runtime", "adaptive-harnesses", "swarm", "prime-lab", "datasets", "backends", "deployment", "advisor"]
+  "pages": ["evolution", "avo", "swarm", "meta-harness-runtime", "adaptive-harnesses", "prime-lab", "datasets", "backends", "deployment", "advisor"]
 }

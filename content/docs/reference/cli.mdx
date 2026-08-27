@@ -154,7 +154,7 @@ aec-bench task lifecycle study ablation
 aec-bench task lifecycle study calibration-freeze
 ```
 
-`start` releases the next checkpoint. `submit` archives the active checkpoint submission. `status` reads state, and `revisit` reads an accepted checkpoint without changing progression. `branch` creates a separate run from a submitted checkpoint and inherits the accepted prefix. `run` resumes from the current lifecycle state. It does not accept a `start_at` override.
+`start` releases the next checkpoint. `submit` archives the active checkpoint submission. `status` reads state, and `revisit` reads an accepted checkpoint while preserving progression. `branch` creates a separate run from a submitted checkpoint and inherits the accepted prefix. `run` resumes from the current lifecycle state and always follows that accepted history.
 
 The Interactive World hierarchy is:
 
@@ -186,7 +186,7 @@ uv run aec-bench task world run dam-seepage-monitoring \
   --dry-run
 ```
 
-The pump-station subcommands expose task-owned actor, control, verification, branching, evaluation, and Harbor application functions. Branch creation does not run, evaluate, select, merge, or change the parent.
+The pump-station subcommands expose task-owned actor, control, verification, branching, evaluation, and Harbor application functions. Branch creation materialises a child and leaves later execution, evaluation, selection, and merging to separate commands.
 
 See [Finite Lifecycles](/docs/core/lifecycles) and [Interactive Worlds](/docs/core/interactive-worlds) for their separate execution contracts.
 
@@ -277,7 +277,7 @@ Useful options:
 | `--reviewer-models-config PATH` | Enable the reviewer with JSON or YAML endpoint configuration |
 | `--fail-on-reviewer-error` | Fail the run if the reviewer stage cannot complete |
 
-Best-of candidates use separate isolated workspaces but belong to one planned trial. The built-in `self` selector is deterministic and reward-blind: it selects the first candidate that completed with a primary output. The official task verifier runs once on the selected output. `--best-of` does not replace experiment repetitions; each repetition is still a separate trial.
+Best-of candidates use separate isolated workspaces but belong to one planned trial. The built-in `self` selector is deterministic and reward-blind: it selects the first candidate that completed with a primary output. The official task verifier runs once on the selected output. Experiment repetitions remain separate trials alongside `--best-of` candidate attempts.
 
 ### `import`, `import-local`, and `import-prime-eval`
 
@@ -348,7 +348,7 @@ uv run aec-bench meta-harness autonomous --task-text "Create a diagnostic task."
 
 `recipe`, `compare`, and `example` use the same Python study API described in [Meta-Harness Composition](/docs/advanced/meta-harness-runtime).
 
-The diagnostic process can pause when a brief, problem model, task run, operation plan, or approval decision is missing. These pauses use named `awaiting_*` states. The existing `--world` flags refer to problem-model JSON files; they do not start an [Interactive World](/docs/core/interactive-worlds).
+The diagnostic process can pause when a brief, problem model, task run, operation plan, or approval decision is missing. These pauses use named `awaiting_*` states. The existing `--world` flags refer to problem-model JSON files. Registered [Interactive Worlds](/docs/core/interactive-worlds) use the `task world` commands.
 
 Use `--emit-run-plan` with `intake-models`, `world-models`, `review-models`, or `operation-models` to validate endpoint configuration before calling a provider.
 

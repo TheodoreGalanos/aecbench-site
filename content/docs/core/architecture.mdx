@@ -31,11 +31,11 @@ The normal Python execution path is:
 run_experiment() -> run_trial() -> runtime.run_once()
 ```
 
-[`AttemptRecipe`](/docs/core/contracts#taskattempt--one-isolated-agent-execution) controls whether one trial runs one attempt or several candidates. It can start and track attempts, but it cannot call the official verifier or inspect reward. This keeps candidate selection separate from `HarnessSpec`, which describes how one agent execution works.
+[`AttemptRecipe`](/docs/core/contracts#taskattempt--one-isolated-agent-execution) controls whether one trial runs one attempt or several candidates. It starts and tracks attempts, while the outer trial runner retains verifier and reward access. `HarnessSpec` describes how one agent execution works.
 
 With best-of execution, several `TaskAttempt` candidates belong to one planned trial. The selector uses only its permitted candidate view. The official verifier evaluates the selected output once. Selection evidence is retained with the trial, and the selected output and trajectory remain resolvable after every temporary attempt workspace is removed.
 
-Templates and suites produce deterministic task instances before this flow starts. The generator can write replay inputs once in `generation-manifest.json` at the output root. Runnable tasks do not copy this provenance, and normal loading and execution do not depend on the sidecar.
+Templates and suites produce deterministic task instances before this flow starts. The generator can write replay inputs once in `generation-manifest.json` at the output root. Normal loading and execution use the runnable task directories; generation replay uses the sidecar.
 
 See [Tasks](/docs/core/tasks) and [Templates](/docs/core/templates) for the authoring path.
 
@@ -65,7 +65,7 @@ Finite lifecycles use one coordinator for all stage changes. The Python function
 
 `run_lifecycle_trial()` executes and verifies one lifecycle, then returns a normal `TrialRecord`. It saves the record only when the caller asks. `run_lifecycle_experiment()` applies the same operation to several planned trials in order. Lifecycle-specific studies keep their own study design, recovery, and selection rules.
 
-Lifecycle composition does not implement meta-harness. A lifecycle evaluator returns normal `TrialRecord` values to the separate runtime-neutral meta-harness API.
+A lifecycle evaluator connects lifecycle execution to the separate runtime-neutral meta-harness API through normal `TrialRecord` values.
 
 See [Finite Lifecycles](/docs/core/lifecycles).
 
@@ -73,13 +73,13 @@ See [Finite Lifecycles](/docs/core/lifecycles).
 
 `aec_bench.experimentation.meta_harness` compares candidates across the existing execution families. The caller supplies each candidate, the function that runs it, and the function that compares its `TrialRecord` results. It supports both one-off comparisons and bounded rounds of proposal and refinement.
 
-The core does not know how a candidate runs or what its assessment means. Artefact-task, lifecycle, Interactive World, adaptive, and repair code retain their own execution and evidence rules. Evaluation owns metric meaning; governance owns approval. Failed and invalid trials remain available to the caller's assessment function.
+Each evaluator defines how its candidate runs, and each assessment function defines what the evidence means. Artefact-task, lifecycle, Interactive World, adaptive, and repair code retain their own execution and evidence rules. Evaluation owns metric meaning; governance owns approval. Failed and invalid trials remain available to the assessment function.
 
-Meta-harness results are normal in-memory Python values. They do not add a persisted study schema, common runtime abstraction, or workflow configuration format. See [Meta-Harness Composition](/docs/advanced/meta-harness-runtime).
+Meta-harness results are normal in-memory Python values. Existing task runtimes and trial records supply persistence and execution. See [Meta-Harness Composition](/docs/advanced/meta-harness-runtime).
 
 ## Agent workspace evolution
 
-`run_evolution()` coordinates changes to versioned prompt-and-skill workspaces. It receives a `CandidateChecks` capability and a candidate proposer. Checks own batch planning, execution, and optional observation enrichment. The proposer owns scratch work and returns a `CandidateProposal`; it does not own scoring, acceptance, or persistence.
+`run_evolution()` coordinates changes to versioned prompt-and-skill workspaces. It receives a `CandidateChecks` capability and a candidate proposer. Checks own batch planning, execution, and optional observation enrichment. The proposer owns scratch work and returns a `CandidateProposal`; the outer loop owns scoring, acceptance, and persistence.
 
 The built-in proposer is [Agentic Variation](/docs/advanced/avo). AVO can make and check several bounded scratch revisions before submission. The outer application checks the submitted child against its selected parent, applies the search policy, and only then updates canonical workspace, archive, graveyard, and lineage state.
 
@@ -91,9 +91,9 @@ Swarm uses the same proposal and evidence boundaries concurrently. Each worker h
 |---------|-------|----------|
 | Task meaning | Task, template, lifecycle, or world | Keeps engineering inputs, actions, and verifier rules together |
 | Artefact-task orchestration | `run_experiment()` and `run_trial()` | Own planning, attempt tracking, selection, official verification, optional review, retained artefacts, and cleanup |
-| Lifecycle orchestration | `aec_bench.lifecycles.application` and the lifecycle host | Applies checkpoint progression, local execution, trial construction, and optional persistence without moving task-owned semantics |
+| Lifecycle orchestration | `aec_bench.lifecycles.application` and the lifecycle host | Applies checkpoint progression, local execution, trial construction, and optional persistence while task semantics stay with the task |
 | Interactive World orchestration | World trial application and task-owned host | Uses the shared actor boundary, then applies task-owned journeys, controls, persistence, verification, evaluation, evidence retention, and trial construction |
-| Harness studies and refinement | `aec_bench.experimentation.meta_harness` | Composes caller-owned candidates, `TrialRecord` evidence, and injected policies without defining a common runtime or metric |
+| Harness studies and refinement | `aec_bench.experimentation.meta_harness` | Composes caller-owned candidates, `TrialRecord` evidence, and injected policies across existing runtimes and metrics |
 | Agent workspace evolution | `aec_bench.evolution` | Runs candidate checks, bounded proposals, selection, and persistence |
 | Agent execution | Agent harness and provider integration | Translates model and tool protocols; task and evaluation owners retain benchmark policy |
 | Evaluation | Evaluation | Owns reward, validity, breakdowns, behavioural analysis, and review evidence; task verifiers supply task-owned evidence |
@@ -116,7 +116,7 @@ See [Execution Backends](/docs/advanced/backends), [Prime Lab](/docs/advanced/pr
 
 `TrialRecord` answers three separate questions: Did the agent run? Was the output evaluated? Is the required evidence complete? It also links to retained outputs, trajectories, and usage information so reports do not depend on temporary workspaces.
 
-Producing authorities own their evidence documents. Trials refer to authority evidence instead of copying it. Provider evidence has its own single-manifest reference. Keyless protocol proof and live-provider qualification remain separate claims.
+Producing authorities own their evidence documents, and trials refer to those documents. Provider evidence has its own single-manifest reference. Keyless protocol proof and live-provider qualification remain separate claims.
 
 `trajectory.jsonl` contains one validated entry per non-empty line, starting with the first line. Provider transcripts remain separate only when their producing boundary needs the exact representation.
 
@@ -132,7 +132,7 @@ Dependencies follow ownership:
 - artefact-task orchestration can depend on task and runtime boundaries while `HarnessSpec` remains an execution-capability description;
 - lifecycle application composition depends on the lifecycle coordinator, normal trial contracts, and explicit execution effects, not task, world, provider, Harbor, or Prime implementations;
 - meta-harness composition depends on `TrialRecord` and caller-supplied functions, not concrete runtimes, providers, or task families;
-- evolution composition depends on check and proposal capabilities; AVO can propose candidates but cannot select or persist them;
+- evolution composition depends on check and proposal capabilities; AVO proposes candidates, while Evolution owns selection and persistence;
 - evaluation owns policy and consumes verifier evidence, while persistence stores the resulting records; and
 - CLI, TUI, web, and reports compose lower-level capabilities.
 

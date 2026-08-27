@@ -15,11 +15,11 @@ During execution, an agent harness can append to `/workspace/trajectory.jsonl`. 
 {"step": 1, "role": "tool_result", "tool_name": "python", "stdout": "V_drop = 5.2V", "stderr": "", "exit_code": 0, "duration_ms": 142, "call_type": "main", "timestamp": "2026-08-15T01:02:05.142Z"}
 ```
 
-Each entry carries `step` and `role`. Tool entries can also carry `tool_name`, `command`, `arguments`, `stdout`, `stderr`, `exit_code`, `duration_ms`, media, and structured metadata. A timestamp records the real step event. It does not define trace identity.
+Each entry carries `step` and `role`. Tool entries can also carry `tool_name`, `command`, `arguments`, `stdout`, `stderr`, `exit_code`, `duration_ms`, media, and structured metadata. A timestamp records the real step event; the retained artefact reference identifies the trace.
 
 ## Shared run identity
 
-Many trials can share the same dataset, agent, source revision, and execution setup. AEC-Bench stores that shared context once in a `RunManifest` instead of copying it into every trial.
+Many trials can share the same dataset, agent, source revision, and execution setup. AEC-Bench stores that shared context once in a `RunManifest`, and each trial refers to it through `run_id`.
 
 `RunManifest` records the facts shared by all trials in one run:
 
@@ -67,7 +67,7 @@ The `attempt` field is the planned repetition number. Internal `TaskAttempt` can
 
 ## Result status
 
-Do not infer one generic complete or partial state from the shape of a record.
+Read the execution, evaluation, and evidence statuses independently.
 
 | Field | Meaning |
 |-------|---------|
@@ -82,7 +82,7 @@ Leaderboard publication normally requires:
 3. `evaluation.validity.verifier_completed == true`; and
 4. `evidence_status` equal to `verified` or `not_required`, subject to the run policy.
 
-A failed execution can still have useful diagnostics. A completed evaluation does not prove that required evidence exists. Keep each status visible.
+A failed execution can still have useful diagnostics. Keep each status visible so readers can see execution, evaluation, and evidence completeness independently.
 
 ## Cost tracking
 

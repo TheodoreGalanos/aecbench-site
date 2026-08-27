@@ -3,7 +3,7 @@ title: Advisor
 description: The advisor is an optional per-harness hook that lets a stronger model answer focused strategic questions during a trial.
 ---
 
-Use an advisor when a cheaper agent can carry out work but sometimes needs help choosing the next step. The harness sends a focused question to another model, receives one suggestion, and then continues the same trial. The advisor cannot use tools, change files, or take control from the agent.
+Use an advisor when a cheaper agent can carry out work but sometimes needs help choosing the next step. The harness sends a focused question to another model, receives one suggestion, and then continues the same trial. The agent remains responsible for tools, files, and action selection.
 
 This page covers advice inside a normal agent-harness trial. Evolution's [AVO advisor](/docs/advanced/avo#conditional-advice) is separate: it helps revise a workspace proposal after repeated failed checks.
 
@@ -99,4 +99,4 @@ The advisor can help when the base model is fast and cheap but often chooses the
 - The agent makes early choices that repeatedly derail the rest of the trial.
 - The agent can execute a good plan once it receives one.
 
-Compare advisor cost and task success against a longer turn budget or a stronger base model. Do not assume that adding a second model is cheaper or better for every task.
+Compare advisor cost and task success against a longer turn budget or a stronger base model. Use the option that performs better for the task at an acceptable cost.

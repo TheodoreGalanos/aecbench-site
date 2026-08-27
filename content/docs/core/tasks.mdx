@@ -13,7 +13,7 @@ Within the artefact-task family, aec-bench uses the word "task" at three levels:
 | **Template** | A parameterised task family that can produce many concrete scenarios | template metadata and renderers |
 | **Runnable task instance** | A concrete problem with a prompt, runtime, and verifier | `task.toml` + `instruction.md` |
 
-Public benchmark reports should name the exact dataset or release that was run. Do not combine proposed ideas, reusable templates, generated tasks, and development-only task families into one task count.
+Public benchmark reports should name the exact dataset or release that was run. Report proposed ideas, reusable templates, generated tasks, and development-only task families as separate inventory measures.
 
 ## Anatomy of a task
 
@@ -35,7 +35,7 @@ tasks/electrical/voltage-drop/
         └── golden_fail.md
 ```
 
-The loader requires `task.toml`, `instruction.md`, and a verifier entry point. Add an environment `Dockerfile` before Harbor execution; without it, validation reports a promotion warning. The agent does not see `solution/` or the golden fixtures.
+The loader requires `task.toml`, `instruction.md`, and a verifier entry point. Add an environment `Dockerfile` before Harbor execution; without it, validation reports a promotion warning. `solution/` and golden fixtures remain private review aids.
 
 ### The prompt
 

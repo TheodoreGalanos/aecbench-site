@@ -63,7 +63,7 @@ AEC-Bench currently supports:
 
 Dam and pump sessions use the shared `run_prime_world_actor_session()` actor boundary. A complete benchmark call uses `run_dam_seepage_trial()` or `run_pump_station_trial()` instead. These functions run the task-owned journey, verify and evaluate the result, retain the evidence artefacts, and return one `TrialRecord`.
 
-Use asynchronous `run_world_experiment()` to apply a complete world trial function to an ordered plan. A provider session is only part of one trial, and one world action is not a trial. Returned `TrialRecord` artefacts remain available after temporary session cleanup.
+Use asynchronous `run_world_experiment()` to apply a complete world trial function to an ordered plan. Each trial covers the full world journey and can contain several actions or provider sessions. Returned `TrialRecord` artefacts remain available after temporary session cleanup.
 
 The pump trial receives a world request selected by the host. The dam trial receives the registered dam profile selected by the host. After the actor process closes, the task owner replays the accepted actions and runs verification and evaluation outside Prime Agent.
 
@@ -71,7 +71,7 @@ Task termination, host truncation, model completion, and provider error remain s
 
 ## Skills and isolation
 
-World sessions install only explicit generic skills by default. Prime receives the task objective, actor-visible starting material, and the allowed actor capability. Task-family methods or hidden solution plans are not present unless a study selects a declared treatment.
+World sessions install explicit generic skills by default. Prime receives the task objective, actor-visible starting material, and the allowed actor capability. A study can add task-family methods or solution plans as a declared treatment.
 
 The pump-station journey can close Prime at an Operations boundary, apply one deterministic task-owned host control, and start a fresh session from the exact new snapshot. The host chooses and applies that control. Dam and pump state, journeys, controls, persistence, verification, and evaluation remain separate and task-owned.
 

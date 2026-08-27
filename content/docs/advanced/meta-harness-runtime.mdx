@@ -5,7 +5,7 @@ description: Compare and refine different ways of running an agent while each ta
 
 Use the meta-harness when you want to compare different ways of running an agent. A candidate can be a harness configuration, a lifecycle strategy, an Interactive World setup, or another value that your application knows how to run.
 
-The meta-harness coordinates the study. It does not replace the task runtime or invent a common score. Your evaluator runs each candidate through its normal path and returns `TrialRecord` results. Your assessment function decides how to compare those results.
+The meta-harness coordinates the study while each task keeps its normal runtime and scoring rules. Your evaluator runs each candidate and returns `TrialRecord` results. Your assessment function decides how to compare those results.
 
 The public Python API is `aec_bench.experimentation.meta_harness`. Artefact tasks, finite lifecycles, Interactive Worlds, and specialist studies keep their own execution and evidence rules.
 
@@ -27,7 +27,7 @@ The simplest study needs three things:
 | `MetaHarnessRound` | One complete propose, evaluate, assess, and select round |
 | `MetaHarnessResult` | The initial evidence, completed rounds, final evaluated selection, and stop reason |
 
-Failed and invalid trials remain evidence. The core does not discard them, convert them to successes, or require a positive reward. It rejects empty evidence and duplicate `trial_id` values from one candidate evaluation.
+The core retains failed and invalid trials as evidence. Each candidate evaluation must return at least one record with unique `trial_id` values.
 
 ## One-shot studies
 
@@ -52,7 +52,7 @@ study = await run_harness_study(
 
 `evaluate_candidate` connects each generic candidate value to its real runtime and returns that runtime's normal `TrialRecord` values. It can be a synchronous function or an asynchronous function. `assess_candidates` owns the comparison result. It can return a metric summary, study conclusion, decision object, or another normal Python value.
 
-The selector is not part of a one-shot study. The caller interprets `study.assessment` or uses the bounded refinement API when selection belongs inside the process.
+A one-shot study returns `study.assessment` for the caller to interpret. Use the bounded refinement API when selection belongs inside the process.
 
 ## Bounded refinement
 
@@ -73,7 +73,7 @@ result = await run_meta_harness(
 )
 ```
 
-`max_rounds` is required and always bounds execution. Each round can select only the current candidate or an evaluated proposal. A changed refined candidate receives a new `candidate_id` and becomes the evaluated baseline for the next round. It cannot become the final selection before evaluation.
+`max_rounds` is required and always bounds execution. Each round can select only the current candidate or an evaluated proposal. A changed refined candidate receives a new `candidate_id` and becomes the evaluated baseline for the next round. Every final selection therefore has evaluation evidence.
 
 The proposal, assessment, selection, refinement, and stopping policies remain with the caller. Evaluation continues to own metric meaning, and governance continues to own approval.
 
@@ -119,7 +119,7 @@ candidate = HarnessCandidate(
 records = evaluate_lifecycle_candidate(candidate)
 ```
 
-The evaluator calls the normal lifecycle experiment boundary and returns its `TrialRecord` values. It does not add a lifecycle-specific meta-harness runtime.
+The evaluator calls the normal lifecycle experiment boundary and returns its `TrialRecord` values through the shared meta-harness API.
 
 Interactive Worlds use their normal experiment boundary in the same way:
 
@@ -138,7 +138,7 @@ async def evaluate_world_candidate(candidate):
     )
 ```
 
-The evaluator returns complete world `TrialRecord` values; an individual action or provider session is not a trial. Prime and adaptive-harness studies can use the same comparison functions while keeping their own execution and qualification rules.
+The evaluator returns one complete world `TrialRecord` for each journey. Prime and adaptive-harness studies can use the same comparison functions while keeping their own execution and qualification rules.
 
 ## CLI comparison
 
@@ -164,11 +164,11 @@ uv run aec-bench meta-harness compare \
   --output comparison
 ```
 
-The supported file flags retain `world` in their names. In this workflow, those files contain generated problem representations; they are not registered Interactive Worlds. `compare` delegates candidate evaluation and assessment to the functional study API. Use `example --output <directory>` for a provider-free worked comparison before connecting model endpoints.
+The supported file flags retain `world` in their names. In this workflow, those files contain generated problem representations. Registered [Interactive Worlds](/docs/core/interactive-worlds) use a separate runtime. `compare` delegates candidate evaluation and assessment to the functional study API. Use `example --output <directory>` for a provider-free worked comparison before connecting model endpoints.
 
 ## Diagnose and repair a benchmark problem
 
-The pauseable CLI workflow helps diagnose a benchmark failure before changing the task or its generator. It gathers the task description, run evidence, verifier output, reviewer notes, proposed operations, and approval decisions in one process. If required input is missing, the process stops in a named waiting state instead of guessing.
+The pauseable CLI workflow helps diagnose a benchmark failure before changing the task or its generator. It gathers the task description, run evidence, verifier output, reviewer notes, proposed operations, and approval decisions in one process. If required input is missing, the process stops in a named waiting state until that input arrives.
 
 This workflow is one use of the generic API. Model-backed stages are optional. Automation can continue when providers or queued artefacts become available, but explicit limits and approval gates still apply.
 
@@ -179,7 +179,7 @@ This workflow is one use of the generic API. Model-backed stages are optional. A
 | **operation loop** | Inspect the problem and evidence, then apply an allowed operation or propose a change | Updated problem model, operation history, or proposal |
 | **governance loop** | Decide whether the proposal affects only this run or changes the shared schema or generator | Run instruction, rejection, or `world_generation_request` |
 
-The process can apply declared operations such as selecting fields, comparing values, taking a subset, or forming combinations. Use a model-generated proposal only when those fixed operations cannot address the evidence.
+The process can apply declared operations such as selecting fields, comparing values, taking a subset, or forming combinations. Use a model-generated proposal when the evidence requires a change beyond those fixed operations.
 
 Only the approval step can change the shared schema or generator. It can keep a change local to the current run, reject it, or emit a new `world_generation_request` for review.
 
@@ -241,7 +241,7 @@ The package contains `job.yaml`, `agent/input.json`, `agent/output.md`, `agent_r
 
 ## Scores and approval
 
-The task verifier still produces scoring evidence. Your evaluation and assessment functions define what the results mean. The meta-harness keeps the returned trial evidence and coordinates those functions; it does not reinterpret scores.
+The task verifier produces scoring evidence. Your evaluation and assessment functions define what the results mean. The meta-harness keeps the returned trial evidence and coordinates those functions.
 
 Agents can propose repairs, but the relevant approval process decides whether to apply or promote them. Normal evidence and repeatability rules still apply.
 

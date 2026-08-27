@@ -19,7 +19,7 @@ A label such as `public-2026` does not define dataset identity. The label cannot
 
 ## Semantic manifest
 
-`dataset create` writes one schema-2 manifest under `artefacts/datasets/manifests/<dataset_id>/manifest.json`:
+`dataset create` writes a manifest under `artefacts/datasets/manifests/<dataset_id>/manifest.json`. The `schema_version` value identifies the file format so AEC-Bench can reject an incompatible manifest. You normally do not set or change it yourself.
 
 ```json
 {

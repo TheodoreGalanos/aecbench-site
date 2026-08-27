@@ -13,7 +13,7 @@ Each cycle has six responsibilities:
 
 | Step | Owner | What happens |
 |------|-------|--------------|
-| **Select** | Search policy | Choose the parent and any authorised inspirations |
+| **Select** | Search policy | Choose the parent and any reference candidates |
 | **Check parent** | `CandidateChecks` | Plan a candidate-independent batch and bind its `TrialRecord` evidence to the parent |
 | **Propose** | Candidate proposer | Work in scratch and return a candidate, abstain, or finish because the budget is exhausted |
 | **Check child** | `CandidateChecks` | Run the child on the same ordered cases used for the parent |

@@ -13,7 +13,7 @@ Within the artefact-task family, aec-bench uses the word "task" at three levels:
 | **Template** | A parameterised task family that can produce many concrete scenarios | template metadata and renderers |
 | **Runnable task instance** | A concrete problem with a prompt, runtime, and verifier | `task.toml` + `instruction.md` |
 
-Public benchmark reports should count a specific dataset or release. Report catalogue seeds, templates, generated instances, and development task families as separate inventory measures.
+Public benchmark reports should name the exact dataset or release that was run. Do not combine proposed ideas, reusable templates, generated tasks, and development-only task families into one task count.
 
 ## Anatomy of a task
 
@@ -35,7 +35,7 @@ tasks/electrical/voltage-drop/
         └── golden_fail.md
 ```
 
-The loader requires `task.toml`, `instruction.md`, and a verifier entry point. A missing environment `Dockerfile` produces a promotion warning; add one before Harbor execution. `solution/` and golden fixtures are review aids kept outside the agent prompt.
+The loader requires `task.toml`, `instruction.md`, and a verifier entry point. Add an environment `Dockerfile` before Harbor execution; without it, validation reports a promotion warning. The agent does not see `solution/` or the golden fixtures.
 
 ### The prompt
 
@@ -69,7 +69,7 @@ Calculate the following:
 
 ### The configuration
 
-`task.toml` contains metadata, timeouts, and runtime limits. `instruction.md` contains the problem. The loader combines both files and produces a `TaskDefinition` contract.
+`task.toml` contains metadata, timeouts, and runtime limits. `instruction.md` contains the problem. When AEC-Bench loads the directory, it validates both files as one `TaskDefinition`.
 
 ```toml title="task.toml"
 version = "1.0"
@@ -168,7 +168,7 @@ Tasks use four catalogue states: `proposed` → `active` → `deprecated` → `r
 - **Deprecated** — superseded by a better version but still runnable for historical comparison
 - **Retired** — archived and excluded from new benchmark selections
 
-Separately, tasks can be **public** (appears in reports and leaderboard) or **holdout** (runs but results are hidden). Holdout tasks are used for anti-contamination testing — if a model scores suspiciously well on holdout tasks it hasn't seen, that's a red flag.
+Separately, tasks can be **public** or **holdout**. Public tasks can appear in reports and leaderboards. Holdout tasks run without exposing their content or individual results and help test whether public task exposure has influenced a model.
 
 Lifecycle values express catalogue policy. Validate the exact task or dataset selection before a run. Publication eligibility requires review and promotion checks beyond a successful filesystem load.
 
@@ -202,7 +202,7 @@ There are three common ways work enters the benchmark:
 
 **Seed runnable instances** are hand-authored tasks with a prompt, runtime, and custom verifier. These are useful when the task needs expert judgement, a bespoke source document, or a narrow real-world scenario.
 
-**Generated instances** come from parameterised templates. A template defines the problem structure with variable parameters, and the generator samples concrete values to create reproducible task instances. The generator can write replay inputs once in `generation-manifest.json` at the output root. Generated `task.toml` files do not copy that provenance. See [Templates](/docs/core/templates) for how this works.
+**Generated instances** come from parameterised templates. A template defines the problem structure, and the generator samples concrete values to create reproducible tasks. It records the inputs needed to repeat generation once in `generation-manifest.json` at the output root. See [Templates](/docs/core/templates) for details.
 
 ## Container extensions
 
@@ -236,6 +236,4 @@ description = "Generate a chart from computed data."
 returns_image = true
 ```
 
-The unified entrypoint records tool output as text. General multimodal self-review
-requires an agent-harness path with explicit image-input support. Treat
-`returns_image = true` as an artefact and verifier capability for other paths.
+The common tool entry point records tool output as text. An agent can inspect the returned image only when its harness explicitly supports image input. Other harnesses can still retain the image for the verifier or later review.

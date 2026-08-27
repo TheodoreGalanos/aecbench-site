@@ -3,7 +3,7 @@ title: Config
 description: aec-bench's configuration is split across several TOML and YAML files, each living near the concept it configures.
 ---
 
-This page is the structural reference. Narrative docs for each concept live under [Core](/docs/core/tasks), [Agents](/docs/agents/configuration), and [Advanced](/docs/advanced/evolution).
+Use this page when you need the exact shape of a configuration file. For explanations and complete workflows, start with [Core](/docs/core/tasks), [Agents](/docs/agents/configuration), or [Advanced](/docs/advanced/evolution).
 
 ## `aec-bench.toml` — project root
 
@@ -253,7 +253,7 @@ timeout: 1800
 harness_config: experiment.yaml      # optional
 ```
 
-`strategy` accepts `hill_climb` or `qd`. `structural_weight` and `discipline_balanced` configure quality-diversity scoring. The `solver` block controls task execution. The classifier enriches observations, and the evolver model runs the built-in AVO candidate proposer.
+`strategy: hill_climb` keeps moving towards the current best candidate. `strategy: qd` keeps strong candidates with different behaviours. `structural_weight` and `discipline_balanced` tune that quality-diversity comparison. The `solver` runs tasks, the classifier adds behavioural observations, and the evolver model proposes workspace changes through AVO.
 
 The YAML composition creates separate selection and revision checks from the selected public tasks. Holdout qualification remains a separate operation.
 
@@ -309,11 +309,11 @@ Create semantic dataset manifests with `aec-bench dataset create`:
 }
 ```
 
-The manifest defines the semantic selection. Publication binds it to one exact Git source or detached bundle. See [Datasets](/docs/advanced/datasets).
+The manifest defines which tasks belong to the dataset. `schema_version` identifies the JSON file format; normal callers do not choose it. Publication binds the selection to one exact Git source or detached bundle. See [Datasets](/docs/advanced/datasets).
 
 ## `swarm.yaml`
 
-Swarm config extends the evolution workspace model with parallel agents, shared budget, and quality-diversity archive settings:
+Swarm config adds parallel agents, a shared budget, and an archive that keeps strong candidates with different behaviours:
 
 ```yaml
 task:

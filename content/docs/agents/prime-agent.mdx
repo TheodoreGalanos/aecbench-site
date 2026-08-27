@@ -65,7 +65,7 @@ Dam and pump sessions use the shared `run_prime_world_actor_session()` actor bou
 
 Use asynchronous `run_world_experiment()` to apply a complete world trial function to an ordered plan. A provider session is only part of one trial, and one world action is not a trial. Returned `TrialRecord` artefacts remain available after temporary session cleanup.
 
-The pump trial receives a host-selected world request. The dam trial receives one exact registered world profile. After the actor process closes, the task owner replays accepted typed actions and runs verification and evaluation outside the actor endpoint.
+The pump trial receives a world request selected by the host. The dam trial receives the registered dam profile selected by the host. After the actor process closes, the task owner replays the accepted actions and runs verification and evaluation outside Prime Agent.
 
 Task termination, host truncation, model completion, and provider error remain separate facts.
 

@@ -1,39 +1,37 @@
 ---
 title: Agentic Variation (AVO)
-description: Use a bounded agent loop to inspect, edit, check, repair, and submit one evolution candidate.
+description: Use an agent to draft, test, repair, and submit a change to an agent workspace.
 ---
 
-Agentic Variation (AVO) is the built-in candidate proposer for AEC-Bench evolution. It implements the agentic variation pattern introduced by Chen et al. in [“AVO: Agentic Variation Operators for Autonomous Evolutionary Search”](https://arxiv.org/abs/2603.24517).
+Agentic Variation (AVO) is the part of [Evolution](/docs/advanced/evolution) that drafts changes to an agent workspace, including its system prompt and skills. It can inspect results, edit a copy of the workspace, test the changes, diagnose failures, and revise the draft before submission.
 
-AVO can inspect evidence, edit a scratch workspace, run revision checks, diagnose failures, restore an earlier revision, and try again before submission. It returns a candidate to `run_evolution()` for selection checks.
+The design is based on Chen et al., [“AVO: Agentic Variation Operators for Autonomous Evolutionary Search”](https://arxiv.org/abs/2603.24517). In AEC-Bench, AVO proposes a candidate; Evolution decides whether to keep it.
 
-## How AVO fits
+## Where AVO fits
 
-AVO handles a proposal call within the evolution search:
+At the start of a cycle, Evolution chooses:
 
-| Responsibility | Owner |
-|----------------|-------|
-| Select the parent, inspirations, goal, and strategy | Evolution search policy |
-| Edit and check scratch revisions | AVO |
-| Define and run revision checks | Injected `CandidateChecks` |
-| Compare the submitted child with its parent | Selection checks |
-| Accept, reject, persist, archive, or bury a candidate | Evolution application |
-| Run holdout qualification | Separate qualification operation |
+- the parent workspace to improve;
+- the goal and editing strategy; and
+- any reference candidates that may contain useful approaches.
 
-`run_evolution()` changes the canonical workspace only after the gate accepts the submitted candidate.
+A reference candidate is another saved workspace version chosen as an example. The API calls these candidates `inspirations`, but AVO can only read them. They do not become parents and are not merged into the draft automatically.
+
+AVO works on a private copy of the parent. It cannot browse arbitrary candidates or change the selected references. After AVO submits a child, Evolution runs selection checks and decides whether to accept it. The canonical workspace changes only after acceptance.
+
+See [Three kinds of checks](/docs/advanced/evolution#three-kinds-of-checks) for the difference between revision checks, selection checks, and holdout qualification.
 
 ## Proposal flow
 
-A `CandidateProposalRequest` supplies the selected parent evidence, authorised inspirations, goal, strategy, prior cycle summaries, rejected-candidate summaries, and bounded memory.
+Before AVO starts, Evolution supplies the parent and its results, the goal, the editing strategy, selected reference candidates, and relevant history from earlier cycles. The Python API carries these inputs in a `CandidateProposalRequest`.
 
 AVO then:
 
-1. plans a fixed public revision batch;
-2. checks the selected parent at revision `0`;
-3. creates an isolated scratch workspace;
-4. lets the agent inspect, edit, check, diagnose, and restore revisions;
-5. permits submission only for the current changed revision with exact evidence; and
-6. returns a `CandidateProposal`.
+1. chooses a fixed set of public tasks for draft feedback;
+2. runs those tasks on the parent;
+3. creates a private copy of the workspace;
+4. lets the agent edit, check, diagnose, and restore drafts; and
+5. returns the latest checked draft or finishes without a candidate.
 
 The proposal status is `submitted`, `abstained`, `budget_exhausted`, or `cancelled`. Only `submitted` can contain child material. `run_evolution()` still runs selection checks before it can persist the child.
 
@@ -43,32 +41,28 @@ The agent receives these typed tools:
 
 | Tool | Purpose |
 |------|---------|
-| `inspect_parent_results` | Read the exact selected-parent evidence |
+| `inspect_parent_results` | Read the parent results |
 | `inspect_current_candidate` | Read current scratch material |
-| `inspect_inspirations` | Read authorised inspiration snapshots |
-| `inspect_previous_cycles` | Read approved evolution history |
+| `inspect_inspirations` | Read the reference candidates selected for this proposal |
+| `inspect_previous_cycles` | Read earlier evolution cycles |
 | `inspect_rejected_candidates` | Read rejected-candidate summaries |
-| `read_program_guidance` | Read the approved knowledge source |
+| `read_program_guidance` | Read the workspace guidance |
 | `edit_candidate` | Apply validated prompt or skill edits in scratch |
 | `test_candidate` | Run the fixed revision checks for the current revision |
-| `restore_candidate` | Restore exact material from an evaluated attempt |
-| `submit_candidate` | Submit the current evaluated revision |
+| `restore_candidate` | Restore a previously checked draft |
+| `submit_candidate` | Submit the current checked draft |
 | `abstain` | Finish without a child |
 | `request_advice` | Ask for a new direction when the current approach is exhausted |
 
-AVO has no canonical workspace handle. `edit_candidate` changes scratch only, and each new edit invalidates evidence from the previous material.
+`edit_candidate` changes only the private copy. Each new edit makes the previous revision results stale.
 
-## Revision evidence
+## How revision checks stay comparable
 
-Each AVO call uses the same ordered public evaluation cases for every revision. A `RevisionAttempt` binds:
+AVO uses the same ordered public tasks for every revision in a proposal. This lets it compare a new draft with the parent and earlier drafts on the same work.
 
-- revision and attempt IDs;
-- the tested `WorkspaceSnapshot`;
-- the mutation summary and hypothesis;
-- the resulting `TrialRecord` evidence; and
-- usage after that check.
+Every check is tied to the workspace content that was tested. A `RevisionAttempt` records the workspace snapshot, the reason for the edit, its `TrialRecord` results, and the resources used. AVO cannot submit an edited workspace with results from an older revision.
 
-This prevents evidence from a tested revision being attached to different candidate material. Holdout tasks cannot be used for revision checks or enter AVO memory or advice.
+Revision checks use public development tasks. Holdout tasks cannot enter AVO checks, memory, or advice.
 
 ## Limits
 
@@ -84,27 +78,39 @@ An `AVOBudget` uses these defaults:
 | Stagnant revision checks | 3 |
 | Advisor interventions | 0 |
 
-`build_avo()` enables one conditional advisor intervention by default. Token and USD limits are optional. If a configured limit needs a token count or cost that the provider did not report, AVO stops. A `0.0` cost means known free usage; `None` means unknown.
+`AVOBudget()` by itself allows no advisor calls. The normal `build_avo()` setup enables one unless you supply a different budget.
+
+Token and USD limits are optional. If a configured limit needs a token count or cost that the provider did not report, AVO stops. A `0.0` cost means known free usage; `None` means unknown.
 
 ## Conditional advice
 
-The AVO advisor is separate from the [trial-level Advisor tool](/docs/advanced/advisor). It can run after three valid checks without progress, after two consecutive invalid or failed checks, or when the main agent calls `request_advice`.
+If AVO gets stuck, a second model can suggest another direction. Advice can run:
 
-The advisor receives the goal, selected parent ID, strategy, bounded attempt summaries, remaining budget, and trigger reason. It can suggest one to three directions or confirm a validation failure. It has no workspace, tools, evaluator, or authority over selection and persistence.
+- after three valid checks without progress;
+- after two consecutive invalid or failed checks; or
+- when the main model calls `request_advice`.
+
+The advisor sees short summaries of the goal, attempts, and remaining budget. It can suggest one to three directions or confirm a validation failure. It cannot edit the workspace, run tools, select a candidate, or persist changes.
+
+This advisor is separate from the [trial-level Advisor tool](/docs/advanced/advisor).
 
 ## Memory and resume
 
-AVO retains at most 24 structured memory facts. It prioritises the best current attempt, recent distinct failure categories, a recent successful direction, and then recent remaining facts.
+AVO keeps at most 24 short facts between revisions and proposal cycles. It retains the best result, recent failure types, and useful editing directions instead of carrying an unbounded transcript.
 
-Durable calls use checkpoint schema `2`. A checkpoint binds the run, AVO call, selected parent, revision-case order, evidence, scratch material, configuration identity, budget, usage, memory, advice, incomplete external effects, and any terminal proposal.
+When checkpointing is enabled, AVO saves enough state to continue an interrupted proposal. This includes:
 
-Resume rejects identity or material mismatches. An interrupted model request, revision check, compaction, or advisor request must be reconciled before retry. A terminal checkpoint restores the recorded proposal without repeating paid work.
+- the parent and current scratch workspace;
+- completed revision checks and their evidence;
+- budget and usage totals;
+- retained memory and advice; and
+- whether a model call or check was interrupted.
 
-Checkpoint and usage JSON keep the protected `development_*` and `supervisor_*` field names. Python composition uses revision-check and advisor terms.
+On resume, AVO verifies that the run, parent, workspace, and configuration still match. If the interruption occurred during a model call or revision check, AVO determines whether that work completed before retrying it. Completed paid work is not repeated. If the proposal already finished, resume returns the recorded result.
 
 ## Python composition
 
-`build_avo()` returns the proposer expected by `run_evolution()`:
+`build_avo()` returns the proposer expected by `run_evolution()`. The `revision_checks` input is the public-task draft feedback capability described on the [Evolution page](/docs/advanced/evolution#three-kinds-of-checks).
 
 ```python
 from aec_bench.evolution import build_avo
@@ -119,11 +125,13 @@ propose = build_avo(
 )
 ```
 
-When no advisor model is supplied, AVO reuses the proposal model. The `aec-bench evolve run` command creates these boundaries from YAML configuration.
+When no advisor model is supplied, AVO reuses the proposal model. The `aec-bench evolve run` command builds the revision checks and proposer from YAML, so Python composition is optional.
 
-## Evidence status
+## What is tested
 
-Provider-free tests cover the AVO protocol, budgets, state transitions, checkpoint rules, and evidence boundaries. Claims about model quality, cost, or candidate improvement require an approved public-task development run and separate holdout qualification.
+The AEC-Bench test suite covers AVO tools, budgets, revision evidence, advice, memory, and resume behavior without calling a paid model. These tests verify the library behavior; they do not show that a particular model will improve a workspace.
+
+Measure model quality and cost with a public-task development run, then use separate holdout qualification before promoting the result.
 
 ## Further reading
 

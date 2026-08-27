@@ -3,6 +3,10 @@ title: Advisor
 description: The advisor is an optional per-harness hook that lets a stronger model answer focused strategic questions during a trial.
 ---
 
+Use an advisor when a cheaper agent can carry out work but sometimes needs help choosing the next step. The harness sends a focused question to another model, receives one suggestion, and then continues the same trial. The advisor cannot use tools, change files, or take control from the agent.
+
+This page covers advice inside a normal agent-harness trial. Evolution's [AVO advisor](/docs/advanced/avo#conditional-advice) is separate: it helps revise a workspace proposal after repeated failed checks.
+
 ## How it works
 
 Inside a harness run, an adapter can issue an `AdvisorRequest` whenever it hits a decision point:
@@ -26,9 +30,7 @@ class AdvisorResponse:
     reasoning: str              # why this suggestion
 ```
 
-The advisor returns guidance; the agent retains control of output files, tools, and action selection.
-
-This page covers the optional advisor tool used inside an agent harness trial. Evolution's [AVO advisor](/docs/advanced/avo#conditional-advice) is separate. It advises a candidate proposal after stagnation or repeated invalid checks.
+The advisor returns guidance; the agent decides whether to follow it.
 
 ## Configuration
 
@@ -45,9 +47,9 @@ enabled = true
 
 `max_uses` is a hard cap per trial.
 
-## Per-adapter context
+## What the advisor sees
 
-Different adapters give the advisor different context. A tool-loop adapter might show recent tool calls and their results. An RLM adapter might show recent REPL commands and scratchpad notes. The `AdvisorContextStrategy` protocol lets each adapter curate exactly what the advisor sees:
+Different agent harnesses provide different context. A tool loop might show recent tool calls and results. An RLM harness might show recent REPL commands and scratchpad notes. The internal `AdvisorContextStrategy` protocol builds this context:
 
 ```python
 class AdvisorContextStrategy(Protocol):
@@ -58,7 +60,7 @@ class AdvisorContextStrategy(Protocol):
     ) -> list[dict[str, str]]: ...
 ```
 
-This is why the same advisor model can sensibly coach both a REPL agent and a tool-loop agent: the adapter shapes the context to match its own execution model.
+This lets the same advisor model help different harnesses without receiving their full transcripts.
 
 ## Usage tracking
 
@@ -92,9 +94,9 @@ A zero-confidence fallback lets the trial continue under the agent's own judgeme
 
 ## When to use it
 
-The advisor pays off when the base model is fast and cheap but stumbles on strategic choices, such as a Haiku executor with Sonnet as the coach. Two signals that it is worth wiring up:
+The advisor can help when the base model is fast and cheap but often chooses the wrong direction. Two useful signals are:
 
-- Your agent consistently makes **early wrong-direction choices** that ripple into the rest of the trial
-- The cheap model **executes competently** and benefits most from better strategic choices
+- The agent makes early choices that repeatedly derail the rest of the trial.
+- The agent can execute a good plan once it receives one.
 
-For a strong base model, spend the tokens on longer turn budgets. For a weak base model, the advisor can lift a task's success rate at a fraction of the cost of upgrading the executor.
+Compare advisor cost and task success against a longer turn budget or a stronger base model. Do not assume that adding a second model is cheaper or better for every task.

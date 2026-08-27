@@ -1,13 +1,13 @@
 ---
 title: Templates
-description: A template defines a parameterised engineering problem family that generates concrete task instances through parameter sampling and Jinja2 rendering.
+description: Create many reproducible task instances from one engineering problem pattern.
 ---
 
 import { TemplateGenerationFlow } from '@/components/docs/template-generation-flow';
 
 ## How templates work
 
-A template is a reusable engineering problem family. It samples realistic parameters, renders an instruction, computes ground truth, and scaffolds complete task instances that can be validated, frozen into datasets, and run through the same benchmark pipeline as hand-authored tasks.
+A template is a reusable engineering problem family. It samples realistic inputs, writes the task instruction, computes the expected answer, and creates complete task directories. You can validate and run those tasks in the same way as hand-authored tasks.
 
 <TemplateGenerationFlow />
 
@@ -36,7 +36,7 @@ src/aec_bench/templates/builtin/electrical/voltage_drop/
 └── __init__.py
 ```
 
-The three required files are the contract:
+Three files define the template:
 
 | File | Role |
 |------|------|
@@ -49,7 +49,7 @@ Templates can also provide `verify.py`, `system_prompt.md`, and
 
 ## `params.toml`
 
-`params.toml` is the public contract for a template:
+`params.toml` defines the inputs and metadata for a template:
 
 ```toml title="params.toml"
 [meta]
@@ -228,7 +228,7 @@ uv run aec-bench generate suite --config suite.toml --dry-run
 uv run aec-bench generate suite --config suite.toml
 ```
 
-Generation writes optional replay data once in `generation-manifest.json` at the output root. The sidecar records the source template, seed, stable instance index, difficulty, visibility, and sampled parameters needed for replay. Runnable task directories do not copy those fields. Normal task loading and execution ignore the sidecar.
+Generation can write `generation-manifest.json` at the output root. This file records which template, seed, instance index, difficulty, visibility, and sampled inputs produced the tasks. Keep it when you need to reproduce the same generated set. Normal task loading and execution do not read it.
 
 ## Built-in template scope
 

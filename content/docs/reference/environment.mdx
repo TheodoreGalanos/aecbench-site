@@ -5,7 +5,7 @@ description: aec-bench reads a handful of environment variables for credentials 
 
 ## `.env` loading
 
-aec-bench loads `.env` from the project root at CLI startup via `dotenv.load_dotenv()`. Anything set in the shell takes precedence; `.env` fills in the gaps.
+At startup, the CLI loads `.env` from the project root. Values already set in your shell win; `.env` supplies only missing values.
 
 ```bash
 # .env
@@ -123,4 +123,4 @@ Compute selection is separate. A config-based run uses `compute.backend` from `e
 
 Environment variables bypass the path ladder. They are either credentials required by provider SDKs at call time or agent-runtime overrides read by a container entry script.
 
-Treat source tasks, datasets, and workspaces as canonical, and regenerate local Prime packages and swarm run state from them.
+Treat source tasks, datasets, and evolution workspaces as the source of truth. Regenerate local Prime packages and swarm outputs when those sources change.

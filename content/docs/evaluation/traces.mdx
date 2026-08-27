@@ -19,6 +19,8 @@ Each entry carries `step` and `role`. Tool entries can also carry `tool_name`, `
 
 ## Shared run identity
 
+Many trials can share the same dataset, agent, source revision, and execution setup. AEC-Bench stores that shared context once in a `RunManifest` instead of copying it into every trial.
+
 `RunManifest` records the facts shared by all trials in one run:
 
 - `run_id` and `experiment_id`;
@@ -29,7 +31,7 @@ Each entry carries `step` and `role`. Tool entries can also carry `tool_name`, `
 - expected evidence authorities; and
 - optional evaluation and qualification requirements.
 
-The ledger stores the manifest once. Each trial uses `run_id` instead of copying these fields.
+The local record store keeps the manifest once. Each trial refers to it through `run_id`.
 
 ## The trial result
 
@@ -86,9 +88,9 @@ A failed execution can still have useful diagnostics. A completed evaluation doe
 
 Each trial can record model calls, input and output tokens, cache use, advisor use, and an estimated USD cost. Reports use `CostRecord` as the aggregate usage authority. Provider-specific metadata can remain in provider evidence when it is needed for diagnosis.
 
-## The ledger
+## Retained records
 
-Accepted run manifests, trial records, and retained evidence are immutable. New review or forensic detail uses a new retained artefact that refers to the existing trial. Source code and temporary workspaces remain normal replaceable implementation.
+Accepted run manifests, trial records, and retained evidence cannot be overwritten. New review or diagnostic detail is stored as another artefact that refers to the existing trial. Source code and temporary workspaces can still change normally.
 
 ## Imported Prime rollouts
 

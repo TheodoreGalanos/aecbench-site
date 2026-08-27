@@ -3,7 +3,7 @@ title: Swarm
 description: Run several workspace-evolution agents in parallel and keep strong candidates that use meaningfully different strategies.
 ---
 
-`aec-bench swarm` runs several evolution agents in parallel. Each agent changes a private copy of the workspace. A shared archive keeps strong candidates that solve the tasks in different ways, instead of keeping only the single highest score. This approach is called **quality-diversity search**.
+`aec-bench swarm` runs several evolution agents in parallel. Each agent changes a private copy of the workspace. A shared archive keeps strong candidates that solve the tasks in different ways. This approach is called **quality-diversity search**.
 
 ## When to use it
 
@@ -78,7 +78,7 @@ _swarm_runs/
 └── summary.json
 ```
 
-`swarm_state.json` records the current decisions. `candidates.json` stores the exact candidate content. The other files store accepted candidates, rejected candidates, ancestry, notes, budget, and a readable event history. The event history explains what happened but is not enough to rebuild the current state.
+`swarm_state.json` records the current decisions. `candidates.json` stores the exact candidate content. The other files store accepted candidates, rejected candidates, ancestry, notes, budget, and a readable event history. Recovery uses the state and candidate files; the event history explains what happened.
 
 The current output layout uses one flat state directory. A later run in the same workspace uses the same snapshot paths and appends to the same event log. Use a separate workspace when runs must remain isolated.
 
@@ -100,7 +100,7 @@ uv run aec-bench swarm history \
 
 ## How coordination works
 
-Each agent receives a parent workspace, selected reference candidates, an editing strategy, and a goal. It runs AVO in private and returns a proposal plus its usage. The agent cannot score or archive its own proposal.
+Each agent receives a parent workspace, selected reference candidates, an editing strategy, and a goal. It runs AVO in private and returns a proposal plus its usage. The manager owns scoring and archive decisions.
 
 In the Python API, these values are `SwarmAssignment` and `CandidateProposal`.
 
@@ -112,7 +112,7 @@ The manager then:
 4. updates selection, rejection, budget, and ancestry state in one short protected operation; and
 5. saves the shared state and candidate content.
 
-Evaluations can run at the same time. `SwarmState`, not the event log or an agent's claim, records the accepted decisions.
+Evaluations can run at the same time. `SwarmState` records the accepted decisions; the event log and agent reports provide supporting information.
 
 ## Behaviour descriptors
 

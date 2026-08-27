@@ -17,7 +17,7 @@ The available Prime environment depends on what the task needs:
 | Materialised public evidence lifecycles | Persistent `StatefulToolEnv` package | Local eval only |
 | Multi-environment training suites | Difficulty-filtered environment views with Prime buffer ratios | Generated through `prime train-config` |
 
-The original task verifier still decides reward. Changing the Prime environment does not change what counts as a correct result.
+The original task verifier decides reward consistently across Prime environments.
 
 General task exports accept public tasks only. They record each task's content revision and visibility, and keep verifier files outside the actor workspace.
 
@@ -81,7 +81,7 @@ uv run aec-bench prime export-lifecycle \
 
 Repeat `--package` to include more lifecycles. The generated package keeps absolute references to the source packages and checks their content hashes before each rollout. One rollout owns one complete lifecycle and one persistent conversation; the task lifecycle verifier remains the sole reward authority.
 
-Lifecycle exports support local evaluation only. These exports do not support continual-learning or transfer claims. Use the general `prime export` path for hosted task evaluation and training.
+Lifecycle exports support local evaluation. Continual-learning or transfer claims require a separate study and evidence path. Use the general `prime export` path for hosted task evaluation and training.
 
 ## Push
 
@@ -136,7 +136,7 @@ Use `--env-arg KEY=VALUE` for additional `load_environment(...)` arguments beyon
 
 ## Evaluate a trained adapter
 
-Prime can evaluate either a base model or a trained adapter in the same environment. Here, an **adapter** is a deployed set of trained model weights. A training checkpoint records training progress, but it is not automatically available for inference.
+Prime can evaluate either a base model or a trained adapter in the same environment. Here, an **adapter** is a deployed set of trained model weights. Inference requires an adapter deployment; a training checkpoint records training progress.
 
 List available adapter deployments:
 

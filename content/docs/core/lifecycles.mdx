@@ -57,7 +57,7 @@ aec-bench task lifecycle verify artefacts/lifecycles/hydraulic-review \
   --run-dir artefacts/lifecycle-runs/hydraulic-review-smoke
 ```
 
-`run-smoke` checks the local package and stage progression without a model. It does not test a hosted provider.
+`run-smoke` checks the local package and stage progression with a deterministic actor. Use a model-backed run to test a hosted provider.
 
 Some lifecycle families expose public semantic variants. Inspect them before materialisation:
 
@@ -172,7 +172,7 @@ aec-bench task lifecycle study ablation --config lifecycle-ablation.yaml --dry-r
 aec-bench task lifecycle study calibration-freeze --config lifecycle-ablation.yaml
 ```
 
-Ablation uses the common lifecycle trial and experiment functions. It retains its study-specific planning, immutable snapshots, recovery, and selection policy. Meta-harness can consume lifecycle records through an evaluator, but it does not own lifecycle execution.
+Ablation uses the common lifecycle trial and experiment functions. It retains its study-specific planning, immutable snapshots, recovery, and selection policy. A lifecycle evaluator supplies completed records to meta-harness studies.
 
 ## Conditional work
 
@@ -198,6 +198,6 @@ aec-bench prime export-lifecycle \
   --aec-bench-root /absolute/path/to/aec-bench
 ```
 
-The generated package keeps absolute references to the materialised lifecycle and an editable local AEC-Bench checkout. It supports local evaluation only and does not support continual-learning or transfer claims.
+The generated package keeps absolute references to the materialised lifecycle and an editable local AEC-Bench checkout. It supports local evaluation. Continual-learning or transfer claims require a separate study and evidence path.
 
 See [Prime Lab](/docs/advanced/prime-lab) for package and hosted-evaluation limits, and [Review and Reporting](/docs/evaluation/reviewing) for evidence interpretation.

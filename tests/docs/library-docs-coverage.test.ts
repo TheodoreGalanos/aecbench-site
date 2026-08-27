@@ -65,7 +65,8 @@ describe('library documentation coverage', () => {
     expect(worlds).toContain('world.toml');
     expect(worlds).toContain('plan_trials');
     expect(worlds).toContain('run_world_experiment');
-    expect(worlds).toContain('One action is not a trial');
+    expect(worlds).toContain('A trial covers the complete journey');
+    expect(worlds).not.toContain('One action is not a trial');
     expect(worlds).toContain('aec-bench task world pump-station');
     expect(worlds).not.toContain('aec-bench task pump-station-world');
     expect(lifecycles).toContain('One stage is active at a time');
@@ -104,8 +105,8 @@ describe('library documentation coverage', () => {
     expect(runtime).toContain('result = await run_meta_harness(');
     expect(runtime).toContain('await run_world_experiment(');
     expect(runtime).toContain('max_rounds=3');
-    expect(runtime).toContain('Failed and invalid trials remain evidence');
-    expect(runtime).toContain('does not replace the task runtime or invent a common score');
+    expect(runtime).toContain('retains failed and invalid trials as evidence');
+    expect(runtime).toContain('each task keeps its normal runtime and scoring rules');
     expect(runtime).toContain('operation loop');
     expect(runtime).toContain('governance loop');
     expect(runtime).toContain('world_generation_request');
@@ -192,12 +193,12 @@ describe('library documentation coverage', () => {
     expect(avo).toContain('at most 24 short facts');
     expect(avo).toContain('saves enough state to continue an interrupted proposal');
     expect(avo).toContain('Completed paid work is not repeated');
-    expect(avo).toContain('they do not show that a particular model will improve a workspace');
+    expect(avo).toContain('particular model improves a workspace requires a separate model-backed study');
 
     expect(advisor).toContain('AVO advisor');
     expect(swarm).toContain('SwarmAssignment');
     expect(swarm).toContain('CandidateProposal');
-    expect(swarm).toContain('cannot score or archive its own proposal');
+    expect(swarm).toContain('manager owns scoring and archive decisions');
   });
 
   it('documents the provider-free package and current optional extras', () => {
@@ -230,7 +231,7 @@ describe('library documentation coverage', () => {
     expect(templates).toContain('| Maritime | 3 |');
     expect(libraryCatalogue).toContain('352 built templates');
     expect(libraryCatalogue).toContain('six disciplines');
-    expect(libraryCatalogue).toContain('same public library content produces the same export bytes');
+    expect(libraryCatalogue).toContain('exporting the same content produces the same file');
     expect(libraryCatalogue).not.toContain('library_commit');
   });
 

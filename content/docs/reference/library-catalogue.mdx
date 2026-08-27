@@ -48,7 +48,7 @@ The export contains a file-format version and two entry lists:
 }
 ```
 
-The site derives all counts from these lists. Build time, package version, Git revision, and stored counts do not enter the catalogue bytes. Therefore, the same public library content produces the same export bytes.
+The site derives all counts from these lists. The catalogue bytes depend only on the public library content, so exporting the same content produces the same file.
 
 Each entry includes:
 
@@ -68,7 +68,7 @@ Each entry includes:
 
 ## Generated task replay
 
-The catalogue describes public template families. Task generation writes optional replay data once, in `generation-manifest.json` at the output root. Runnable task directories do not copy generation provenance. Normal task loading and execution do not read the sidecar.
+The catalogue describes public template families. Task generation writes optional replay data once, in `generation-manifest.json` at the output root. Runnable task directories contain the files needed for loading and execution; the sidecar supports generation replay.
 
 Use the sidecar when you must replay generation. Use the task ID and an exact dataset reference when you run or report a benchmark selection.
 
@@ -106,6 +106,6 @@ Limit the catalogue to the public benchmark surface. Keep local run outputs, pri
 
 ## Schema compatibility
 
-`schema_version` tells the site how to read the JSON file. Most users do not need to care about its numeric value. The current site reads schema 2 and can temporarily read schema 1; it rejects unknown formats instead of displaying incomplete catalogue data.
+`schema_version` tells the site how to read the JSON file. The library supplies this value. The current site reads schema 2, provides a temporary schema-1 reader, and rejects unknown formats to protect catalogue accuracy.
 
 If the contract changes, update the site reader and these docs in the same change. If entries change, export and sync the catalogue again.

@@ -20,7 +20,7 @@ Each cycle has six responsibilities:
 | **Gate** | Search policy | Accept, reject, or skip from exact evidence |
 | **Persist** | Application shell | Commit accepted material and update lineage, archive, graveyard, and reports |
 
-The canonical workspace changes only after acceptance. A proposer cannot score its own child, commit it, or update search state.
+The canonical workspace changes only after acceptance. The outer evolution loop owns scoring, commits, and search state.
 
 The built-in proposer is [Agentic Variation (AVO)](/docs/advanced/avo). It can inspect, edit, test, diagnose, and repair several scratch revisions before it submits a candidate.
 
@@ -73,7 +73,7 @@ uv run aec-bench evolve run --config evolution.yaml --tasks-root tasks
 uv run aec-bench evolve history workspaces/voltage-drop-evo
 ```
 
-`--tasks-root` binds the YAML selectors to runnable public tasks. A run without task-backed evidence exercises composition only; it does not establish benchmark performance.
+`--tasks-root` binds the YAML selectors to runnable public tasks. Benchmark-performance claims require task-backed evidence; composition-only runs are useful for integration checks.
 
 ## Three kinds of checks
 
@@ -97,9 +97,9 @@ Evolution:
   -> accept or reject
 ```
 
-AVO uses revision checks because it is still developing the child. It does not receive the final selection capability and cannot accept its own work. Evolution uses selection checks because it only needs to assess the submitted child; earlier scratch revisions are not candidates for promotion.
+AVO uses revision checks because it is still developing the child. Evolution retains final selection authority and uses selection checks to assess the submitted child against its parent.
 
-Both check types use public tasks. They can share a public batch or use different batches, but their evidence and experiment identities remain separate. Qualification is outside adaptation: holdout material cannot enter AVO context, advice, or memory.
+Both check types use public tasks. They can share a public batch or use different batches, but their evidence and experiment identities remain separate. Qualification keeps holdout material in a separate post-adaptation evaluation.
 
 ## Functional composition
 
@@ -163,11 +163,11 @@ Use [Swarm](/docs/advanced/swarm) when several independent agents should explore
 
 ## Candidate identity and evidence
 
-Each candidate has one stable `candidate_id`. Its `source_revision` is the full Git commit containing its source. `parent_candidate_id` records explicit evolutionary lineage. An optional immutable label helps people find a candidate but is not its identity.
+Each candidate has one stable `candidate_id`. Its `source_revision` is the full Git commit containing its source. `parent_candidate_id` records explicit evolutionary lineage. An optional immutable label provides a human-friendly discovery name.
 
 Parent and child evidence remain separate. Both must use the same ordered evaluation cases before comparison. The task verifier remains the reward authority, and `TrialRecord` remains the evidence authority.
 
-Rollback accepts a candidate ID or immutable label. It restores that candidate's exact source as a new Git commit; it does not change the original candidate.
+Rollback accepts a candidate ID or immutable label. It restores that candidate's exact source as a new Git commit and preserves the original candidate.
 
 ```bash
 uv run aec-bench evolve rollback workspaces/voltage-drop-evo <candidate-id>

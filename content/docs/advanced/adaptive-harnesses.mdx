@@ -1,6 +1,6 @@
 ---
 title: Adaptive Harnesses
-description: Compare changes to an agent harness without changing the trusted execution code or benchmark task by accident.
+description: Compare agent-harness changes while keeping the trusted execution code and benchmark task fixed.
 ---
 
 Most users can select an [agent harness](/docs/agents/harnesses) and use the normal run commands. Use the adaptive harness API when you want to compare or repair how an agent runs while proving exactly what changed between candidates.
@@ -19,7 +19,7 @@ The API calls these objects `K`, `Hx`, and `px`:
 | `Hx` | One compiled harness configuration | A different execution plan |
 | `px` | The operations the harness will run | A different harness configuration |
 
-Keeping these identities separate makes a comparison interpretable. It does not, by itself, prove that a harness learned or will transfer to other tasks.
+Keeping these identities separate makes a comparison interpretable. Claims about learning or transfer require separate evidence.
 
 ## Trusted execution code (`K`)
 
@@ -29,9 +29,9 @@ If this code changes, the experiment records a new kernel identity. This prevent
 
 ## Harness configuration (`Hx`)
 
-`HarnessSpec` is the declarative input for one harness. It describes runtime capabilities, bindings, contracts, recursion policy, and budgets. It does not own artefact-task attempt branching, selection, or verification.
+`HarnessSpec` is the declarative input for one harness. It describes runtime capabilities, bindings, contracts, recursion policy, and budgets. The artefact-task runner owns attempt branching, selection, and verification.
 
-Compiling a `HarnessSpec` against one fixed kernel produces the **compiled harness instance** (`Hx`). This is the exact harness configuration used in the experiment. It selects the model, bindings, capabilities, and limits, but cannot change the fixed execution code.
+Compiling a `HarnessSpec` against one fixed kernel produces the **compiled harness instance** (`Hx`). This is the exact harness configuration used in the experiment. It selects the model, bindings, capabilities, and limits while the fixed execution code stays unchanged.
 
 Typical fields include:
 
@@ -48,7 +48,7 @@ from the incumbent run.
 
 The **execution program** (`px`) says which task operations to run and in what order. The library validates this plan and compiles it into a `RunBundle` for the adaptive execution path.
 
-This is not the ordinary artefact-task API. Normal task execution uses `run_experiment()` and `run_trial()` and does not pass through `run_batch.v1` or a generic execution-program bridge.
+Ordinary artefact tasks use `run_experiment()` and `run_trial()`. Governed adaptive studies use the separate `run_batch.v1` execution-program path.
 
 A program can express bounded patterns such as:
 
@@ -79,7 +79,7 @@ task snapshot, verifier, seeds, repetitions, and shared budget must also remain 
 
 ## Use with the meta-harness API
 
-`K / Hx / px` is one specialist candidate shape. The generic [meta-harness API](/docs/advanced/meta-harness-runtime) does not require it. Harness-program studies use `run_harness_study()` to compare candidates while keeping their normal compilation, Harbor execution, trial evidence, analysis, and reports.
+`K / Hx / px` is one specialist candidate shape. The generic [meta-harness API](/docs/advanced/meta-harness-runtime) accepts other candidate shapes through their evaluator functions. Harness-program studies use `run_harness_study()` to compare candidates while keeping their normal compilation, Harbor execution, trial evidence, analysis, and reports.
 
 The adaptive cycle uses `run_meta_harness()` for its bounded candidate selection and refinement shape. Repair still owns diagnosis and typed patch creation. Motif learning and promotion remain with their governance owners.
 

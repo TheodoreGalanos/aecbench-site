@@ -15,9 +15,9 @@ At the start of a cycle, Evolution chooses:
 - the goal and editing strategy; and
 - any reference candidates that may contain useful approaches.
 
-A reference candidate is another saved workspace version chosen as an example. The API calls these candidates `inspirations`, but AVO can only read them. They do not become parents and are not merged into the draft automatically.
+A reference candidate is another saved workspace version chosen as a read-only example. The API calls these candidates `inspirations`. The selected parent remains the sole parent, and AVO chooses which ideas to reproduce in its draft.
 
-AVO works on a private copy of the parent. It cannot browse arbitrary candidates or change the selected references. After AVO submits a child, Evolution runs selection checks and decides whether to accept it. The canonical workspace changes only after acceptance.
+AVO works on a private copy of the parent and sees only the reference candidates supplied by Evolution. After AVO submits a child, Evolution runs selection checks and decides whether to accept it. The canonical workspace changes only after acceptance.
 
 See [Three kinds of checks](/docs/advanced/evolution#three-kinds-of-checks) for the difference between revision checks, selection checks, and holdout qualification.
 
@@ -60,9 +60,9 @@ The agent receives these typed tools:
 
 AVO uses the same ordered public tasks for every revision in a proposal. This lets it compare a new draft with the parent and earlier drafts on the same work.
 
-Every check is tied to the workspace content that was tested. A `RevisionAttempt` records the workspace snapshot, the reason for the edit, its `TrialRecord` results, and the resources used. AVO cannot submit an edited workspace with results from an older revision.
+Every check is tied to the workspace content that was tested. A `RevisionAttempt` records the workspace snapshot, the reason for the edit, its `TrialRecord` results, and the resources used. Submission requires results from the exact revision being proposed.
 
-Revision checks use public development tasks. Holdout tasks cannot enter AVO checks, memory, or advice.
+Revision checks use public development tasks. Holdout tasks remain reserved for qualification after adaptation.
 
 ## Limits
 
@@ -90,13 +90,13 @@ If AVO gets stuck, a second model can suggest another direction. Advice can run:
 - after two consecutive invalid or failed checks; or
 - when the main model calls `request_advice`.
 
-The advisor sees short summaries of the goal, attempts, and remaining budget. It can suggest one to three directions or confirm a validation failure. It cannot edit the workspace, run tools, select a candidate, or persist changes.
+The advisor sees short summaries of the goal, attempts, and remaining budget. Its role is to suggest one to three directions or confirm a validation failure.
 
 This advisor is separate from the [trial-level Advisor tool](/docs/advanced/advisor).
 
 ## Memory and resume
 
-AVO keeps at most 24 short facts between revisions and proposal cycles. It retains the best result, recent failure types, and useful editing directions instead of carrying an unbounded transcript.
+AVO keeps at most 24 short facts between revisions and proposal cycles. This compact memory prioritises the best result, recent failure types, and useful editing directions.
 
 When checkpointing is enabled, AVO saves enough state to continue an interrupted proposal. This includes:
 
@@ -129,7 +129,7 @@ When no advisor model is supplied, AVO reuses the proposal model. The `aec-bench
 
 ## What is tested
 
-The AEC-Bench test suite covers AVO tools, budgets, revision evidence, advice, memory, and resume behavior without calling a paid model. These tests verify the library behavior; they do not show that a particular model will improve a workspace.
+The AEC-Bench test suite covers AVO tools, budgets, revision evidence, advice, memory, and resume behavior with provider-free test doubles. Evidence that a particular model improves a workspace requires a separate model-backed study.
 
 Measure model quality and cost with a public-task development run, then use separate holdout qualification before promoting the result.
 

@@ -228,7 +228,7 @@ uv run aec-bench generate suite --config suite.toml --dry-run
 uv run aec-bench generate suite --config suite.toml
 ```
 
-Generation can write `generation-manifest.json` at the output root. This file records which template, seed, instance index, difficulty, visibility, and sampled inputs produced the tasks. Keep it when you need to reproduce the same generated set. Normal task loading and execution do not read it.
+Generation can write `generation-manifest.json` at the output root. This file records which template, seed, instance index, difficulty, visibility, and sampled inputs produced the tasks. Keep it when you need to reproduce the same generated set.
 
 ## Built-in template scope
 
@@ -239,7 +239,7 @@ The built-in templates are strongest when the engineering contract is explicit:
 - Outputs with concrete tolerances
 - Verifiers that score mechanically from explicit rules
 
-Tasks are deferred rather than templated when they depend on open-ended document review, hidden standards tables, iterative solvers without a reduced contract, or broad design judgement that has not been made explicit.
+Use hand-authored tasks for open-ended document review, protected standards tables, iterative solvers that lack a reduced contract, or broad design judgement that still needs an explicit scoring method.
 
 ## Writing your own
 

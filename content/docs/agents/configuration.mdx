@@ -154,9 +154,9 @@ trigger = "both"
 consistency_threshold = 0.7
 ```
 
-Some triggers need evidence from several candidate extractions. For example, `consistency` cannot run with `k_candidates = 1`. If the required evidence is missing, the harness reviews every section and records why in its trajectory.
+Some triggers need evidence from several candidate extractions. For example, `consistency` requires `k_candidates` of at least 2. If the required evidence is missing, the harness reviews every section and records why in its trajectory.
 
-The trajectory also records candidate payloads, confidence, consistency, uncertainty, and the resulting review decision. These values describe harness execution; they do not change task meaning or scoring.
+The trajectory also records candidate payloads, confidence, consistency, uncertainty, and the resulting review decision. The task and verifier remain the authority for task meaning and scoring.
 
 ## How harness names map to Python
 

@@ -88,7 +88,7 @@ max_turns = 12
 
 Tool Loop enforces the task's tool whitelist. A request for a tool that was not declared fails the run with `undeclared_tool_request` (`AdapterFailureKind.UNDECLARED_TOOL_REQUEST` in Python). This makes tool access part of the benchmark contract.
 
-The optional advisor tool is configured separately. When enabled, it is an explicit harness capability, not a task-declared tool.
+The optional advisor is configured as a harness capability, separately from task-declared tools.
 
 Select `pydantic_ai` when you need the explicit public alias for this PydanticAI-backed path. It uses the same bounded tool-loop strategy and output contract.
 
@@ -186,7 +186,7 @@ uv run aec-bench run-local tasks/electrical/voltage-drop \
 
 The current qualified model prefixes are `azure:` and `deepseek:`. The adapter retains redacted runtime evidence under `logs/deepseek-harness/`. Provider credentials remain in the selected environment and are not serialised into the execution bundle.
 
-Use the [CLI reference](/docs/reference/cli#run-local) for best-of local attempts. DeepSeek Harness also supports ordinary Harbor experiment manifests; it does not add a separate provider-specific task runner.
+Use the [CLI reference](/docs/reference/cli#run-local) for best-of local attempts. DeepSeek Harness runs through ordinary Harbor experiment manifests.
 
 ## Prime Agent
 

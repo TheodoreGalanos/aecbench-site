@@ -18,9 +18,9 @@ Both paths use `run_experiment()` and `run_trial()` for ordinary artefact tasks.
 
 ## What a backend does
 
-A backend starts the environment and translates the provider's model and tool protocols. It does not select tasks or decide what a correct answer means. The task verifier still owns scoring.
+A backend starts the environment and translates the provider's model and tool protocols. AEC-Bench selects the tasks, and the task verifier defines correctness.
 
-Tests without credentials can prove that the protocol shape is correct. They cannot prove that a live provider route works. Live qualification needs evidence from a real run through that provider.
+Provider-free tests prove the protocol shape. Live qualification requires evidence from a real run through the provider route.
 
 ## Available Harbor environments
 

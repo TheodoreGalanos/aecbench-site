@@ -3,7 +3,7 @@ title: Review and Reporting
 description: How optional LLM review, structured human review, reporting, and holdout protection sit alongside automated benchmark rewards.
 ---
 
-Automated verification supplies the score. Review records disagreement, uncertainty, and supporting evidence without changing that score.
+Automated verification supplies the score. Review adds disagreement, uncertainty, and supporting evidence as separate information.
 
 ## Optional post-verifier LLM review
 
@@ -25,7 +25,7 @@ The stage writes request, per-model review, evaluation, and summary artefacts be
 
 ## Task-genome review evidence
 
-A retained review must stay tied to the task version that was reviewed. `TaskSnapshotRef` identifies that version, and small `SourceSpan` records point to the instruction, verifier, or other source behind each claim. The review does not copy the complete task source.
+A retained review must stay tied to the task version that was reviewed. `TaskSnapshotRef` identifies that version, and small `SourceSpan` records point to the instruction, verifier, or other source behind each claim.
 
 When a review must be retained independently, store the review bytes and use `ArtifactRef`. Before reuse, verify that the review still matches the selected task snapshot. A changed task needs a new review.
 

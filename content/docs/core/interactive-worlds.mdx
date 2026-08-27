@@ -84,7 +84,7 @@ A world contribution owns five things:
 
 The registered definition binds this behaviour to an exact code build and scenario profile.
 
-The dam and pump worlds share the world core and one Prime actor-session implementation. They do not share state, journeys, controls, persistence, verification, or evaluation. These semantics remain with each task owner.
+The dam and pump worlds share the world core and one Prime actor-session implementation. Each task owner defines its own state, journey, controls, persistence, verification, and evaluation.
 
 ## Authoring path
 
@@ -100,7 +100,7 @@ Store episode IDs, step indexes, provider data, repository paths, and content di
 
 ## What counts as one trial
 
-One action is not a trial, and one provider session is not a trial. A trial is the complete journey from the selected scenario to verified final evidence.
+A trial covers the complete journey from the selected scenario to verified final evidence. It can contain several actions or provider sessions.
 
 A complete world trial selects the profile, runs the actor journey, closes the provider session, verifies task-owned evidence, evaluates the result, retains referenced artefacts, and returns one `TrialRecord`. Returned artefact references remain valid after temporary session directories are removed.
 
@@ -146,7 +146,7 @@ Current complete routes are:
 | Pump-station stewardship | Prime Agent |
 | Pump-station stewardship | DeepSeek harness through Harbor |
 
-Provider adapters translate execution protocols. They do not contain dam- or pump-specific task semantics.
+Provider adapters translate execution protocols. The dam and pump task owners define their task-specific behavior.
 
 ## Who controls the world
 
@@ -162,13 +162,13 @@ The world owns engineering meaning. The actor host owns the provider-facing deci
 
 An invalid action leaves state unchanged. A stale decision is rejected before it reaches task logic. Domain termination and host truncation are separate facts.
 
-Host controls are separate from agent actions. An agent therefore cannot pause, rewind, branch, or otherwise operate the host simply because it can act inside the scenario.
+Host controls are separate from agent actions. The host alone can pause, rewind, branch, or otherwise control the run.
 
 ## Branching
 
 `worlds.branch_world()` creates child branches through the existing rollout-control boundary and the pump branch port. `worlds.tasks_for_branches()` maps those branches to tasks for later planning.
 
-Branch creation only materialises children. It does not execute, evaluate, select, merge, or change the parent. Those later decisions remain explicit application operations.
+Branch creation materialises child branches and leaves the parent unchanged. Separate application operations execute, evaluate, select, or merge those children.
 
 ## CLI
 

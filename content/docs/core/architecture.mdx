@@ -6,7 +6,7 @@ description: aec-bench supports artefact tasks, finite lifecycles, and Interacti
 import { BenchmarkRunFlow } from '@/components/docs/benchmark-run-flow';
 import { CoreDomains } from '@/components/docs/core-domains';
 
-aec-bench has three execution families: artefact tasks, finite lifecycles, and Interactive Worlds. They share planning, experiment identity, [`TrialRecord`](/docs/core/contracts#trialrecord--one-trial-result) evidence, provenance, and reporting. Each family retains its own execution and evaluation semantics.
+AEC-Bench supports three shapes of work: one submitted artefact, a known sequence of stages, or an interactive situation that changes after each action. They share experiment planning, trial records, and reports, but each shape keeps the rules needed to run and score it.
 
 <CoreDomains />
 
@@ -31,7 +31,7 @@ The normal Python execution path is:
 run_experiment() -> run_trial() -> runtime.run_once()
 ```
 
-[`AttemptRecipe`](/docs/core/contracts#taskattempt--one-isolated-agent-execution) controls whether one trial runs one attempt or several candidates. It receives only a tracked `AttemptRunner`; it cannot call the official verifier or inspect reward. The runtime still performs exactly one agent execution per call. This keeps attempt branching and selection outside `HarnessSpec`, which describes runtime capabilities, bindings, contracts, and budgets.
+[`AttemptRecipe`](/docs/core/contracts#taskattempt--one-isolated-agent-execution) controls whether one trial runs one attempt or several candidates. It can start and track attempts, but it cannot call the official verifier or inspect reward. This keeps candidate selection separate from `HarnessSpec`, which describes how one agent execution works.
 
 With best-of execution, several `TaskAttempt` candidates belong to one planned trial. The selector uses only its permitted candidate view. The official verifier evaluates the selected output once. Selection evidence is retained with the trial, and the selected output and trajectory remain resolvable after every temporary attempt workspace is removed.
 
@@ -47,7 +47,7 @@ The world owns its state, rules, and evaluation. The runner connects the agent t
 
 The current catalogue includes wastewater pump-station stewardship and dam-seepage monitoring. Both use the same world interfaces, while each task keeps its own state, rules, and evaluation.
 
-[`WorldTask`](/docs/core/interactive-worlds#worldtask-and-file-backed-tasks) binds an objective to an exact registered world build and profile. `plan_trials()` creates the common `PlannedTrial` values. A complete dam, pump, or Harbor world-trial function then returns a `TrialRecord`. Asynchronous `run_world_experiment()` applies that operation in plan order and can persist each completed record.
+[`WorldTask`](/docs/core/interactive-worlds#define-a-world-task-in-files) binds an objective to an exact registered world build and profile. `plan_trials()` creates the common `PlannedTrial` values. A complete dam, pump, or Harbor world-trial function then returns a `TrialRecord`. Asynchronous `run_world_experiment()` applies that operation in plan order and can persist each completed record.
 
 Persistence, recovery, host controls, branching, rollouts, staged evidence, and provider integration are optional capabilities. Add these capabilities when the world requires them.
 
@@ -59,11 +59,11 @@ A finite lifecycle is a separate execution family. It declares a bounded sequenc
 
 Use a lifecycle when the work has known stages and controlled evidence release. Use an Interactive World when actions change an ongoing causal state. Use an artefact task when one workspace or submission is sufficient.
 
-Finite lifecycles use one checkpoint coordinator and one functional application surface. `release_checkpoint()`, `submit_checkpoint()`, `read_lifecycle()`, `revisit_checkpoint()`, `branch_lifecycle()`, and `run_lifecycle()` control canonical state. A branch can start only from a submitted checkpoint. It receives the accepted prefix through that checkpoint and continues through the same coordinator.
+Finite lifecycles use one coordinator for all stage changes. The Python functions `release_checkpoint()`, `submit_checkpoint()`, `read_lifecycle()`, `revisit_checkpoint()`, `branch_lifecycle()`, and `run_lifecycle()` use those same rules. A branch can start only from an accepted submission and leaves its parent unchanged.
 
-[`LifecycleTrial`](/docs/core/lifecycles#functional-python-api) binds one `PlannedTrial` to a materialised lifecycle package, run directory, execution mode, and visibility policy. `run_local_lifecycle()` dispatches to separate fresh-session and persistent-session implementations because their memory and recovery rules differ. Both return `LifecycleExecution`, which contains canonical state and the agent and tool evidence needed to construct a trial.
+[`LifecycleTrial`](/docs/core/lifecycles#python-api) combines one planned trial with its lifecycle package, run directory, context mode, and visibility policy. `run_local_lifecycle()` keeps fresh and persistent agent sessions separate because they have different memory and recovery rules. Both return the state and evidence needed to construct a trial record.
 
-`run_lifecycle_trial()` executes, verifies, constructs one normal `TrialRecord`, optionally persists it, and returns it. `run_lifecycle_experiment()` applies that operation to lifecycle trials in declared order and returns the records directly. Lifecycle studies use these functions while keeping study design, immutable snapshots, recovery, and selection policy under `aec_bench.experimentation.lifecycle_studies`.
+`run_lifecycle_trial()` executes and verifies one lifecycle, then returns a normal `TrialRecord`. It saves the record only when the caller asks. `run_lifecycle_experiment()` applies the same operation to several planned trials in order. Lifecycle-specific studies keep their own study design, recovery, and selection rules.
 
 Lifecycle composition does not implement meta-harness. A lifecycle evaluator returns normal `TrialRecord` values to the separate runtime-neutral meta-harness API.
 
@@ -71,7 +71,7 @@ See [Finite Lifecycles](/docs/core/lifecycles).
 
 ## Meta-harness composition
 
-`aec_bench.experimentation.meta_harness` composes candidate studies across the existing execution families. It evaluates caller-owned `HarnessCandidate` values through injected functions that return normal `TrialRecord` evidence. The same functional boundary supports one-shot baseline comparisons and bounded propose, evaluate, assess, select, and refine processes.
+`aec_bench.experimentation.meta_harness` compares candidates across the existing execution families. The caller supplies each candidate, the function that runs it, and the function that compares its `TrialRecord` results. It supports both one-off comparisons and bounded rounds of proposal and refinement.
 
 The core does not know how a candidate runs or what its assessment means. Artefact-task, lifecycle, Interactive World, adaptive, and repair code retain their own execution and evidence rules. Evaluation owns metric meaning; governance owns approval. Failed and invalid trials remain available to the caller's assessment function.
 
@@ -85,7 +85,7 @@ The built-in proposer is [Agentic Variation](/docs/advanced/avo). AVO can make a
 
 Swarm uses the same proposal and evidence boundaries concurrently. Each worker has private AVO state. The manager owns shared selection checks, budget, archive effects, and immutable `SwarmState`.
 
-## Capability ownership
+## Where each responsibility lives
 
 | Concern | Owner | Boundary |
 |---------|-------|----------|
@@ -110,11 +110,11 @@ Prime is separate from Harbor. Prime Lab exports public artefact tasks into pack
 
 See [Execution Backends](/docs/advanced/backends), [Prime Lab](/docs/advanced/prime-lab), and [Prime Agent](/docs/agents/prime-agent).
 
-## Evidence boundaries
+## How evidence is stored
 
-`RunManifest` owns the source, dataset, agent, environment, provider route, expected authorities, and other identity shared by a run. Each `TrialRecord` refers to it through `run_id` and records one planned trial result. A trial can use one `TaskAttempt` or select from several candidates.
+`RunManifest` stores information shared by a run, such as the source, dataset, agent, environment, and provider route. Each `TrialRecord` links to that manifest through `run_id` and records one planned trial result. A trial can contain one attempt or select from several candidates.
 
-`TrialRecord` keeps execution, evaluation, and evidence status separate. `TrialOutput` separates normal termination from host truncation and records the final reason. `CostRecord` owns model calls, token and cache use, advisor use, and estimated cost. Retained bytes use `ArtifactRef`, which includes the artefact ID, SHA-256, byte size, and media type.
+`TrialRecord` answers three separate questions: Did the agent run? Was the output evaluated? Is the required evidence complete? It also links to retained outputs, trajectories, and usage information so reports do not depend on temporary workspaces.
 
 Producing authorities own their evidence documents. Trials refer to authority evidence instead of copying it. Provider evidence has its own single-manifest reference. Keyless protocol proof and live-provider qualification remain separate claims.
 

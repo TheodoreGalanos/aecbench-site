@@ -7,7 +7,7 @@ An Interactive World is a causal task environment. The agent observes the curren
 
 Use this model when a sequence of decisions matters. If one submitted file or bounded workspace is enough, use an [artefact task](/docs/core/tasks). If the stages are known in advance and the host controls evidence release, use a [finite lifecycle](/docs/core/lifecycles).
 
-## Public discovery and task API
+## Find and load a world
 
 Use the `aec_bench.worlds` facade to discover registered worlds and build provider-neutral tasks:
 
@@ -27,7 +27,7 @@ task = worlds.task(
 loaded_profile = worlds.load_profile(task)
 ```
 
-`WorldInfo`, `WorldProfileInfo`, and `WorldTask` are public values. Discovery order and text matching are deterministic. `worlds.get()` uses an exact world ID.
+`worlds.list()` shows every registered world, `worlds.find()` searches them, and `worlds.get()` loads an exact world ID. A profile selects one fixed scenario for that world.
 
 The built-in catalogue contains:
 
@@ -36,9 +36,9 @@ The built-in catalogue contains:
 | `dam-seepage-monitoring` | `synthetic-rising-seepage` | Minimum world contract |
 | `wastewater-pump-station-stewardship.v1` | `pump-station-reference-system.asw-8-rs1.v1`, `pump-station-reference-system.asw-8-rs2.v1` | Branching, host controls, persistence |
 
-## `WorldTask` and file-backed tasks
+## Define a world task in files
 
-A `WorldTask` binds one instruction to an exact registered world build and content-pinned profile. It also carries normal task catalogue metadata and a derived task revision. It does not contain provider configuration or task execution state.
+A `WorldTask` combines an instruction with an exact registered world build and scenario profile. This keeps the task reproducible even if the world catalogue changes later. Provider settings and live execution state stay outside the task.
 
 For a portable task package, store the objective in `instruction.md` and the exact references in `world.toml`:
 
@@ -70,19 +70,19 @@ tags = ["dam", "monitoring", "seepage", "synthetic"]
 
 Load it with `worlds.load_world_task(instance_dir, tasks_root)`. Loading rejects an unknown world, a stale build, a stale profile, or metadata that does not match the registered profile.
 
-## Minimum world contract
+## What every world owns
 
 A world contribution owns five things:
 
 | Part | Purpose |
 |------|---------|
 | **State** | One authoritative representation of the current engineering situation |
-| **Observation** | The explicit projection that the actor is allowed to see |
+| **Observation** | The part of the current situation that the agent is allowed to see |
 | **Action** | A validated task-owned decision or request |
 | **Transition** | A deterministic accepted change or a rejection that leaves state unchanged |
 | **Evaluation** | The task-owned interpretation of final state, trajectory, and verified evidence |
 
-The registered world definition binds this behaviour to an exact build and content-pinned profile. Registration happens once at the catalogue composition boundary.
+The registered definition binds this behaviour to an exact code build and scenario profile.
 
 The dam and pump worlds share the world core and one Prime actor-session implementation. They do not share state, journeys, controls, persistence, verification, or evaluation. These semantics remain with each task owner.
 
@@ -98,9 +98,9 @@ The dam and pump worlds share the world core and one Prime actor-session impleme
 
 Store episode IDs, step indexes, provider data, repository paths, and content digests as execution or evidence metadata outside domain state. Add host controls, durable recovery, branching, or provider packaging only when the task needs them.
 
-## Action, session, and trial boundaries
+## What counts as one trial
 
-A world action is not a trial. A provider session is also not a trial; it is one part of the execution evidence for a trial.
+One action is not a trial, and one provider session is not a trial. A trial is the complete journey from the selected scenario to verified final evidence.
 
 A complete world trial selects the profile, runs the actor journey, closes the provider session, verifies task-owned evidence, evaluates the result, retains referenced artefacts, and returns one `TrialRecord`. Returned artefact references remain valid after temporary session directories are removed.
 
@@ -148,7 +148,7 @@ Current complete routes are:
 
 Provider adapters translate execution protocols. They do not contain dam- or pump-specific task semantics.
 
-## World and actor authority
+## Who controls the world
 
 The world owns engineering meaning. The actor host owns the provider-facing decision exchange.
 
@@ -162,7 +162,7 @@ The world owns engineering meaning. The actor host owns the provider-facing deci
 
 An invalid action leaves state unchanged. A stale decision is rejected before it reaches task logic. Domain termination and host truncation are separate facts.
 
-Host controls use a separate authority surface from actor actions. This prevents an agent from acquiring operational authority only because it can act in the world.
+Host controls are separate from agent actions. An agent therefore cannot pause, rewind, branch, or otherwise operate the host simply because it can act inside the scenario.
 
 ## Branching
 

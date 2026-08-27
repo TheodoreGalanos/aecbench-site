@@ -1,9 +1,9 @@
 ---
 title: Swarm
-description: Swarm runs multi-agent quality-diversity evolution over agent workspaces, sharing discoveries through a common archive.
+description: Run several workspace-evolution agents in parallel and keep strong candidates that use meaningfully different strategies.
 ---
 
-`aec-bench swarm` runs several evolution agents in parallel. Each agent mutates its own workspace, while a shared quality-diversity archive preserves different high-performing strategies across the search.
+`aec-bench swarm` runs several evolution agents in parallel. Each agent changes a private copy of the workspace. A shared archive keeps strong candidates that solve the tasks in different ways, instead of keeping only the single highest score. This approach is called **quality-diversity search**.
 
 ## When to use it
 
@@ -78,7 +78,7 @@ _swarm_runs/
 └── summary.json
 ```
 
-`swarm_state.json` is the decision authority. `candidates.json` retains exact candidate material. Archive, graveyard, lineage, notes, and budget remain separate owned state. `events.jsonl` reports what happened; replaying the event log does not recreate authoritative state.
+`swarm_state.json` records the current decisions. `candidates.json` stores the exact candidate content. The other files store accepted candidates, rejected candidates, ancestry, notes, budget, and a readable event history. The event history explains what happened but is not enough to rebuild the current state.
 
 The current output layout uses one flat state directory. A later run in the same workspace uses the same snapshot paths and appends to the same event log. Use a separate workspace when runs must remain isolated.
 
@@ -100,21 +100,23 @@ uv run aec-bench swarm history \
 
 ## How coordination works
 
-Each agent receives a `SwarmAssignment` with a parent, authorised inspirations, a mutation strategy, a goal, and an assignment ID. It runs AVO in its private workspace and returns only a `CandidateProposal` plus agent usage. It does not report an authoritative score, behaviour descriptor, or archive decision.
+Each agent receives a parent workspace, selected reference candidates, an editing strategy, and a goal. It runs AVO in private and returns a proposal plus its usage. The agent cannot score or archive its own proposal.
+
+In the Python API, these values are `SwarmAssignment` and `CandidateProposal`.
 
 The manager then:
 
 1. plans a shared selection batch;
-2. checks the assigned parent and submitted child outside the shared-state lock;
-3. binds the resulting `TrialRecord` evidence to the exact candidates;
-4. applies archive, graveyard, budget, lineage, and pure state-reducer effects in one short locked section; and
-5. persists explicit shared state and candidate material.
+2. checks the assigned parent and submitted child without blocking other evaluations;
+3. attaches the resulting `TrialRecord` evidence to the exact candidates;
+4. updates selection, rejection, budget, and ancestry state in one short protected operation; and
+5. saves the shared state and candidate content.
 
-Evaluation runs concurrently outside the shared lock. `SwarmState`, not the event log or an agent claim, is the decision authority.
+Evaluations can run at the same time. `SwarmState`, not the event log or an agent's claim, records the accepted decisions.
 
 ## Behaviour descriptors
 
-The quality-diversity archive indexes candidates by behaviour and reward:
+The archive groups candidates by behaviour as well as reward:
 
 | Descriptor | What it captures |
 |------------|------------------|

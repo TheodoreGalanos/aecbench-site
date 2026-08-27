@@ -5,7 +5,7 @@ description: A Harbor execution backend places each trial in a container or sand
 
 `aec-bench run` builds a Harbor job, dispatches it through Harbor, waits for completion, and imports the results into the ledger. `--backend` selects the Harbor execution environment.
 
-Use `aec-bench run-local` when you need an in-process development path on the local host. Both commands enter the shared `run_experiment()` application boundary; they differ at the runtime implementation.
+Use `aec-bench run-local` for fast local development. Use `aec-bench run` when the task needs a controlled container or remote sandbox. Both commands plan and score trials in the same way; only the execution environment changes.
 
 ## Execution paths
 
@@ -16,11 +16,11 @@ Use `aec-bench run-local` when you need an in-process development path on the lo
 
 Both paths use `run_experiment()` and `run_trial()` for ordinary artefact tasks. They use the selected agent harness and the same task-owned verifier, which defines correctness in every environment.
 
-## Provider boundary
+## What a backend does
 
-Provider packages translate model, tool, and runtime protocols. They can capture provider evidence, but they do not own task selection, task meaning, or scoring. Task-specific branches belong with the task or world, not in a provider package.
+A backend starts the environment and translates the provider's model and tool protocols. It does not select tasks or decide what a correct answer means. The task verifier still owns scoring.
 
-Each runtime attestation refers to one retained provider evidence manifest. Keyless tests can prove the protocol shape without credentials. Live-provider qualification is a different claim and needs evidence from the real provider route. Passing keyless tests does not qualify a live provider.
+Tests without credentials can prove that the protocol shape is correct. They cannot prove that a live provider route works. Live qualification needs evidence from a real run through that provider.
 
 ## Available Harbor environments
 
@@ -93,7 +93,9 @@ Harbor still owns task staging, agent invocation, artefact collection, and verif
 
 ## Local development
 
-`run-local` creates an isolated workspace for each agent attempt. By default it runs one attempt; `--best-of K` can run several candidates and select one inside the same trial. `run_trial()` then runs the verifier once on the selected output, materialises retained output and trajectory artefacts, removes temporary workspaces unless `--keep-workspace` is set, and imports the result. It is useful for harness iteration and verifier debugging because failures remain on the local process boundary.
+`run-local` creates an isolated workspace for each agent attempt. By default, it runs one attempt. `--best-of K` runs several candidate attempts inside one trial and selects one output.
+
+After selection, `run_trial()` runs the verifier once, retains the selected output and trace, removes temporary workspaces unless `--keep-workspace` is set, and imports the result. This local path is useful for harness iteration and verifier debugging.
 
 ```bash
 uv run aec-bench run-local tasks/electrical/voltage-drop \

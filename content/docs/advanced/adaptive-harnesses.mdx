@@ -1,9 +1,9 @@
 ---
 title: Adaptive Harnesses
-description: How aec-bench separates the fixed execution kernel, agent-harness configuration, and execution program for governed comparison and repair.
+description: Compare changes to an agent harness without changing the trusted execution code or benchmark task by accident.
 ---
 
-Most package users can select an agent harness and use the normal run commands; kernel fingerprints are for governed adaptive experiments. This page is for researchers and maintainers who need governed candidate comparison, replayable repair, or experimental isolation across execution structures.
+Most users can select an [agent harness](/docs/agents/harnesses) and use the normal run commands. Use the adaptive harness API when you want to compare or repair how an agent runs while proving exactly what changed between candidates.
 
 Adaptive harness experiments separate three objects that are easy to blur together:
 
@@ -11,20 +11,27 @@ Adaptive harness experiments separate three objects that are easy to blur togeth
 - the selected agent-harness configuration; and
 - the program that schedules task attempts.
 
-The compact notation is **K / Hx / px**. These identify three library contracts;
-learned-harness claims require separate evidence.
+The API calls these objects `K`, `Hx`, and `px`:
 
-## Fixed kernel
+| API name | Plain-language meaning | Keep it fixed when you test |
+|----------|------------------------|-----------------------------|
+| `K` | The trusted execution code | A new harness configuration or execution plan |
+| `Hx` | One compiled harness configuration | A different execution plan |
+| `px` | The operations the harness will run | A different harness configuration |
 
-The **fixed kernel** (`K`) is the versioned code allowed to execute in an adaptive run. Its identity records the kernel version and a digest of the executable source it owns.
+Keeping these identities separate makes a comparison interpretable. It does not, by itself, prove that a harness learned or will transfer to other tasks.
 
-Kernel membership follows executable ownership, independent of a shared checkout. Executable kernel changes produce a new identity, and candidates remain bound to the recorded identity.
+## Trusted execution code (`K`)
 
-## Harness specification and instance
+The **fixed kernel** (`K`) is the versioned code allowed to execute in an adaptive run. Its identity records the kernel version and a digest of that executable source.
+
+If this code changes, the experiment records a new kernel identity. This prevents a harness candidate from quietly changing the machinery used to test it.
+
+## Harness configuration (`Hx`)
 
 `HarnessSpec` is the declarative input for one harness. It describes runtime capabilities, bindings, contracts, recursion policy, and budgets. It does not own artefact-task attempt branching, selection, or verification.
 
-Deterministic compilation against one fixed kernel produces the **compiled harness instance** (`Hx`). `CompiledHarnessInstance` is immutable and content-addressed. It selects declared agent bindings and their bounded runtime settings while executable code remains in the fixed kernel.
+Compiling a `HarnessSpec` against one fixed kernel produces the **compiled harness instance** (`Hx`). This is the exact harness configuration used in the experiment. It selects the model, bindings, capabilities, and limits, but cannot change the fixed execution code.
 
 Typical fields include:
 
@@ -37,9 +44,9 @@ Typical fields include:
 An `Hx` change is therefore an explicit experimental treatment recorded separately
 from the incumbent run.
 
-## Execution program
+## Execution plan (`px`)
 
-The **execution program** (`px`) is a validated graph of task operations for governed adaptive and harness-program studies. The fixed kernel compiles it into a `RunBundle` for the adaptive execution path.
+The **execution program** (`px`) says which task operations to run and in what order. The library validates this plan and compiles it into a `RunBundle` for the adaptive execution path.
 
 This is not the ordinary artefact-task API. Normal task execution uses `run_experiment()` and `run_trial()` and does not pass through `run_batch.v1` or a generic execution-program bridge.
 
@@ -51,9 +58,9 @@ A program can express bounded patterns such as:
 - a coalesced batch operation; or
 - a final output-commit step.
 
-Programs contain validated task-operation graphs composed from fixed-kernel primitives.
+Each operation must come from the fixed kernel.
 
-## K / Hx / px
+## Compare one change at a time
 
 Keeping the three identities separate makes comparisons interpretable:
 
@@ -70,13 +77,13 @@ fixed K
 Vary either `Hx` or `px` in one comparison while holding the other and `K` fixed. The
 task snapshot, verifier, seeds, repetitions, and shared budget must also remain explicit.
 
-## Functional composition boundary
+## Use with the meta-harness API
 
-K / Hx / px is one specialist candidate shape, not a requirement of the generic meta-harness API. Harness-program studies use `run_harness_study()` to evaluate their materialised candidates while retaining fixed-kernel compilation, Harbor execution, trial receipts, statistical analysis, and study reports.
+`K / Hx / px` is one specialist candidate shape. The generic [meta-harness API](/docs/advanced/meta-harness-runtime) does not require it. Harness-program studies use `run_harness_study()` to compare candidates while keeping their normal compilation, Harbor execution, trial evidence, analysis, and reports.
 
 The adaptive cycle uses `run_meta_harness()` for its bounded candidate selection and refinement shape. Repair still owns diagnosis and typed patch creation. Motif learning and promotion remain with their governance owners.
 
-Other callers can use different candidate values and runtimes through the same functional API. They need only return non-empty `TrialRecord` evidence and supply their own assessment policy.
+Other callers can compare different types of candidate through the same API. Each evaluator returns its normal `TrialRecord` evidence, and the caller defines how to compare it.
 
 ## Compilation and execution
 
@@ -88,7 +95,7 @@ The compiler fails closed before execution when a candidate:
 - refers to an incompatible task or harness profile; or
 - cannot bind every execution dependency to the frozen identities.
 
-Successful compilation produces an immutable run bundle. Harbor remains the execution substrate for this adaptive path. The host still preserves task packaging, workspace isolation, verifier authority, output collection, and trial import.
+Successful compilation produces an immutable run bundle, which Harbor executes. AEC-Bench still packages the task, isolates the workspace, runs the official verifier, collects outputs, and imports the trial.
 
 ## Evidence and authority
 

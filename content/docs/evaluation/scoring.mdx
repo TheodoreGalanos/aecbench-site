@@ -42,7 +42,7 @@ The optional `details.json` carries the per-dimension breakdown:
 
 ## Reward rollup
 
-`reward.json` is the authoritative trial reward. Artefact ingestion reads and validates this reward, then stores `details.json` as `EvaluationResult.breakdown`.
+`reward.json` is the trial reward used by AEC-Bench. The runner validates it and stores `details.json` as `EvaluationResult.breakdown`.
 
 For tasks that need rubric-style scoring, verifier code or judge pipelines can call the rubric scorer before writing artefacts. The scorer normalises each dimension to `score / max_score`, clamps it to `[0, 1]`, and combines dimensions with a rollup strategy:
 
@@ -75,7 +75,7 @@ The reward gate is fail-closed:
 
 `verifier_completed` is otherwise diagnostic. It surfaces in reports with the parser and schema flags, so readers can distinguish "the agent was wrong" from "the agent did not produce anything usable".
 
-## The full EvaluationResult
+## Evaluation result fields
 
 Putting it together:
 

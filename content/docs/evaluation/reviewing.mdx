@@ -3,12 +3,11 @@ title: Review and Reporting
 description: How optional LLM review, structured human review, reporting, and holdout protection sit alongside automated benchmark rewards.
 ---
 
-Automated verification supplies the score. Review and reporting preserve disagreement,
-uncertainty, and provenance while the automated reward remains fixed.
+Automated verification supplies the score. Review records disagreement, uncertainty, and supporting evidence without changing that score.
 
 ## Optional post-verifier LLM review
 
-`run` and `run-local` can call an LLM reviewer after the deterministic verifier. The reviewer inspects the materialised task-review profile, output, artefacts, trace, source authority, and contradiction evidence:
+`run` and `run-local` can call an LLM reviewer after the deterministic verifier. The reviewer can inspect the task, agent output, retained files, execution trace, cited sources, and evidence of contradictions:
 
 ```bash
 uv run aec-bench run --config experiment.yaml \
@@ -26,7 +25,7 @@ The stage writes request, per-model review, evaluation, and summary artefacts be
 
 ## Task-genome review evidence
 
-A task-genome review refers to one exact `TaskSnapshotRef`. It records small `SourceSpan` values for the instruction, verifier, and other source evidence that supports each extracted claim. It does not copy the complete task source into the review.
+A retained review must stay tied to the task version that was reviewed. `TaskSnapshotRef` identifies that version, and small `SourceSpan` records point to the instruction, verifier, or other source behind each claim. The review does not copy the complete task source.
 
 When a review must be retained independently, store the review bytes and use `ArtifactRef`. Before reuse, verify that the review still matches the selected task snapshot. A changed task needs a new review.
 
@@ -77,7 +76,7 @@ Re-reviewing creates a new record and preserves history.
 
 Every reported metric derives from identified trial, evaluation, and review records and filters.
 
-Different audiences need different projections:
+Different audiences need different views:
 
 | Audience | Useful view |
 |---|---|
@@ -91,7 +90,7 @@ Different audiences need different projections:
 Reviewers may see holdout-sensitive evidence that must not enter public reports,
 training data, model-visible feedback, or task-generation prompts.
 
-Keep these planes separate:
+Keep these uses separate:
 
 - full private review evidence;
 - allowlisted public aggregates;
@@ -99,9 +98,7 @@ Keep these planes separate:
 - model-visible development feedback; and
 - training-visible examples.
 
-Holdout sensitivity follows provenance: every annotation derived from a sealed target
-remains **holdout-sensitive**, including summaries and paraphrases. Choose categories
-and aggregate publication rules before opening the holdout.
+Every annotation, summary, or paraphrase derived from a sealed target remains **holdout-sensitive**. Choose categories and aggregate publication rules before opening the holdout.
 
 ## Continuous improvement
 

@@ -38,7 +38,7 @@ The current upstream library export contains 352 built templates and 284 propose
 
 ## Schema
 
-The current export has only the schema marker and the two entry lists:
+The export contains a file-format version and two entry lists:
 
 ```json
 {
@@ -106,6 +106,6 @@ Limit the catalogue to the public benchmark surface. Keep local run outputs, pri
 
 ## Schema compatibility
 
-`schema_version` describes the JSON contract. It is not template identity or library identity. The site accepts schema 2 and a bounded schema-1 transition reader. Unknown schemas fail the build.
+`schema_version` tells the site how to read the JSON file. Most users do not need to care about its numeric value. The current site reads schema 2 and can temporarily read schema 1; it rejects unknown formats instead of displaying incomplete catalogue data.
 
 If the contract changes, update the site reader and these docs in the same change. If entries change, export and sync the catalogue again.

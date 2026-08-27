@@ -5,7 +5,7 @@ description: Contracts define the validated data that crosses task, execution, e
 
 import { ContractsFlow } from '@/components/docs/contracts-flow';
 
-Contracts sit at real trust boundaries: imported task material, provider results, cross-process calls, and persisted evidence. Ordinary Python values remain suitable inside one owner.
+This page is for developers who need to read or produce AEC-Bench data. A contract validates information when it crosses a boundary, such as imported task material, provider results, another process, or persisted evidence. Internal helper values do not need the same machinery.
 
 The common artefact-task path resolves the task, runs one or more isolated attempts, verifies the selected output, and builds one reportable trial:
 
@@ -88,7 +88,7 @@ An `AttemptRecipe` receives only the tracked `AttemptRunner`. It can request one
 
 `CandidateChecks` plans a candidate-independent batch, runs it, optionally enriches its observations, and returns an `EvaluatedCandidate`. A parent and child remain separate evaluated values and must use the same ordered evaluation cases before comparison. `TrialRecord` remains the evidence authority.
 
-`CandidateProposalRequest` supplies a selected parent, authorised inspirations, goal, strategy, history, and bounded memory to a proposer. A submitted `CandidateProposal` carries the child snapshot, mutation summary, and evaluated revision attempt. An abstained, budget-exhausted, or cancelled proposal carries no child material.
+`CandidateProposalRequest` supplies a selected parent, reference candidate snapshots (`inspirations`), goal, strategy, history, and bounded memory to a proposer. A submitted `CandidateProposal` carries the child snapshot, mutation summary, and evaluated revision attempt. An abstained, budget-exhausted, or cancelled proposal carries no child material.
 
 The proposer changes scratch only. The application can write canonical workspace state only after selection checks pass and the search gate accepts the child. See [Evolution](/docs/advanced/evolution) and [Agentic Variation](/docs/advanced/avo).
 
@@ -123,7 +123,7 @@ Schema labels such as v2 or v3 are valid compatibility versions. They are not ex
 
 ## RunManifest — shared run identity
 
-`RunManifest` stores the identity that all trials in one run share:
+`RunManifest` stores information shared by every trial in one run. Its `schema_version` identifies the persisted file format so AEC-Bench can reject incompatible records. Library code supplies this value; normal callers do not choose it.
 
 ```python
 class RunManifest(FrozenStrictModel):

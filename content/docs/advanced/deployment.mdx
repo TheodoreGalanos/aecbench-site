@@ -3,7 +3,7 @@ title: Deployment
 description: Harbor is the execution path aec-bench uses to dispatch experiment trials and import completed results into the ledger.
 ---
 
-For normal experiment runs, aec-bench builds a Harbor job config from the experiment manifest, invokes the Harbor CLI, locates the produced job directory, and imports its trial results into the ledger.
+Use Harbor when an experiment must run in controlled containers or remote sandboxes. AEC-Bench turns the experiment configuration into a Harbor job, waits for it to finish, and imports the results into the local record store.
 
 The public `aec-bench run` flow is synchronous. The command returns after Harbor finishes and the import step completes.
 

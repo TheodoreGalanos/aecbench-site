@@ -3,9 +3,7 @@ title: Contributing Tasks
 description: How to contribute source-backed, reproducible AEC benchmark tasks and verify their generated artefacts.
 ---
 
-Contributions should make the engineering basis, benchmark transformation, and
-verification boundary inspectable. A task is ready when another contributor can trace
-the source, regenerate the task, and reproduce the verifier result.
+A good contribution lets another person answer three questions: Where did the engineering rule come from? How did it become a benchmark task? Can I reproduce the expected score?
 
 ## Contribution workflow
 
@@ -39,10 +37,9 @@ same rule. Record:
 Do not copy proprietary source text into public fixtures unless redistribution is
 permitted. A citation is not permission to publish the underlying rulebook.
 
-## Contract boundary
+## Make every scored input visible
 
-The task instruction must expose every input needed for the scored result, including
-verifier defaults, lookup values, and local-file assumptions.
+The task instruction must expose every input needed for the scored result. This includes verifier defaults, lookup values, and assumptions about local files.
 
 A good contribution distinguishes:
 

@@ -3,11 +3,11 @@ title: Prime Lab
 description: Prime Lab integration exports public aec-bench tasks for evaluation and training, and public evidence lifecycles for local persistent evaluation.
 ---
 
-Prime Lab support is optional. It lets aec-bench package selected tasks as Prime/verifiers environments while preserving the aec-bench task verifier as the reward authority.
+Prime Lab support is optional. Use it to run AEC-Bench tasks through Prime for hosted evaluation or training. AEC-Bench still supplies the task and decides the reward; Prime supplies the execution and training platform.
 
-## Export lanes
+## What you can export
 
-aec-bench classifies tasks into conservative Prime lanes:
+The available Prime environment depends on what the task needs:
 
 | AEC-Bench task shape | Prime environment shape | Status |
 |----------------------|-------------------------|--------|
@@ -17,7 +17,7 @@ aec-bench classifies tasks into conservative Prime lanes:
 | Materialised public evidence lifecycles | Persistent `StatefulToolEnv` package | Local eval only |
 | Multi-environment training suites | Difficulty-filtered environment views with Prime buffer ratios | Generated through `prime train-config` |
 
-The original task verifier still decides reward; Prime changes only the evaluation substrate.
+The original task verifier still decides reward. Changing the Prime environment does not change what counts as a correct result.
 
 General task exports accept public tasks only. They record each task's content revision and visibility, and keep verifier files outside the actor workspace.
 
@@ -134,9 +134,9 @@ uv run aec-bench prime eval \
 
 Use `--env-arg KEY=VALUE` for additional `load_environment(...)` arguments beyond the current first-class CLI flags.
 
-## Adapter eval
+## Evaluate a trained adapter
 
-Prime evaluates base models and hosted-training adapters through the same environment boundary. Adapter inference requires a deployed Prime inference adapter; a training checkpoint id identifies a different record.
+Prime can evaluate either a base model or a trained adapter in the same environment. Here, an **adapter** is a deployed set of trained model weights. A training checkpoint records training progress, but it is not automatically available for inference.
 
 List available adapter deployments:
 
@@ -164,7 +164,7 @@ uv run aec-bench prime eval \
   --eval-name aec-electrical-adapter-medium
 ```
 
-aec-bench composes the Prime model string as `<base-model>:<adapter-id>`. To keep checkpoint ids and deployment ids distinct, resolve the adapter directly from a hosted training run:
+AEC-Bench sends Prime the model string `<base-model>:<adapter-id>`. If you have a training run rather than a deployed adapter ID, let the command resolve the deployment:
 
 ```bash
 uv run aec-bench prime eval \
@@ -246,16 +246,16 @@ Before scaling a training run, run a one-example hosted eval and inspect reward,
 
 After training finishes, use `aec-bench prime adapters` to find the deployed inference adapter before running adapter evals. Training checkpoint ids and deployed inference adapter ids are different Prime records.
 
-## Import hosted rollouts
+## Bring hosted results back into AEC-Bench
 
-Prime hosted evals keep sample-level rollout payloads: prompt, completion messages, tool calls, reward, timing, token usage, stop condition, and environment metrics. Import those samples into the normal aec-bench ledger when you want the same trace and behavioural tooling used for local or Harbor-backed runs:
+Import a hosted evaluation when you want to inspect it with the same reports used for local and Harbor runs. Each Prime sample includes the prompt, model messages, tool calls, reward, timing, token use, stop reason, and environment metrics:
 
 ```bash
 uv run aec-bench import-prime-eval <prime-eval-id> \
   --experiment prime-eval-medium-stateful
 ```
 
-The importer writes one `TrialRecord` per Prime sample plus local artefacts under the ledger: `conversation.jsonl`, the raw `prime_sample.json`, and `output.md` when the rollout called `submit_answer` with submitted content. It preserves Prime's hosted result and materialises the result locally so the rest of aec-bench can inspect it.
+The importer writes one `TrialRecord` per Prime sample. It also retains the conversation, raw Prime sample, and submitted output when available. The result can then use normal AEC-Bench trace and behaviour reports.
 
 Provider completion, evaluation, and evidence are separate facts. A sample can have a reward and still have failed execution or incomplete evidence. Check `execution_status`, `evaluation_status`, and `evidence_status` with the verifier result.
 

@@ -1,13 +1,13 @@
 ---
 title: Finite Lifecycles
-description: Finite lifecycles control a bounded sequence of evidence releases, submissions, host-owned progression, and task-owned verification.
+description: Run work that has a known sequence of stages, evidence releases, and submissions.
 ---
 
-A finite lifecycle models work with a known sequence of stages. Each stage releases defined evidence and accepts one structurally valid result before the host advances the lifecycle. After execution, the task verifier checks correctness and supplies reward evidence; evaluation owns the normalised reward and validity.
+A finite lifecycle models work with a known sequence of stages. At each stage, the agent receives new evidence and submits a result before it can continue. The host checks that the submission has the required structure; the task verifier separately checks whether it is correct.
 
 Use a lifecycle when the stage order and completion conditions are known before execution. Use an [Interactive World](/docs/core/interactive-worlds) when actor actions change an ongoing causal state. Use an [artefact task](/docs/core/tasks) when one workspace or submission is enough.
 
-## Ownership boundary
+## Who controls each part
 
 The task owns stage meaning. The lifecycle host owns progression.
 
@@ -22,9 +22,9 @@ One stage is active at a time. A structurally invalid result leaves the current 
 
 The host marks the lifecycle complete only after it archives the terminal result.
 
-## Package shape
+## What a lifecycle defines
 
-`EvidenceLifecycleSpec` is the current ordered staged-evidence contract. Other finite lifecycles can define a different contract. It declares a lifecycle identity and ordered checkpoints. Each checkpoint names:
+`EvidenceLifecycleSpec` defines an ordered evidence workflow. Each checkpoint names:
 
 - its instruction;
 - the evidence release visible at that stage;
@@ -32,11 +32,11 @@ The host marks the lifecycle complete only after it archives the terminal result
 - any earlier checkpoint that must already be accepted; and
 - the required submission fields.
 
-Materialisation creates a portable public package with stage instructions, evidence releases, and submission locations. The host checks submission structure; the task verifier defines task-specific correctness and supplies reward evidence to evaluation.
+The `materialize` command creates a portable folder with the stage instructions, evidence, and submission locations. The host checks submission structure; the task verifier defines task-specific correctness.
 
 Lifecycle identity is separate from task status. `proposed`, `active`, `deprecated`, and `retired` describe catalogue status. Lifecycle checkpoints describe evidence progression during one run.
 
-## Inspect and materialise
+## Create and inspect a package
 
 List the installed lifecycle tasks:
 
@@ -44,7 +44,7 @@ List the installed lifecycle tasks:
 aec-bench task lifecycle list
 ```
 
-Materialise one package and run the deterministic smoke actor:
+Create one package and run the deterministic smoke actor:
 
 ```bash
 aec-bench task lifecycle materialize hydraulic-design-response-lifecycle-review \
@@ -57,7 +57,7 @@ aec-bench task lifecycle verify artefacts/lifecycles/hydraulic-review \
   --run-dir artefacts/lifecycle-runs/hydraulic-review-smoke
 ```
 
-`run-smoke` proves the deterministic local package and host boundary. Model and hosted-provider integration require a separate run.
+`run-smoke` checks the local package and stage progression without a model. It does not test a hosted provider.
 
 Some lifecycle families expose public semantic variants. Inspect them before materialisation:
 
@@ -124,7 +124,7 @@ aec-bench task lifecycle run \
 
 Use `--mode fresh_context` to create a separate agent session for each checkpoint attempt. Persistent context keeps one session across checkpoints. These modes are distinct treatments with different memory and recovery rules.
 
-## Functional Python API
+## Python API
 
 Python callers can control checkpoints through direct functions:
 
@@ -139,7 +139,7 @@ from aec_bench.lifecycles.application import (
 )
 ```
 
-`release_checkpoint()` and `submit_checkpoint()` use the same coordinator as the CLI. `read_lifecycle()` returns the canonical state. `revisit_checkpoint()` is read-only, while `branch_lifecycle()` creates a separate run with a validated accepted prefix. `run_lifecycle()` resumes normal fresh-context progression from the current state.
+These functions use the same lifecycle rules as the CLI. `read_lifecycle()` returns the current authoritative state. `revisit_checkpoint()` only reads an accepted stage. `branch_lifecycle()` creates a separate run from accepted work, and `run_lifecycle()` continues from the current state with a fresh agent context.
 
 Lifecycle execution and trial composition use ordinary in-memory values:
 
@@ -182,9 +182,9 @@ Conditional evidence requests remain an experimental staged-evidence capability.
 
 Choose either conditional evidence requests or conditional operations within one lifecycle in the current host implementation.
 
-## Execution evidence
+## What the run records
 
-Lifecycle execution records keep session identity, resolved model, agent harness, execution mode, memory visibility, status, usage, and retained `ArtifactRef` values. A final `TrialRecord` references this evidence, while lifecycle state remains authoritative in the execution record.
+The execution record keeps the model, agent harness, context mode, status, usage, and retained files needed to understand the run. The final `TrialRecord` links to this evidence. The lifecycle's own execution record remains the source of truth for stage state.
 
 Persistent-context and fresh-context execution are explicit choices. Fresh sessions can receive only the evidence allowed by their memory visibility policy. The resolved model and agent harness stay stable across one lifecycle execution.
 

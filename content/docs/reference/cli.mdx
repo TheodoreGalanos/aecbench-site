@@ -3,7 +3,7 @@ title: CLI
 description: The aec-bench CLI is the command-line interface for generating tasks, running experiments, exporting environments, and inspecting results.
 ---
 
-The command surface is grouped by function: setup, generation, execution, analysis, review, evolution, datasets, and integrations.
+Use this page to look up commands and flags. For a guided first run, start with the [Quickstart](/docs/start/quickstart).
 
 ```bash
 uv run aec-bench --version
@@ -109,9 +109,9 @@ Check a task directory:
 uv run aec-bench task validate tasks/electrical/voltage-drop
 ```
 
-### `task genome` and decomposition
+### `task genome` and task structure analysis
 
-Extract one task genome, scan a task or template tree, and derive normalised template decompositions:
+These research commands describe the structure and capabilities of tasks. Extract one task description, scan a task or template tree, or derive a consistent template breakdown:
 
 ```bash
 uv run aec-bench task genome <task-path>
@@ -335,7 +335,7 @@ Use remediation when the verifier can point to a concrete gap and the original t
 
 ### `meta-harness`
 
-Run meta-harness studies and the specialist problem-model workflow for verifier/schema debugging, reviewer interpretation, operation planning, and governed repair loops:
+Compare harness candidates or diagnose a benchmark problem before proposing a controlled repair:
 
 ```bash
 uv run aec-bench meta-harness logic-evaluate --world world.json --run task-run.json
@@ -346,7 +346,11 @@ uv run aec-bench meta-harness process "Create a diagnostic task." --brief brief.
 uv run aec-bench meta-harness autonomous --task-text "Create a diagnostic task." --brief brief.json --world world.json --max-iterations 3
 ```
 
-`recipe`, `compare`, and `example` use the runtime-neutral functional study API. The process commands are pauseable: briefs, problem models, task runs, operation plans, and governance decisions that require input enter `awaiting_*` states. Existing `--world` flags name the supported problem-model JSON files; they do not invoke the registered Interactive World runtime. Use `--emit-run-plan` on `intake-models`, `world-models`, `review-models`, and `operation-models` to validate endpoint configuration before calling providers.
+`recipe`, `compare`, and `example` use the same Python study API described in [Meta-Harness Composition](/docs/advanced/meta-harness-runtime).
+
+The diagnostic process can pause when a brief, problem model, task run, operation plan, or approval decision is missing. These pauses use named `awaiting_*` states. The existing `--world` flags refer to problem-model JSON files; they do not start an [Interactive World](/docs/core/interactive-worlds).
+
+Use `--emit-run-plan` with `intake-models`, `world-models`, `review-models`, or `operation-models` to validate endpoint configuration before calling a provider.
 
 The provider-free comparison surface includes:
 

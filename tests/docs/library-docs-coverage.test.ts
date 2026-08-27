@@ -42,9 +42,9 @@ describe('library documentation coverage', () => {
     expect(reviewing).toContain('Structured review');
     expect(reviewing).toContain('automated reward');
     expect(reviewing).toContain('holdout-sensitive');
-    expect(adaptiveHarnesses).toContain('Fixed kernel');
-    expect(adaptiveHarnesses).toContain('Harness specification and instance');
-    expect(adaptiveHarnesses).toContain('Execution program');
+    expect(adaptiveHarnesses).toContain('Trusted execution code (`K`)');
+    expect(adaptiveHarnesses).toContain('Harness configuration (`Hx`)');
+    expect(adaptiveHarnesses).toContain('Execution plan (`px`)');
     expect(adaptiveHarnesses).not.toContain('Phase 9');
   });
 
@@ -53,7 +53,7 @@ describe('library documentation coverage', () => {
     const worlds = readDoc('core/interactive-worlds.mdx');
     const lifecycles = readDoc('core/lifecycles.mdx');
 
-    expect(architecture).toContain('three execution families');
+    expect(architecture).toContain('three shapes of work');
     expect(architecture).toContain('Artefact and workspace tasks');
     expect(architecture).toContain('Finite lifecycles');
     expect(architecture).toContain('Interactive Worlds');
@@ -65,7 +65,7 @@ describe('library documentation coverage', () => {
     expect(worlds).toContain('world.toml');
     expect(worlds).toContain('plan_trials');
     expect(worlds).toContain('run_world_experiment');
-    expect(worlds).toContain('A world action is not a trial');
+    expect(worlds).toContain('One action is not a trial');
     expect(worlds).toContain('aec-bench task world pump-station');
     expect(worlds).not.toContain('aec-bench task pump-station-world');
     expect(lifecycles).toContain('One stage is active at a time');
@@ -105,7 +105,7 @@ describe('library documentation coverage', () => {
     expect(runtime).toContain('await run_world_experiment(');
     expect(runtime).toContain('max_rounds=3');
     expect(runtime).toContain('Failed and invalid trials remain evidence');
-    expect(runtime).toContain('not a universal runtime');
+    expect(runtime).toContain('does not replace the task runtime or invent a common score');
     expect(runtime).toContain('operation loop');
     expect(runtime).toContain('governance loop');
     expect(runtime).toContain('world_generation_request');
@@ -188,15 +188,16 @@ describe('library documentation coverage', () => {
     expect(avo).toContain('inspect_parent_results');
     expect(avo).toContain('test_candidate');
     expect(avo).toContain('submit_candidate');
-    expect(avo).toContain('at most 24 structured memory facts');
-    expect(avo).toContain('checkpoint schema `2`');
-    expect(avo).toContain('protected `development_*` and `supervisor_*` field names');
-    expect(avo).toContain('Claims about model quality, cost, or candidate improvement require');
+    expect(avo).toContain('reference candidates that may contain useful approaches');
+    expect(avo).toContain('at most 24 short facts');
+    expect(avo).toContain('saves enough state to continue an interrupted proposal');
+    expect(avo).toContain('Completed paid work is not repeated');
+    expect(avo).toContain('they do not show that a particular model will improve a workspace');
 
     expect(advisor).toContain('AVO advisor');
     expect(swarm).toContain('SwarmAssignment');
     expect(swarm).toContain('CandidateProposal');
-    expect(swarm).toContain('It does not report an authoritative score');
+    expect(swarm).toContain('cannot score or archive its own proposal');
   });
 
   it('documents the provider-free package and current optional extras', () => {

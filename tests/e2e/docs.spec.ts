@@ -24,7 +24,7 @@ test.describe('Documentation', () => {
   test('renders the meta-harness composition page', async ({ page }) => {
     await page.goto('/docs/advanced/meta-harness-runtime');
     await expect(page.getByRole('heading', { name: 'Meta-Harness Composition' })).toBeVisible();
-    await expect(page.getByText(/runtime-neutral composition layer/)).toBeVisible();
+    await expect(page.getByText(/meta-harness coordinates the study/)).toBeVisible();
     await expect(page.locator('code').filter({ hasText: 'max_rounds=3' })).toBeVisible();
     await expect(page.locator('code').filter({ hasText: 'await run_world_experiment' })).toBeVisible();
     await expect(page.getByText('uv run aec-bench meta-harness process')).toBeVisible();
@@ -42,10 +42,10 @@ test.describe('Documentation', () => {
 
   test('renders public Interactive World discovery and execution paths', async ({ page }) => {
     await page.goto('/docs/core/interactive-worlds');
-    await expect(page.getByRole('heading', { name: 'Public discovery and task API' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Find and load a world' })).toBeVisible();
     await expect(page.locator('code').filter({ hasText: 'from aec_bench import worlds' })).toBeVisible();
     await expect(page.getByText('aec-bench task world pump-station branch --help')).toBeVisible();
-    await expect(page.getByText(/A world action is not a trial/)).toBeVisible();
+    await expect(page.getByText(/A trial covers the complete journey/)).toBeVisible();
   });
 
   test('renders the public guides migrated from the library', async ({ page }) => {
@@ -69,13 +69,21 @@ test.describe('Documentation', () => {
     await expect(page.getByText('ANTHROPIC_API_KEY')).toBeVisible();
   });
 
+  test('renders persisted run planning and accounting guidance', async ({ page }) => {
+    await page.goto('/docs/core/runs-and-plans');
+    await expect(page.getByRole('heading', { name: 'Runs and Plans' })).toBeVisible();
+    await expect(page.getByText('ResolvedRunSpec').first()).toBeVisible();
+    await expect(page.getByText('uv run aec-bench run plan').first()).toBeVisible();
+    await expect(page.getByText('uv run aec-bench run reconcile').first()).toBeVisible();
+  });
+
   test('renders the architecture flow diagram', async ({ page }) => {
     await page.setViewportSize({ width: 1024, height: 900 });
     await page.goto('/docs/core/architecture');
     await expect(page.getByTestId('benchmark-run-flow')).toBeVisible();
     await expect(page.getByTestId('core-domains')).toBeVisible();
     await expect(page.getByTestId('core-domains-desktop').getByText('Finite lifecycles', { exact: true })).toBeVisible();
-    await expect(page.getByText(/aec-bench has three execution families/)).toBeVisible();
+    await expect(page.getByText(/AEC-Bench supports three shapes of work/)).toBeVisible();
     await expect(
       page.getByText(
         'aec-bench supports artefact tasks and Interactive Worlds through shared authoring, evaluation, evidence, and reporting boundaries.',
@@ -84,7 +92,7 @@ test.describe('Documentation', () => {
     ).toHaveCount(0);
     await expect(
       page.getByRole('img', {
-        name: /benchmark run flow from define task through retain and report/i,
+        name: /benchmark run flow from define task through reconcile run/i,
       }),
     ).toBeVisible();
 

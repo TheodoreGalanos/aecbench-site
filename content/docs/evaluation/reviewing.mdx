@@ -76,6 +76,29 @@ Re-reviewing creates a new record and preserves history.
 
 Every reported metric derives from identified trial, evaluation, and review records and filters.
 
+`run reconcile` uses `RunAccounting` to establish the result-set boundary. It
+matches typed outcomes to the exact persisted plan and returns:
+
+- planned and terminal outcome counts;
+- run completeness and validity;
+- accepted trial identities in plan order;
+- missing and invalid planned identities;
+- duplicate and conflicting identities; and
+- unexpected identities retained in quarantine.
+
+The run status gives the reporting context:
+
+| Status | Reporting meaning |
+|--------|-------------------|
+| `complete` | The full planned set has valid successful results |
+| `complete_with_failures` | The full planned set is accounted for and includes terminal failures, cancellations, or timeouts |
+| `cancelled` | The accounted result set reflects the requested cancellation |
+| `incomplete` | One or more planned trial identities are awaiting terminal results |
+| `invalid` | Membership or evidence conflicts require review |
+
+The reconciliation result provides the accepted record set and accounting
+counts used by reporting workflows.
+
 Different audiences need different views:
 
 | Audience | Useful view |
@@ -116,4 +139,6 @@ exposed the problem.
 
 See [Scoring](/docs/evaluation/scoring) for the verifier contract,
 [Traces](/docs/evaluation/traces) for execution evidence, and
-[Classification](/docs/evaluation/classification) for automated behavioural analysis.
+[Classification](/docs/evaluation/classification) for automated behavioural
+analysis. See [Runs and Plans](/docs/core/runs-and-plans) for planned membership
+and reconciliation.

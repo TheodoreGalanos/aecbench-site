@@ -125,6 +125,12 @@ The `model` field supports `$ENV_VAR` expansion. The manifest parser accepts `ha
 
 The runner applies dataset task IDs, patterns, domain, and difficulty as intersections. A dataset-backed experiment contains an exact repository or bundle reference. Use `dataset config` to resolve a human label before you write the experiment. Run `dataset validate` first and inspect the dry-run plan.
 
+`run plan --config` resolves the manifest into a persisted `ResolvedRunSpec`.
+The saved condition contains exact task releases, agent conditions, compute and
+repetition settings, verification and reviewer settings, visibility, and
+execution policy. Environment-backed credentials remain named environment
+references in the resolved condition.
+
 `compute.timeout_override` sits alongside `resource_limits` and overrides the per-task trial timeout.
 
 The optional `reviewer` block runs after deterministic verification:

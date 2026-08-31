@@ -26,6 +26,7 @@ describe('library documentation coverage', () => {
     expect(agentsMeta).toContain('"prime-agent"');
     expect(coreMeta).toContain('"lifecycles"');
     expect(coreMeta).toContain('"interactive-worlds"');
+    expect(coreMeta).toContain('"runs-and-plans"');
     expect(coreMeta).toContain('"contributing"');
     expect(evaluationMeta).toContain('"reviewing"');
     expect(referenceMeta).toContain('"library-catalogue"');
@@ -120,6 +121,28 @@ describe('library documentation coverage', () => {
     expect(config).toContain('public | private | holdout');
     expect(quickstart).toContain('--lifecycle proposed');
     expect(templates).toContain('--lifecycle proposed');
+  });
+
+  it('documents persisted run planning and complete result accounting', () => {
+    const runs = readDoc('core/runs-and-plans.mdx');
+    const contracts = readDoc('core/contracts.mdx');
+    const cli = readDoc('reference/cli.mdx');
+    const deployment = readDoc('advanced/deployment.mdx');
+    const reviewing = readDoc('evaluation/reviewing.mdx');
+
+    expect(runs).toContain('ResolvedRunSpec');
+    expect(runs).toContain('RunPlan');
+    expect(runs).toContain('RunAccounting');
+    expect(runs).toContain('run reconcile');
+    expect(contracts).toContain('EvidenceRunStore');
+    expect(contracts).toContain('TrialAccountingObservation');
+    expect(cli).toContain('aec-bench run plan');
+    expect(cli).toContain('aec-bench run inspect');
+    expect(cli).toContain('aec-bench run diff');
+    expect(cli).toContain('aec-bench run reconcile');
+    expect(deployment).toContain('HarborTrialTransport');
+    expect(deployment).toContain('HarborImportReconciliation');
+    expect(reviewing).toContain('run completeness and validity');
   });
 
   it('documents the functional meta-harness ownership and specialist process', () => {
@@ -291,7 +314,8 @@ describe('library documentation coverage', () => {
     expect(contracts).toContain('execution_status');
     expect(contracts).toContain('provider_evidence');
     expect(contracts).toContain('WorldTask');
-    expect(contracts).toContain('plan_trials()');
+    expect(contracts).toContain('ResolvedRunSpec');
+    expect(contracts).toContain('RunPlan');
     expect(contracts).toContain('CandidateProposalRequest');
     expect(contracts).toContain('EvaluatedCandidate');
     expect(traces).toContain('evidence_status');

@@ -1,0 +1,125 @@
+---
+title: Execution Control
+description: How aec-bench turns a persisted run plan into leased work, attempts, progress, and final trial records.
+---
+
+Execution control runs the exact trials in a ready `RunPlan`. It gives each
+planned trial one `TrialWorkItem`, records each execution try as an `Attempt`,
+and publishes the selected result as a `TrialRecord`.
+
+```text
+RunPlan
+   ↓ create
+TrialWorkItem
+   ↓ lease
+Attempt → BackendSubmission
+   ↓ collect
+AttemptReceipt
+   ↓ finalise
+TrialFinalization → TrialRecord
+```
+
+## Operational state
+
+`OperationalStore` is a SQLite coordination store. It keeps mutable run,
+plan, planned-trial, work-item, attempt, backend-submission, and lease rows.
+Short transactions update scheduler state while portable run plans and trial
+evidence stay in the evidence store.
+
+The store records the state needed to dispatch work and recover a process:
+
+| Record | Role |
+|---|---|
+| `TrialWorkItem` | One schedulable row bound to a run, plan, trial, backend, route, resource class, priority, and retry policy |
+| `Attempt` | One execution try under a stable trial and work-item identity |
+| `Lease` | A time-limited worker claim with heartbeat and release state |
+| `BackendSubmission` | The provider submission identity and observed backend state |
+| `AttemptReceipt` | Versioned collected facts, output references, verifier receipt, usage, and reconciliation state |
+| `TrialFinalization` | The versioned pointer to the published final trial record |
+
+These contracts use UUIDv7 identities and timezone-aware timestamps. A retry
+creates a new attempt under the same planned trial. A finalization binds the
+published `TrialRecord` to its selected attempt.
+
+## Scheduler policy
+
+`ExecutionPolicy` is part of the resolved run condition. It contains the global
+concurrency limit, retry policy, lease timing, priority ageing, and scoped
+limits for runs, backends, provider routes, model routes, resource classes, and
+execution families.
+
+The local scheduler leases ready work when all applicable limits allow it. It
+applies priority ageing, records backoff, renews heartbeats, and releases or
+expires leases. Retry policy classifies infrastructure failures separately from
+benchmark and invalidating failures. Unknown external state enters
+reconciliation before another attempt can be selected.
+
+The CLI planning path writes `ExecutionPolicy(max_concurrency=1)`.
+The policy contract is available to Python composition and persisted plan
+inspection.
+
+## Start, resume, and cancel
+
+Start or resume a persisted local artefact plan with explicit roots:
+
+```bash
+uv run aec-bench run start <run-id> \
+  --operational-store artefacts/operational.sqlite \
+  --plan-root artefacts/runs \
+  --tasks-root tasks
+
+uv run aec-bench run resume <run-id> \
+  --operational-store artefacts/operational.sqlite \
+  --plan-root artefacts/runs \
+  --tasks-root tasks
+```
+
+`run start` accepts a ready persisted plan and executes its local artefact
+trials. `run resume` loads the same plan, expires old leases, reconciles
+uncertain work, and continues ready work. Both commands validate the saved
+task snapshot and local backend before execution.
+
+Request cancellation with the operational store:
+
+```bash
+uv run aec-bench run cancel <run-id> \
+  --operational-store artefacts/operational.sqlite
+```
+
+Queued work is cancelled. Active work records a cancellation request and the
+backend result is reconciled before the work reaches a terminal state.
+
+## Progress
+
+`RunProgress` projects one authoritative `RunPlan` with the operational rows.
+It reports planned, queued, leased, running, succeeded, failed, cancelled,
+invalid, unknown, and missing work and trial counts. It also reports attempts,
+backend submissions, active and expired leases, retries, timestamps, and the
+remaining work count.
+
+The CLI reads this projection with:
+
+```bash
+uv run aec-bench run status <run-id> \
+  --operational-store artefacts/operational.sqlite \
+  --plan-root artefacts/runs
+```
+
+The TUI exposes the same projection in its run-progress view. The web API
+returns it from `GET /api/runs/{run_id}/status` when the web process has an
+operational store and plan root configured.
+
+## Execution-family composition
+
+The shared scheduler accepts execution-family adapters at a Python composition
+boundary. Artefact tasks use the local artefact adapter for `run start` and
+`run resume`. Interactive World, finite lifecycle, and Harbor integrations
+compose their family-specific worker with the same work, attempt, lease,
+receipt, and finalization contracts.
+
+Each family keeps its task meaning, state transitions, verifier, and evidence
+rules. The scheduler controls work ownership and recovery, while the task
+family defines result meaning.
+
+See [Runs and Plans](/docs/core/runs-and-plans) for plan identity and
+[Contracts](/docs/core/contracts) for the validated data shapes.

@@ -15,14 +15,15 @@ describe('BenchmarkRunFlow', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders all six pipeline stages', () => {
+  it('renders all seven pipeline stages', () => {
     render(<BenchmarkRunFlow />);
 
     expect(screen.getAllByText('Define Task').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Resolve Run').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Persist Plan').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Run Attempt(s)').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Verify Records').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Create Work Items').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Lease and Run Attempts').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Publish Trial Records').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Reconcile Run').length).toBeGreaterThan(0);
   });
 });

@@ -37,6 +37,28 @@ Which variables are required depends on which models appear in your agent config
 
 Model routing depends on the harness path. See [Providers](/docs/agents/configuration#providers).
 
+## Run-control paths
+
+The run-control CLI and web status surface accept explicit paths for mutable
+operational state and persisted plans:
+
+```bash
+uv run aec-bench run status <run-id> \
+  --operational-store artefacts/operational.sqlite \
+  --plan-root artefacts/runs
+```
+
+In `--dev` mode, the launcher passes these paths to the reloadable FastAPI
+process through environment variables:
+
+| Variable | Purpose |
+|----------|---------|
+| `AEC_BENCH_OPERATIONAL_STORE` | SQLite `OperationalStore` path for run progress |
+| `AEC_BENCH_PLAN_ROOT` | Root containing persisted run plans |
+
+The web status route is `GET /api/runs/{run_id}/status`. The TUI run-progress
+view reads the same two roots.
+
 ## Agent runtime overrides
 
 The container agent runtime reads a few environment variables, mostly for script-style and RLM adapters that pass arguments through the environment:

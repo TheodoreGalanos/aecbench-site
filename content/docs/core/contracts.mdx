@@ -8,7 +8,8 @@ import { ContractsFlow } from '@/components/docs/contracts-flow';
 This page is for developers who need to read or produce AEC-Bench data. A contract validates information when it crosses a boundary, such as imported task material, provider results, another process, or persisted evidence. Ordinary Python values handle work inside one owner.
 
 The run boundary resolves one requested condition, persists its exact trial set,
-records each result, and accounts for the complete observed set:
+coordinates execution, records each result, and accounts for the complete
+observed set:
 
 <ContractsFlow />
 
@@ -91,9 +92,28 @@ family, attempt recipe, and evaluation profile. World and lifecycle trials also
 carry their exact family release.
 
 `EvidenceRunStore` persists the resolved specification, draft plan, ready plan,
-and operational state. A ready plan has contiguous ordinals, unique trial
-identities and keys, complete task and agent coverage, and summary counts that
-match its trial set.
+and portable trial evidence. `OperationalStore` owns mutable SQLite
+coordination for runs, plans, work items, attempts, backend submissions, and
+leases. A ready plan has contiguous ordinals, unique trial identities and keys,
+complete task and agent coverage, and summary counts that match its trial set.
+
+## Execution control contracts
+
+`ExecutionPolicy` records the resolved global and scoped scheduler limits,
+lease timing, priority ageing, and retry policy. A `TrialWorkItem` binds one
+planned trial to its execution family, backend, provider and model routes,
+resource class, priority, and current state.
+
+An `Attempt` is one execution try. A `Lease` records worker ownership for a
+bounded time. `BackendSubmission` records the external submission and observed
+backend state. After collection, an `AttemptReceipt` records process status,
+cancellation, resource usage, output references, verifier and authority
+evidence, failure classification, and reconciliation state.
+
+`TrialFinalization` points to the published `TrialRecord` selected from the
+attempt receipts. `RunProgress` is a read-only projection of the authoritative
+`RunPlan` and mutable operational rows. See [Execution Control](/docs/core/execution-control)
+for the scheduler and recovery workflow.
 
 ## TaskAttempt — one isolated agent execution
 

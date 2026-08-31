@@ -131,6 +131,11 @@ repetition settings, verification and reviewer settings, visibility, and
 execution policy. Environment-backed credentials remain named environment
 references in the resolved condition.
 
+The resolved `ExecutionPolicy` includes scheduler limits, retry policy, lease
+timing, priority ageing, and scoped limits. The CLI planning path
+resolves `max_concurrency` to `1`; this policy is persisted for inspection and
+Python composition.
+
 `compute.timeout_override` sits alongside `resource_limits` and overrides the per-task trial timeout.
 
 The optional `reviewer` block runs after deterministic verification:

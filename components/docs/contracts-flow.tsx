@@ -5,7 +5,8 @@
 const stages = [
   { label: 'ResolvedRunSpec', detail: 'requested condition', accent: 'teal' },
   { label: 'RunPlan', detail: 'exact trial set', accent: 'teal' },
-  { label: 'TrialRecord values', detail: 'observed results', accent: 'amber' },
+  { label: 'TrialWorkItem', detail: 'schedulable trial', accent: 'amber' },
+  { label: 'TrialRecord values', detail: 'published results', accent: 'amber' },
   { label: 'RunAccounting', detail: 'membership & status', accent: 'amber' },
 ] as const;
 
@@ -53,27 +54,31 @@ export function ContractsFlow() {
     <div
       className="not-prose my-8"
       role="img"
-      aria-label="Run contract flow from ResolvedRunSpec through RunPlan and TrialRecord values to RunAccounting"
+      aria-label="Run contract flow from ResolvedRunSpec through RunPlan, TrialWorkItem, TrialRecord values, and RunAccounting"
       data-testid="contracts-flow"
     >
       <div className="md:hidden">
         <ContractNode {...stages[0]} />
         <Connector label="plan" />
         <ContractNode {...stages[1]} />
-        <Connector label="execute" />
+        <Connector label="create" />
         <ContractNode {...stages[2]} />
-        <Connector label="reconcile" />
+        <Connector label="publish" />
         <ContractNode {...stages[3]} />
+        <Connector label="reconcile" />
+        <ContractNode {...stages[4]} />
       </div>
 
-      <div className="hidden items-center gap-3 md:grid md:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr]">
+      <div className="hidden items-center gap-3 md:grid md:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr_auto_1fr]">
         <ContractNode {...stages[0]} />
         <span className="text-xs italic text-[var(--color-fd-muted-foreground)]">plan →</span>
         <ContractNode {...stages[1]} />
-        <span className="text-xs italic text-[var(--color-fd-muted-foreground)]">execute →</span>
+        <span className="text-xs italic text-[var(--color-fd-muted-foreground)]">create →</span>
         <ContractNode {...stages[2]} />
-        <span className="text-xs italic text-[var(--color-fd-muted-foreground)]">reconcile →</span>
+        <span className="text-xs italic text-[var(--color-fd-muted-foreground)]">publish →</span>
         <ContractNode {...stages[3]} />
+        <span className="text-xs italic text-[var(--color-fd-muted-foreground)]">reconcile →</span>
+        <ContractNode {...stages[4]} />
       </div>
     </div>
   );

@@ -14,9 +14,11 @@ ExperimentManifest
 ResolvedRunSpec
         ↓ plan
 RunPlan
-        ↓ execute
+        ↓ create work
+TrialWorkItem
+        ↓ execute and finalise
 TrialRecord values
-        ↓ reconcile
+        ↓ account
 RunAccounting
 ```
 
@@ -60,6 +62,9 @@ visibility, and lifecycle counts.
 
 The evidence store persists the resolved specification first, then the draft
 and ready plan. Starting the run fixes the ready plan for that occurrence.
+`OperationalStore` creates mutable work-item, attempt, submission, and lease
+rows for the ready plan. The operational rows coordinate execution; the
+persisted plan remains the authority for planned membership.
 
 ## Trials, repetitions, and attempts
 
@@ -79,6 +84,39 @@ planned trial 019c…
 
 This identity model keeps benchmark membership separate from execution
 recovery and candidate selection.
+
+## Control a persisted run
+
+Start or resume a persisted local artefact plan with explicit operational and
+plan roots:
+
+```bash
+uv run aec-bench run start <run-id> \
+  --operational-store artefacts/operational.sqlite \
+  --plan-root artefacts/runs \
+  --tasks-root tasks
+
+uv run aec-bench run resume <run-id> \
+  --operational-store artefacts/operational.sqlite \
+  --plan-root artefacts/runs \
+  --tasks-root tasks
+```
+
+`run start` executes the saved local artefact plan. `run resume` expires old
+leases, reconciles uncertain work, and continues ready work. Request
+cancellation with `run cancel` and inspect the shared progress projection with
+`run status`:
+
+```bash
+uv run aec-bench run cancel <run-id> \
+  --operational-store artefacts/operational.sqlite
+uv run aec-bench run status <run-id> \
+  --operational-store artefacts/operational.sqlite \
+  --plan-root artefacts/runs
+```
+
+The TUI and web surface read the same progress projection. The web endpoint is
+`GET /api/runs/{run_id}/status`.
 
 ## Inspect and compare plans
 

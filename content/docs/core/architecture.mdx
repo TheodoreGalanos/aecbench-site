@@ -10,6 +10,18 @@ AEC-Bench supports three shapes of work: one submitted artefact, a known sequenc
 
 <CoreDomains />
 
+## Shared execution control
+
+The execution layer turns each planned trial into a `TrialWorkItem`. A local
+scheduler leases work, records attempts and backend submissions, collects an
+`AttemptReceipt`, and publishes a `TrialFinalization` that points to the
+selected `TrialRecord`.
+
+`OperationalStore` holds this mutable coordination state in SQLite. The
+persisted `RunPlan` and portable trial evidence remain the authoritative
+records. `RunProgress` projects both sources for the CLI, TUI, and web status
+surface.
+
 ## Artefact and workspace tasks
 
 An artefact task gives an agent an instruction and an execution environment. The agent changes files or submits an artefact, and the task verifier evaluates the resulting workspace.
@@ -21,14 +33,15 @@ An artefact task gives an agent an instruction and an execution environment. The
 | **Define** | `task.toml`, `instruction.md`, the environment, and verifier define one runnable task |
 | **Resolve** | `ResolvedRunSpec` records the complete requested condition and exact releases |
 | **Plan** | `EvidenceRunStore` persists the ordered UUID-backed `RunPlan` before execution |
-| **Attempt** | Each `runtime.run_once()` call runs one agent execution in one isolated workspace and returns a `TaskAttempt` |
+| **Schedule** | `OperationalStore` creates and leases one `TrialWorkItem` for each planned trial |
+| **Attempt** | Each leased item creates an `Attempt`; the worker records backend submission and collection facts |
 | **Verify** | `run_trial()` selects one attempt, runs the official verifier, and materialises the `TrialRecord` |
 | **Reconcile** | `RunAccounting` matches every observed result to the exact planned trial set |
 
 The run contracts form one sequence:
 
 ```text
-ResolvedRunSpec -> RunPlan -> PlannedTrial -> TaskAttempt -> TrialRecord -> RunAccounting
+ResolvedRunSpec -> RunPlan -> TrialWorkItem -> Attempt -> TrialRecord -> RunAccounting
 ```
 
 [`AttemptRecipe`](/docs/core/contracts#taskattempt--one-isolated-agent-execution) controls whether one trial runs one attempt or several candidates. It starts and tracks attempts, while the outer trial runner retains verifier and reward access. `HarnessSpec` describes how one agent execution works.
@@ -91,6 +104,7 @@ Swarm uses the same proposal and evidence boundaries concurrently. Each worker h
 |---------|-------|----------|
 | Task meaning | Task, template, lifecycle, or world | Keeps engineering inputs, actions, and verifier rules together |
 | Run planning and accounting | Experiment orchestration | Owns the resolved condition, exact trial membership, plan state, and final result-set status |
+| Execution coordination | `OperationalStore` and the local scheduler | Owns mutable work, attempt, lease, submission, retry, cancellation, reconciliation, and progress state |
 | Artefact-task orchestration | `run_experiment()` and `run_trial()` | Owns attempt tracking, selection, official verification, optional review, retained artefacts, and cleanup |
 | Lifecycle orchestration | `aec_bench.lifecycles.application` and the lifecycle host | Applies checkpoint progression, local execution, trial construction, and optional persistence while task semantics stay with the task |
 | Interactive World orchestration | World trial application and task-owned host | Uses the shared actor boundary, then applies task-owned journeys, controls, persistence, verification, evaluation, evidence retention, and trial construction |
@@ -107,6 +121,12 @@ Swarm uses the same proposal and evidence boundaries concurrently. Each worker h
 
 `run` uses the same artefact-task application boundary with a `HarborExperimentRuntime`, which dispatches and imports the Harbor work. Docker, Modal, Morph, e2b, and Daytona are Harbor environment backends.
 
+Harbor also composes with the shared scheduler through its Python boundary. The
+Harbor adapter maps a planned trial to a backend submission and maps collected
+results back to the planned UUID before finalization. The synchronous
+`aec-bench run` command remains the direct Harbor workflow described in
+[Backends](/docs/advanced/backends).
+
 Prime is separate from Harbor. Prime Lab exports public artefact tasks into packages for hosted evaluation and training. Its finite-lifecycle export is local-only and keeps references to the source packages and checkout. Prime Agent runs the upstream executable directly for local artefact tasks or through bounded ACP sessions for supported Interactive Worlds.
 
 See [Execution Backends](/docs/advanced/backends), [Prime Lab](/docs/advanced/prime-lab), and [Prime Agent](/docs/agents/prime-agent).
@@ -118,6 +138,13 @@ ordered expected trial set. `RunManifest` stores shared execution context for
 trial evidence, and each `TrialRecord` records one planned result through its
 run and trial identities. A trial can contain one attempt or select from
 several candidates.
+
+`OperationalStore` stores the mutable SQLite coordination rows used while work
+is queued, leased, retried, cancelled, reconciled, and reported. The
+`EvidenceIndex` is a separate rebuildable SQLite metadata projection; portable
+trial records and their referenced artefacts remain the evidence authority.
+See [Evidence Index](/docs/advanced/evidence-index) for metadata queries and
+verification.
 
 `RunAccounting` reconciles the observed records with the exact plan. It supplies
 run completeness, validity, terminal outcome counts, accepted record identities,

@@ -99,6 +99,24 @@ The run status gives the reporting context:
 The reconciliation result provides the accepted record set and accounting
 counts used by reporting workflows.
 
+For an active persisted run, review the operational projection separately from
+the final accounting result:
+
+```bash
+uv run aec-bench run status <run-id> \
+  --operational-store artefacts/operational.sqlite \
+  --plan-root artefacts/runs
+```
+
+The CLI, TUI run-progress view, and `GET /api/runs/{run_id}/status` web route
+use the shared `RunProgress` projection. It includes work-item, trial, attempt,
+backend-submission, lease, retry, and completion-blocker counts.
+
+Use the [Evidence Index](/docs/advanced/evidence-index) to page through trial
+metadata, then read the portable record path when a review needs the evidence
+body. Run `aec-bench evidence verify` before relying on referenced artefact
+bytes.
+
 Different audiences need different views:
 
 | Audience | Useful view |

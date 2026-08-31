@@ -234,6 +234,56 @@ uv run aec-bench dataset results electrical-core@public-2026
 
 ## Running Experiments
 
+### Persisted run plans
+
+Create a resolved specification and ready plan for identity-bearing artefact
+tasks:
+
+```bash
+uv run aec-bench run plan \
+  --config experiment.yaml \
+  --tasks-root tasks \
+  --store-root artefacts/runs
+```
+
+The command assigns a new run UUIDv7, resolves exact task releases and agent
+conditions, expands every task-agent-repetition combination, and persists the
+complete ordered plan.
+
+Inspect a saved run by readable key or UUID:
+
+```bash
+uv run aec-bench run inspect <run-key-or-uuid> \
+  --store-root artefacts/runs
+```
+
+The inspection output includes the run identity, resolved condition, plan
+identity, trial count, plan summary, and readiness state.
+
+Compare two persisted runs:
+
+```bash
+uv run aec-bench run diff <left-run> <right-run> \
+  --store-root artefacts/runs
+```
+
+`run diff` reports semantic field changes across the resolved conditions.
+
+Reconcile typed terminal outcomes with the exact plan:
+
+```bash
+uv run aec-bench run reconcile <run-key-or-uuid> \
+  --observations outcomes.json \
+  --store-root artefacts/runs
+```
+
+The result includes planned, succeeded, failed, cancelled, timed-out, invalid,
+missing, duplicate, and unexpected counts. It also returns completeness,
+validity, accepted trial identities, and quarantined trial identities.
+
+See [Runs and Plans](/docs/core/runs-and-plans) for the identity and accounting
+model.
+
 ### `run`
 
 Run an experiment manifest:

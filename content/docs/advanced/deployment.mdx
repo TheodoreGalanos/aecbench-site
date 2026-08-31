@@ -1,9 +1,11 @@
 ---
 title: Deployment
-description: Harbor is the execution path aec-bench uses to dispatch experiment trials and import completed results into the ledger.
+description: Harbor executes planned trials in controlled environments and returns records to the AEC-Bench evidence store.
 ---
 
-Use Harbor when an experiment must run in controlled containers or remote sandboxes. AEC-Bench turns the experiment configuration into a Harbor job, waits for it to finish, and imports the results into the local record store.
+Use Harbor when an experiment runs in controlled containers or remote
+sandboxes. AEC-Bench turns the experiment configuration into a Harbor job,
+waits for it to finish, and imports validated results into the evidence store.
 
 The public `aec-bench run` flow is synchronous. The command returns after Harbor finishes and the import step completes.
 
@@ -13,11 +15,11 @@ Harbor is the execution boundary around the task, agent harness, and verifier. E
 
 | Layer | Responsibility |
 |-------|----------------|
-| **AEC-Bench planner** | Selects tasks and expands agents and repetitions into a trial plan |
+| **AEC-Bench planner** | Resolves exact releases and expands tasks, agents, and repetitions into an ordered trial plan |
 | **Agent harness** | Controls how the model receives the task and uses tools |
 | **Harbor environment** | Runs the trial on Modal, Docker, E2B, Daytona, or Morph |
 | **Harbor orchestrator** | Starts the planned trials with the configured local concurrency |
-| **AEC-Bench importer** | Validates completed results and writes `TrialRecord` records to the ledger |
+| **AEC-Bench importer** | Validates returned results and retains accepted `TrialRecord` values |
 
 For environment selection and local execution, see [Backends](/docs/advanced/backends).
 
@@ -42,12 +44,12 @@ Keep provider credentials in environment variables or the provider's authenticat
 A live run follows one sequence:
 
 1. Validate the manifest and selected backend.
-2. Resolve the selected tasks and build the complete trial plan.
-3. Write a generated Harbor job config.
+2. Resolve the selected tasks and build the trial plan.
+3. Write the Harbor job configuration.
 4. Invoke `uv run harbor run -c <generated-config>`.
-5. Locate the new Harbor job directory.
-6. Run the optional post-verifier reviewer.
-7. Validate and import the completed trials into the ledger.
+5. Locate the Harbor job directory.
+6. Run the verifier and optional post-verifier reviewer.
+7. Validate and retain the completed trial records.
 
 Start the sequence through the supported AEC-Bench command:
 
@@ -55,7 +57,23 @@ Start the sequence through the supported AEC-Bench command:
 uv run aec-bench run --config experiment.yaml
 ```
 
-The command reports the job directory, imported trial count, and duplicate count. A failed Harbor command stops the workflow before import.
+The command reports the job directory, imported trial count, and duplicate count.
+
+## Plan-bound Harbor import
+
+`HarborExperimentDispatcher` writes one-trial Harbor configurations and can
+write a `HarborTrialTransport` sidecar for a persisted `RunPlan`. The transport
+record carries the planned AEC-Bench trial UUID with the Harbor job and trial
+names.
+
+`HarborImportExperimentRunner.import_harbor_plan()` reads that mapping, restores
+the planned identity, and validates the returned task release, agent condition,
+compute backend, execution family, and attempt.
+
+`HarborImportReconciliation` reports expected, observed, missing, duplicate,
+unexpected, and accepted trial identities. Accepted records retain Harbor job
+and trial names as execution metadata and use the AEC-Bench UUID as their trial
+identity.
 
 ## Configuration
 
@@ -87,7 +105,10 @@ Use `aec-bench import` when a completed Harbor job directory already exists:
 uv run aec-bench import jobs/<harbor-job-id>
 ```
 
-The importer reads the Harbor results and trial artefacts, validates their task and execution records, and writes `TrialRecord` records. Re-importing identical records reports duplicates. A conflicting trial identity fails the import and preserves the existing record.
+The importer reads the Harbor results and trial artefacts, validates their task
+and execution records, and writes accepted `TrialRecord` values. Re-importing
+identical records reports duplicates. A conflicting identity returns an import
+mismatch and preserves the accepted record.
 
 Provider completion, agent failure, verifier evidence, and reviewer evidence remain distinct. Imported trials record `execution_status`, `evaluation_status`, and `evidence_status` separately. The verifier result establishes the score only after execution and evaluation complete and required evidence is valid.
 
@@ -99,7 +120,7 @@ Export one accepted run and its retained artefacts as a deterministic package:
 uv run aec-bench run export run-001 --output run-001.tar.zst
 ```
 
-Import the package into another ledger:
+Import the package into another evidence store:
 
 ```bash
 uv run aec-bench run import run-001.tar.zst
@@ -109,8 +130,9 @@ uv run aec-bench run import run-001.tar.zst
 
 ## Operational boundaries
 
-- Harbor creates the execution environment and runs the generated job; AEC-Bench owns planning and ledger import.
-- `aec-bench run` is attached. Keep the calling process alive until Harbor returns.
-- AEC-Bench adds no retry or pre-emption policy around Harbor; any such policy belongs to Harbor or the selected provider.
-- `RunManifest` records shared run identity once. Each `TrialRecord` stores one planned trial result and refers to the run.
-- Completed execution and evaluation, plus verified or not-required evidence, are the basis for comparison and leaderboard aggregation.
+- Harbor creates the execution environment and runs the generated job.
+- AEC-Bench owns planning, import validation, and retained evidence.
+- `aec-bench run` stays attached until Harbor returns.
+- Plan-bound import uses `ResolvedRunSpec` for the requested condition and `RunPlan` for exact membership.
+- Each accepted plan-bound `TrialRecord` binds to one planned trial UUID.
+- `RunAccounting` supplies completeness and validity for comparison and reporting workflows.

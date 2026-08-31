@@ -1,0 +1,151 @@
+---
+title: Runs and Plans
+description: How aec-bench resolves a requested condition, persists the exact trial set, and accounts for every result.
+---
+
+An AEC-Bench run is one occurrence of a benchmark condition. Each run receives
+its own UUIDv7 identity and readable key. The saved condition and plan make two
+runs comparable when they use the same task, agent, execution, and evaluation
+versions.
+
+```text
+ExperimentManifest
+        ↓ resolve
+ResolvedRunSpec
+        ↓ plan
+RunPlan
+        ↓ execute
+TrialRecord values
+        ↓ reconcile
+RunAccounting
+```
+
+## Resolve the requested condition
+
+`ResolvedRunSpec` records the complete requested condition before execution. It
+contains:
+
+- the experiment and run identities;
+- exact task snapshot references;
+- exact agent conditions;
+- compute and repetition settings;
+- verification and reviewer settings;
+- visibility policy;
+- execution policy; and
+- optional authority, evaluation, and provider-route references.
+
+The persisted specification records environment-backed credentials as named
+environment references and stores the resolved benchmark settings as values.
+
+## Persist the exact plan
+
+`RunPlan` expands the resolved condition into an ordered set of
+`PlannedTrial` values. Planning combines each selected task release, agent
+condition, and repetition.
+
+Every planned trial contains:
+
+- a UUIDv7 trial identity and readable key;
+- a contiguous ordinal;
+- the run identity;
+- the exact task release and task metadata;
+- the agent and compute condition;
+- the repetition number;
+- the execution family;
+- an attempt recipe; and
+- the evaluation profile.
+
+The plan summary records task, agent, repetition, execution-family, backend,
+visibility, and lifecycle counts.
+
+The evidence store persists the resolved specification first, then the draft
+and ready plan. Starting the run fixes the ready plan for that occurrence.
+
+## Trials, repetitions, and attempts
+
+A repetition creates a separate planned trial. Each repetition receives its own
+trial UUID and plan ordinal.
+
+An execution attempt belongs to one planned trial. Retries and best-of
+candidates receive separate attempt UUIDs while the planned trial identity stays
+the same. The selected and verified result becomes the `TrialRecord` for that
+planned trial.
+
+```text
+planned trial 019c…
+├── attempt 019d…
+└── attempt 019e…
+```
+
+This identity model keeps benchmark membership separate from execution
+recovery and candidate selection.
+
+## Inspect and compare plans
+
+For identity-bearing artefact tasks, create and persist a ready plan from an
+experiment manifest:
+
+```bash
+uv run aec-bench run plan \
+  --config experiment.yaml \
+  --tasks-root tasks \
+  --store-root artefacts/runs
+```
+
+Inspect the saved condition, plan summary, and current state:
+
+```bash
+uv run aec-bench run inspect <run-key-or-uuid> \
+  --store-root artefacts/runs
+```
+
+Compare two saved conditions field by field:
+
+```bash
+uv run aec-bench run diff <left-run> <right-run> \
+  --store-root artefacts/runs
+```
+
+`run diff` reports semantic changes to task releases, agent conditions,
+compute settings, repetitions, evaluation, and other resolved fields.
+
+## Account for the result set
+
+`run reconcile` matches typed trial outcomes to the exact planned UUID set:
+
+```bash
+uv run aec-bench run reconcile <run-key-or-uuid> \
+  --observations outcomes.json \
+  --store-root artefacts/runs
+```
+
+The accounting result partitions the planned trials into succeeded, failed,
+cancelled, timed out, invalid, and missing outcomes. It also records duplicate
+and unexpected identities. Accepted records remain in plan order, while
+quarantined records remain separate from aggregate input.
+
+| Status | Meaning |
+|--------|---------|
+| `complete` | Every planned trial has one valid successful result |
+| `complete_with_failures` | Every planned trial is accounted for and one or more terminal outcomes failed, cancelled, or timed out |
+| `cancelled` | A cancellation request produced reconciled cancelled trials |
+| `incomplete` | One or more planned trial results are missing |
+| `invalid` | The observed set contains invalid evidence, unexpected identities, or conflicting duplicates |
+
+An identical duplicate is counted once. A conflicting duplicate is quarantined
+and makes the accounting result invalid.
+
+## Execution families
+
+Artefact tasks, Interactive Worlds, and finite lifecycles use the same planned
+trial identity and result-accounting rules. Each family retains its own
+execution semantics and binds its result to the exact task, world, profile, or
+lifecycle release recorded in the plan.
+
+Harbor transport records carry the planned trial UUID alongside Harbor job and
+trial names. Import reconciliation restores the planned UUID, validates exact
+membership, and returns accepted records in plan order.
+
+See [Contracts](/docs/core/contracts) for the validated data shapes,
+[Deployment](/docs/advanced/deployment) for Harbor execution, and
+[CLI](/docs/reference/cli) for the complete command reference.

@@ -10,7 +10,7 @@ describe('BenchmarkRunFlow', () => {
 
     expect(
       screen.getByRole('img', {
-        name: /benchmark run flow from define task through retain and report/i,
+        name: /benchmark run flow from define task through reconcile run/i,
       }),
     ).toBeInTheDocument();
   });
@@ -19,10 +19,10 @@ describe('BenchmarkRunFlow', () => {
     render(<BenchmarkRunFlow />);
 
     expect(screen.getAllByText('Define Task').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Resolve Instance').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Plan Trial').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Resolve Run').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Persist Plan').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Run Attempt(s)').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Select & Verify').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Retain & Report').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Verify Records').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Reconcile Run').length).toBeGreaterThan(0);
   });
 });

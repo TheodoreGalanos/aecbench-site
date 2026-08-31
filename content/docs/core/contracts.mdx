@@ -7,11 +7,14 @@ import { ContractsFlow } from '@/components/docs/contracts-flow';
 
 This page is for developers who need to read or produce AEC-Bench data. A contract validates information when it crosses a boundary, such as imported task material, provider results, another process, or persisted evidence. Ordinary Python values handle work inside one owner.
 
-The common artefact-task path resolves the task, runs one or more isolated attempts, verifies the selected output, and builds one reportable trial:
+The run boundary resolves one requested condition, persists its exact trial set,
+records each result, and accounts for the complete observed set:
 
 <ContractsFlow />
 
-Interactive Worlds and finite lifecycles use additional task-owned records during execution, then attach their verified evidence to the same reportable trial boundary.
+Artefact tasks, Interactive Worlds, and finite lifecycles use the same run and
+trial identities. Each execution family retains its task-owned evidence and
+binds the final result to its planned trial.
 
 ## TaskDefinition — what to solve
 
@@ -40,7 +43,9 @@ Executable Interactive Worlds use `WorldTask`; static artefact tasks use `TaskDe
 
 A file-backed world task contains `instruction.md` and `world.toml`. The TOML document has exact `[world]` and `[profile]` references plus registered `[metadata]`. `load_world_task()` rejects stale build or profile content and metadata that does not match the registered profile.
 
-The same world task can enter `plan_trials()`, direct `run_world_experiment()` composition, or a dataset manifest entry with `task_kind: "world"`.
+The same world task can enter a persisted `RunPlan`, direct
+`run_world_experiment()` composition, or a dataset manifest entry with
+`task_kind: "world"`.
 
 ### Lifecycle and visibility
 
@@ -71,11 +76,24 @@ class AgentOutput(StrictModel):
 
 The harness reports completion and location. Evaluation owns parsing and scoring the task-specific output.
 
-## ResolvedTaskInstance and PlannedTrial — what will run
+## ResolvedRunSpec and RunPlan — what will run
 
 `ResolvedTaskInstance` combines the validated `TaskDefinition` with the exact task directory and resolved environment, verifier, and tool paths. It is the direct task input to artefact-task execution.
 
-`PlannedTrial` carries trial, experiment, and task identity; agent and compute configuration; the repetition number; and typed planning extensions. `plan_trials()` is the one direct planner for runnable task families. Artefact `run_experiment()` and world `run_world_experiment()` match each plan to the correct task through their separate application boundaries.
+`ResolvedRunSpec` records the requested run condition: exact task releases,
+agent conditions, compute settings, repetitions, verification, evaluation,
+visibility, execution policy, and provider route.
+
+`RunPlan` expands that condition into an ordered set of `PlannedTrial` values.
+Each trial carries its UUIDv7 identity, readable key, ordinal, run identity,
+task release, agent condition, compute configuration, repetition, execution
+family, attempt recipe, and evaluation profile. World and lifecycle trials also
+carry their exact family release.
+
+`EvidenceRunStore` persists the resolved specification, draft plan, ready plan,
+and operational state. A ready plan has contiguous ordinals, unique trial
+identities and keys, complete task and agent coverage, and summary counts that
+match its trial set.
 
 ## TaskAttempt — one isolated agent execution
 
@@ -84,6 +102,20 @@ Each call to `runtime.run_once()` returns one `TaskAttempt`. The attempt records
 An `AttemptRecipe` receives the tracked `AttemptRunner`. It can request one attempt, retry from a parent attempt, or produce candidates for selection. The outer trial runner retains verifier and reward access. Evolution candidates and execution attempts use separate identities.
 
 `TaskAttempt` is an internal execution result. `TrialRecord` is the selected, verified, and reportable trial result.
+
+## RunAccounting — the complete result set
+
+`TrialAccountingObservation` assigns one typed outcome to a planned trial:
+`succeeded`, `failed`, `cancelled`, `timed_out`, `invalid`, or `missing`.
+
+`RunAccounting` compares those observations with the exact `ResolvedRunSpec`
+and `RunPlan`. It records accepted, missing, invalid, duplicate, conflicting,
+and unexpected trial identities. Accepted records remain in plan order, and
+quarantined records remain separate from aggregate input.
+
+The resulting run status is `complete`, `complete_with_failures`, `cancelled`,
+`incomplete`, or `invalid`. See [Runs and Plans](/docs/core/runs-and-plans) for
+the complete workflow.
 
 ## Evolution candidates — exact workspace and evidence
 
@@ -141,9 +173,12 @@ absolute paths, drive-qualified paths, backslashes, empty components, `.` and
 resolved path, including symlinks, against its trusted root. Human-readable
 keys are not used as storage paths without this validation boundary.
 
-## RunManifest — shared run identity
+## RunManifest — shared trial evidence context
 
-`RunManifest` stores information shared by every trial in one run. Its `schema_version` identifies the persisted file format so AEC-Bench can reject incompatible records. Library code supplies this value.
+`ResolvedRunSpec` and `RunPlan` establish the complete requested condition and
+planned membership. `RunManifest` stores execution context shared by the trial
+records produced for one run. Its `schema_version` identifies the persisted
+evidence format. Library code supplies this value.
 
 ```python
 class RunManifest(FrozenStrictModel):

@@ -19,16 +19,16 @@ An artefact task gives an agent an instruction and an execution environment. The
 | Stage | What happens |
 |-------|--------------|
 | **Define** | `task.toml`, `instruction.md`, the environment, and verifier define one runnable task |
-| **Resolve** | The loader validates the task and produces a `ResolvedTaskInstance` bound to exact source paths |
-| **Plan** | `run_experiment()` applies the selected attempt recipe to each `PlannedTrial` |
+| **Resolve** | `ResolvedRunSpec` records the complete requested condition and exact releases |
+| **Plan** | `EvidenceRunStore` persists the ordered UUID-backed `RunPlan` before execution |
 | **Attempt** | Each `runtime.run_once()` call runs one agent execution in one isolated workspace and returns a `TaskAttempt` |
-| **Select and verify** | `run_trial()` selects one attempt, runs the official verifier once on its output, and can run the optional post-verifier reviewer |
-| **Retain and report** | `run_trial()` materialises the `TrialRecord` and retained artefacts before it removes attempt workspaces |
+| **Verify** | `run_trial()` selects one attempt, runs the official verifier, and materialises the `TrialRecord` |
+| **Reconcile** | `RunAccounting` matches every observed result to the exact planned trial set |
 
-The normal Python execution path is:
+The run contracts form one sequence:
 
 ```text
-run_experiment() -> run_trial() -> runtime.run_once()
+ResolvedRunSpec -> RunPlan -> PlannedTrial -> TaskAttempt -> TrialRecord -> RunAccounting
 ```
 
 [`AttemptRecipe`](/docs/core/contracts#taskattempt--one-isolated-agent-execution) controls whether one trial runs one attempt or several candidates. It starts and tracks attempts, while the outer trial runner retains verifier and reward access. `HarnessSpec` describes how one agent execution works.
@@ -47,7 +47,7 @@ The world owns its state, rules, and evaluation. The runner connects the agent t
 
 The current catalogue includes wastewater pump-station stewardship and dam-seepage monitoring. Both use the same world interfaces, while each task keeps its own state, rules, and evaluation.
 
-[`WorldTask`](/docs/core/interactive-worlds#define-a-world-task-in-files) binds an objective to an exact registered world build and profile. `plan_trials()` creates the common `PlannedTrial` values. A complete dam, pump, or Harbor world-trial function then returns a `TrialRecord`. Asynchronous `run_world_experiment()` applies that operation in plan order and can persist each completed record.
+[`WorldTask`](/docs/core/interactive-worlds#define-a-world-task-in-files) binds an objective to an exact registered world build and profile. The persisted plan binds each world trial to that exact world and profile release. A complete dam, pump, or Harbor world-trial function then returns a `TrialRecord`. Asynchronous `run_world_experiment()` applies that operation in plan order and can persist each completed record.
 
 Persistence, recovery, host controls, branching, rollouts, staged evidence, and provider integration are optional capabilities. Add these capabilities when the world requires them.
 
@@ -90,14 +90,15 @@ Swarm uses the same proposal and evidence boundaries concurrently. Each worker h
 | Concern | Owner | Boundary |
 |---------|-------|----------|
 | Task meaning | Task, template, lifecycle, or world | Keeps engineering inputs, actions, and verifier rules together |
-| Artefact-task orchestration | `run_experiment()` and `run_trial()` | Own planning, attempt tracking, selection, official verification, optional review, retained artefacts, and cleanup |
+| Run planning and accounting | Experiment orchestration | Owns the resolved condition, exact trial membership, plan state, and final result-set status |
+| Artefact-task orchestration | `run_experiment()` and `run_trial()` | Owns attempt tracking, selection, official verification, optional review, retained artefacts, and cleanup |
 | Lifecycle orchestration | `aec_bench.lifecycles.application` and the lifecycle host | Applies checkpoint progression, local execution, trial construction, and optional persistence while task semantics stay with the task |
 | Interactive World orchestration | World trial application and task-owned host | Uses the shared actor boundary, then applies task-owned journeys, controls, persistence, verification, evaluation, evidence retention, and trial construction |
 | Harness studies and refinement | `aec_bench.experimentation.meta_harness` | Composes caller-owned candidates, `TrialRecord` evidence, and injected policies across existing runtimes and metrics |
 | Agent workspace evolution | `aec_bench.evolution` | Runs candidate checks, bounded proposals, selection, and persistence |
 | Agent execution | Agent harness and provider integration | Translates model and tool protocols; task and evaluation owners retain benchmark policy |
 | Evaluation | Evaluation | Owns reward, validity, breakdowns, behavioural analysis, and review evidence; task verifiers supply task-owned evidence |
-| Durable evidence | Ledger and producing domain | Stores immutable trial, dataset, and content-addressed evidence records |
+| Durable evidence | Evidence store and producing domain | Stores run specifications, plans, trial records, datasets, and retained evidence |
 | Presentation | CLI, TUI, web, and reports | Projects metrics defined by evaluation |
 
 ### Local and remote execution
@@ -112,7 +113,15 @@ See [Execution Backends](/docs/advanced/backends), [Prime Lab](/docs/advanced/pr
 
 ## How evidence is stored
 
-`RunManifest` stores information shared by a run, such as the source, dataset, agent, environment, and provider route. Each `TrialRecord` links to that manifest through `run_id` and records one planned trial result. A trial can contain one attempt or select from several candidates.
+`ResolvedRunSpec` stores the complete requested condition. `RunPlan` stores the
+ordered expected trial set. `RunManifest` stores shared execution context for
+trial evidence, and each `TrialRecord` records one planned result through its
+run and trial identities. A trial can contain one attempt or select from
+several candidates.
+
+`RunAccounting` reconciles the observed records with the exact plan. It supplies
+run completeness, validity, terminal outcome counts, accepted record identities,
+and quarantined record identities for reporting.
 
 `TrialRecord` answers three separate questions: Did the agent run? Was the output evaluated? Is the required evidence complete? It also links to retained outputs, trajectories, and usage information so reports do not depend on temporary workspaces.
 
@@ -128,7 +137,7 @@ Dependencies follow ownership:
 
 - task definitions and task worlds remain provider-neutral;
 - shared world-runtime code remains independent of concrete worlds;
-- direct trial planning uses `plan_trials()` for all runnable task families;
+- canonical run planning expands a `ResolvedRunSpec` into one exact `RunPlan`;
 - artefact-task orchestration can depend on task and runtime boundaries while `HarnessSpec` remains an execution-capability description;
 - lifecycle application composition depends on the lifecycle coordinator, normal trial contracts, and explicit execution effects, not task, world, provider, Harbor, or Prime implementations;
 - meta-harness composition depends on `TrialRecord` and caller-supplied functions, not concrete runtimes, providers, or task families;

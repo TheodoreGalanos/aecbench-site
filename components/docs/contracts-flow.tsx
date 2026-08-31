@@ -1,25 +1,50 @@
-// ABOUTME: Visual diagram showing how the core artefact-task contracts connect.
-// ABOUTME: Staircase layout: ResolvedTaskInstance → TaskAttempt(s) → EvaluationResult → TrialRecord.
+// ABOUTME: Visual diagram showing the persisted run contracts and their sequence.
+// ABOUTME: Connects the requested condition, exact plan, trial evidence, and accounting result.
 'use client';
 
-interface ContractNodeProps {
-  label: string;
-  color: string;
-}
+const stages = [
+  { label: 'ResolvedRunSpec', detail: 'requested condition', accent: 'teal' },
+  { label: 'RunPlan', detail: 'exact trial set', accent: 'teal' },
+  { label: 'TrialRecord values', detail: 'observed results', accent: 'amber' },
+  { label: 'RunAccounting', detail: 'membership & status', accent: 'amber' },
+] as const;
 
-function ContractNode({ label, color }: Readonly<ContractNodeProps>) {
+type StageAccent = (typeof stages)[number]['accent'];
+
+const accentClasses: Record<StageAccent, string> = {
+  teal: 'border-[#38b2ac]/80',
+  amber: 'border-[#e8a838]/80',
+};
+
+function ContractNode({
+  label,
+  detail,
+  accent,
+}: Readonly<{ label: string; detail: string; accent: StageAccent }>) {
   return (
     <div
-      className={`flex items-center justify-center rounded-xl border bg-[var(--color-fd-card)] px-4 py-3 text-center text-sm font-semibold leading-snug text-[var(--color-fd-foreground)] shadow-sm ${color}`}
+      className={`flex min-h-20 flex-col items-center justify-center rounded-xl border bg-[var(--color-fd-card)] px-4 py-3 text-center shadow-sm ${accentClasses[accent]}`}
     >
-      {label}
+      <span className="text-sm font-semibold leading-snug text-[var(--color-fd-foreground)]">{label}</span>
+      <span className="mt-1 text-xs text-[var(--color-fd-muted-foreground)]">{detail}</span>
     </div>
   );
 }
 
-function ActionLabel({ label }: Readonly<{ label: string }>) {
+function Connector({ label }: Readonly<{ label: string }>) {
+  const markerId = `contracts-flow-${label}`;
   return (
-    <span className="text-xs text-[var(--color-fd-muted-foreground)] italic">{label}</span>
+    <div className="flex flex-col items-center gap-1 py-2 text-xs italic text-[var(--color-fd-muted-foreground)]">
+      <span>{label}</span>
+      <svg viewBox="0 0 16 24" className="h-6 w-4 overflow-visible" aria-hidden="true">
+        <defs>
+          <marker id={markerId} markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+            <path d="M 0 0 L 6 3 L 0 6 z" fill="#94a3b8" />
+          </marker>
+        </defs>
+        <line x1="8" y1="0" x2="8" y2="22" stroke="#94a3b8" strokeWidth="1.5" markerEnd={`url(#${markerId})`} />
+      </svg>
+    </div>
   );
 }
 
@@ -28,79 +53,27 @@ export function ContractsFlow() {
     <div
       className="not-prose my-8"
       role="img"
-      aria-label="Contract data flow from ResolvedTaskInstance through TaskAttempt candidates and EvaluationResult to TrialRecord"
+      aria-label="Run contract flow from ResolvedRunSpec through RunPlan and TrialRecord values to RunAccounting"
       data-testid="contracts-flow"
     >
-      {/* Mobile: vertical */}
-      <div className="flex flex-col items-center gap-1 md:hidden">
-        <ContractNode label="ResolvedTaskInstance" color="border-[#38b2ac]/80" />
-        <svg viewBox="0 0 16 20" className="h-5 w-4" aria-hidden="true">
-          <defs><marker id="cf-m-arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M 0 0 L 6 3 L 0 6 z" fill="#94a3b8" /></marker></defs>
-          <line x1="8" y1="0" x2="8" y2="18" stroke="#94a3b8" strokeWidth="1.5" markerEnd="url(#cf-m-arr)" />
-        </svg>
-        <ActionLabel label="run in isolated workspace" />
-        <svg viewBox="0 0 16 20" className="h-5 w-4" aria-hidden="true">
-          <line x1="8" y1="0" x2="8" y2="18" stroke="#94a3b8" strokeWidth="1.5" markerEnd="url(#cf-m-arr)" />
-        </svg>
-        <ContractNode label="TaskAttempt candidate(s)" color="border-[#38b2ac]/80" />
-        <svg viewBox="0 0 16 20" className="h-5 w-4" aria-hidden="true">
-          <line x1="8" y1="0" x2="8" y2="18" stroke="#94a3b8" strokeWidth="1.5" markerEnd="url(#cf-m-arr)" />
-        </svg>
-        <ActionLabel label="selected output verified" />
-        <svg viewBox="0 0 16 20" className="h-5 w-4" aria-hidden="true">
-          <line x1="8" y1="0" x2="8" y2="18" stroke="#94a3b8" strokeWidth="1.5" markerEnd="url(#cf-m-arr)" />
-        </svg>
-        <ContractNode label="EvaluationResult" color="border-[#e8a838]/80" />
-        <svg viewBox="0 0 16 20" className="h-5 w-4" aria-hidden="true">
-          <line x1="8" y1="0" x2="8" y2="18" stroke="#94a3b8" strokeWidth="1.5" markerEnd="url(#cf-m-arr)" />
-        </svg>
-        <ActionLabel label="recorded in ledger" />
-        <svg viewBox="0 0 16 20" className="h-5 w-4" aria-hidden="true">
-          <line x1="8" y1="0" x2="8" y2="18" stroke="#94a3b8" strokeWidth="1.5" markerEnd="url(#cf-m-arr)" />
-        </svg>
-        <ContractNode label="TrialRecord" color="border-[#e8a838]/80" />
+      <div className="md:hidden">
+        <ContractNode {...stages[0]} />
+        <Connector label="plan" />
+        <ContractNode {...stages[1]} />
+        <Connector label="execute" />
+        <ContractNode {...stages[2]} />
+        <Connector label="reconcile" />
+        <ContractNode {...stages[3]} />
       </div>
 
-      {/* Desktop: 2x2 grid with elbow connectors and inline labels */}
-      <div className="relative hidden h-56 md:block">
-        <svg
-          className="pointer-events-none absolute inset-0 h-full w-full"
-          viewBox="0 0 100 44"
-          preserveAspectRatio="xMidYMid meet"
-          aria-hidden="true"
-        >
-          <defs>
-            <marker id="cf-arrow" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
-              <path d="M 0 0 L 5 2.5 L 0 5 z" fill="#94a3b8" />
-            </marker>
-          </defs>
-          {/* ResolvedTaskInstance → TaskAttempt candidates */}
-          <line x1="40" y1="5" x2="60" y2="5" stroke="#94a3b8" strokeWidth="0.4" markerEnd="url(#cf-arrow)" />
-          <text x="49.5" y="3" textAnchor="middle" fill="#94a3b8" fontSize="2.5" fontStyle="italic">run once</text>
-
-          {/* TaskAttempt candidates → EvaluationResult */}
-          <path d="M 90 13 V 22 H 10 V 30" fill="none" stroke="#94a3b8" strokeWidth="0.4" strokeLinecap="round" strokeLinejoin="round" markerEnd="url(#cf-arrow)" />
-          <text x="50" y="20.5" textAnchor="middle" fill="#94a3b8" fontSize="2.5" fontStyle="italic">selected output verified</text>
-
-          {/* EvaluationResult → TrialRecord (horizontal, centered between boxes) */}
-          <line x1="40" y1="40" x2="60" y2="40" stroke="#94a3b8" strokeWidth="0.4" markerEnd="url(#cf-arrow)" />
-          <text x="49.5" y="38" textAnchor="middle" fill="#94a3b8" fontSize="2.5" fontStyle="italic">recorded</text>
-          <text x="49.5" y="43" textAnchor="middle" fill="#94a3b8" fontSize="2.5" fontStyle="italic">in ledger</text>
-        </svg>
-
-        {/* Contract nodes */}
-        <div className="absolute left-0 top-0 w-[42%]">
-          <ContractNode label="ResolvedTaskInstance" color="border-[#38b2ac]/80" />
-        </div>
-        <div className="absolute right-0 top-0 w-[42%]">
-          <ContractNode label="TaskAttempt candidate(s)" color="border-[#38b2ac]/80" />
-        </div>
-        <div className="absolute bottom-0 left-0 w-[42%]">
-          <ContractNode label="EvaluationResult" color="border-[#e8a838]/80" />
-        </div>
-        <div className="absolute bottom-0 right-0 w-[42%]">
-          <ContractNode label="TrialRecord" color="border-[#e8a838]/80" />
-        </div>
+      <div className="hidden items-center gap-3 md:grid md:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr]">
+        <ContractNode {...stages[0]} />
+        <span className="text-xs italic text-[var(--color-fd-muted-foreground)]">plan →</span>
+        <ContractNode {...stages[1]} />
+        <span className="text-xs italic text-[var(--color-fd-muted-foreground)]">execute →</span>
+        <ContractNode {...stages[2]} />
+        <span className="text-xs italic text-[var(--color-fd-muted-foreground)]">reconcile →</span>
+        <ContractNode {...stages[3]} />
       </div>
     </div>
   );

@@ -37,9 +37,15 @@ Every task directory has one. A typical file is:
 ```toml
 version = "1.0"
 
+[identity]
+id = "019c2c7a-5a33-7b8d-a702-8f7f3e8c21aa"
+key = "electrical/voltage-drop"
+version = 3
+
 [metadata]
+lifecycle  = "active"            # proposed | active | deprecated | retired
+visibility = "public"            # public | private | holdout
 difficulty = "easy"              # easy | medium | hard
-visibility = "public"            # public | holdout
 category   = "reasoning"
 tags       = ["electrical", "AS-NZS-3008"]
 
@@ -79,6 +85,8 @@ tasks:
   exclude_patterns: []
   domains:      ["electrical"]
   difficulties: ["easy", "medium"]
+  lifecycle_filter: ["active"]
+  visibility_filter: ["public"]
 
 agents:
   - name: claude-tool-loop

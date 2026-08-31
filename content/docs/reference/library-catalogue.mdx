@@ -54,7 +54,7 @@ Each entry includes:
 
 | Field | Meaning |
 |-------|---------|
-| `task_id` | Stable slug used by docs and discipline pages |
+| `task_id` | Catalogue key used by docs and discipline pages; it is not a runnable task UUID |
 | `discipline` | One of civil, electrical, ground, maritime, mechanical, structural |
 | `category` | Machine-readable category slug |
 | `task_name` | Display title |
@@ -70,7 +70,9 @@ Each entry includes:
 
 The catalogue describes public template families. Task generation writes optional replay data once, in `generation-manifest.json` at the output root. Runnable task directories contain the files needed for loading and execution; the sidecar supports generation replay.
 
-Use the sidecar when you must replay generation. Use the task ID and an exact dataset reference when you run or report a benchmark selection.
+Use the sidecar when you must replay generation. Use the catalogue key and an
+exact dataset reference when you run or report a benchmark selection. A
+generated runnable task receives its own explicit key, UUIDv7, and version.
 
 ## Site sync
 

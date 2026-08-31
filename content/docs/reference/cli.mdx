@@ -56,6 +56,8 @@ uv run aec-bench generate task voltage-drop \
   --instances 5 \
   --difficulty easy,medium \
   --seed 42 \
+  --lifecycle proposed \
+  --visibility public \
   --output tasks/generated
 ```
 
@@ -69,7 +71,8 @@ Useful options:
 | `--seed N` | Reproducible sampling seed |
 | `--start-index N` | First stable instance index |
 | `--tool-mode MODE` | Override the template's tool mode |
-| `--visibility public|holdout` | Write explicit registry visibility into each task |
+| `--lifecycle proposed|active|deprecated|retired` | Write explicit lifecycle policy into each task |
+| `--visibility public|private|holdout` | Write explicit visibility policy into each task |
 | `--dry-run` | Show the plan without writing task instances |
 
 ### `generate validate-template`
@@ -108,6 +111,22 @@ Check a task directory:
 ```bash
 uv run aec-bench task validate tasks/electrical/voltage-drop
 ```
+
+Validation reports the task's readable display reference, UUID, version,
+lifecycle, visibility, runnable state, verifier entry point, and verifier
+protocol version. Missing identity or policy values are errors.
+
+### `task explain`
+
+Resolve a canonical task key, alias, or UUID and inspect its current contract:
+
+```bash
+uv run aec-bench task explain electrical/voltage-drop
+```
+
+The result includes the canonical key, aliases, UUID, version, lifecycle,
+visibility, runnable state, output contract, verifier entry point, and verifier
+protocol version.
 
 ### `task genome` and task structure analysis
 

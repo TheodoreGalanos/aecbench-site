@@ -74,7 +74,14 @@ Calculate the following:
 ```toml title="task.toml"
 version = "1.0"
 
+[identity]
+id = "019c2c7a-5a33-7b8d-a702-8f7f3e8c21aa"
+key = "electrical/voltage-drop"
+version = 3
+
 [metadata]
+lifecycle = "active"
+visibility = "public"
 difficulty = "easy"
 category = "reasoning"
 tags = ["electrical", "buildings-electrical", "deterministic", "AS-NZS-3008"]
@@ -93,6 +100,32 @@ memory_mb = 2048
 storage_mb = 5120
 allow_internet = true
 ```
+
+The loader requires `[identity].id`, `[identity].key`, `[identity].version`,
+`[metadata].lifecycle`, and `[metadata].visibility`. It does not infer missing
+policy values. The existing top-level `version` field is separate from
+`[identity].version`; the identity version records a semantic revision of the
+task.
+
+### Task identity
+
+AEC-Bench gives each task three related identity values:
+
+```text
+key:      electrical/voltage-drop
+UUID:     019c2c7a-5a33-7b8d-a702-8f7f3e8c21aa
+version:  3
+display:  electrical/voltage-drop · 3e8c21aa
+```
+
+The key is the readable reference used in commands and reviews. The UUIDv7 is
+the stable identity used to join records. The positive integer version changes
+when the task's meaning, verifier, lifecycle, visibility, or output contract
+changes. A renamed key can remain as an alias for the same UUID. The short UUID
+suffix is for display only.
+
+Checksums have a different purpose: they verify retained bytes. Matching file
+content does not make two tasks the same task.
 
 ### The environment
 
@@ -146,6 +179,11 @@ The verifier writes two files under `/logs/verifier/`:
 
 Each field is scored independently with configurable tolerances. Numerical fields typically allow 3% relative tolerance; boolean/categorical fields require an exact match.
 
+The reward file is not proof that the verifier completed. AEC-Bench also records
+the verifier process exit, timeout, cancellation, identity, version, and output
+parse status. A failed process cannot produce a completed evaluation. See
+[Scoring](/docs/evaluation/scoring) for the receipt and status rules.
+
 ### Golden fixtures
 
 Most verifiers ship with test fixtures — a `golden_pass.md` that should score 1.0 and a `golden_fail.md` that should score less. These test the verifier itself.
@@ -168,9 +206,19 @@ Tasks use four catalogue states: `proposed` → `active` → `deprecated` → `r
 - **Deprecated** — superseded by a better version but still runnable for historical comparison
 - **Retired** — archived and excluded from new benchmark selections
 
-Separately, tasks can be **public** or **holdout**. Public tasks can appear in reports and leaderboards. Holdout tasks run without exposing their content or individual results and help test whether public task exposure has influenced a model.
+Visibility is a separate policy axis:
 
-Lifecycle values express catalogue policy. Validate the exact task or dataset selection before a run. Publication eligibility requires review and promotion checks beyond a successful filesystem load.
+- **Public** tasks can enter normal public selections and reports.
+- **Private** tasks require an explicit permitted visibility context and remain
+  outside public catalogue surfaces.
+- **Holdout** tasks also require explicit permission. Their content and
+  individual results remain protected so they can test whether public exposure
+  influenced a model.
+
+New selections normally use active, public tasks. Deprecated tasks require
+explicit inclusion. Proposed and retired tasks cannot start a new run. The
+runner checks these rules again before planning. Publication eligibility still
+requires review and promotion checks beyond successful filesystem loading.
 
 ## Task categories
 

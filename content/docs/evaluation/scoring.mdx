@@ -3,7 +3,12 @@ title: Scoring
 description: Scoring turns an agent's output into a validated reward by reading verifier artefacts into an EvaluationResult.
 ---
 
-When a trial finishes, the execution backend runs the task's verifier against the agent output file. The verifier writes JSON artefacts, the runner parses them into an `EvaluationResult`, and that result is attached to the trial record.
+When a trial finishes, the execution backend runs the task's verifier against
+the agent output file. AEC-Bench records the process in a
+`VerifierExecutionReceipt`, parses valid verifier output into an
+`EvaluationResult`, and attaches both forms of evidence to the trial. The
+receipt decides whether the verifier completed; the presence of a reward file
+does not.
 
 ## The verifier contract
 
@@ -42,7 +47,9 @@ The optional `details.json` carries the per-dimension breakdown:
 
 ## Reward rollup
 
-`reward.json` is the trial reward used by AEC-Bench. The runner validates it and stores `details.json` as `EvaluationResult.breakdown`.
+`reward.json` supplies the candidate trial reward. The runner validates it and
+stores `details.json` as `EvaluationResult.breakdown`. AEC-Bench retains that
+reward only when the verifier receipt also completed successfully.
 
 For tasks that need rubric-style scoring, verifier code or judge pipelines can call the rubric scorer before writing artefacts. The scorer normalises each dimension to `score / max_score`, clamps it to `[0, 1]`, and combines dimensions with a rollup strategy:
 
@@ -51,7 +58,32 @@ For tasks that need rubric-style scoring, verifier code or judge pipelines can c
 | `weighted_mean` (default) | `sum(normalised * weight) / sum(weight)` | Balanced judgement across fields |
 | `min` | Worst dimension wins | A single wrong field should fail the task |
 
-Rubric rewards round to 4 decimals and must land in `[0.0, 1.0]`. If a verifier writes `reward.json` directly, that value is used as-is after validation.
+Rubric rewards round to 4 decimals and must land in `[0.0, 1.0]`. If a verifier
+writes `reward.json` directly, that value is eligible for use after output and
+receipt validation.
+
+## Verifier process receipt
+
+The receipt records the verifier key and version, process interval, redacted
+arguments, exit code, timeout or cancellation, bounded stdout and stderr,
+reward and details artefacts, output parse status, and any failure reason.
+
+A verifier is complete only when all of these conditions are true:
+
+1. the receipt matches the expected verifier key and version;
+2. the process was not cancelled and did not time out;
+3. the process exited with code `0`;
+4. `reward.json` exists and parses as valid verifier output; and
+5. the reward artefact is retained with the trial evidence.
+
+A reward written before a crash or non-zero exit cannot turn that process into
+a successful verification.
+
+| Receipt outcome | Evaluation status | Reward treatment |
+|-----------------|-------------------|------------------|
+| Successful process and valid reward | `completed` | Retain the validated reward |
+| Timeout, cancellation, non-zero exit, or missing reward | `failed` | Set reward to `0.0` |
+| Verifier identity mismatch or malformed reward | `invalid` | Set reward to `0.0` |
 
 ## Validity gates
 
@@ -61,7 +93,7 @@ Before scoring, the pipeline checks whether the output is even fit for scoring:
 class ValidityCheck(StrictModel):
     output_parseable: bool       # did the file parse as its declared format?
     schema_valid: bool           # did it match the expected shape?
-    verifier_completed: bool     # did reward.json appear?
+    verifier_completed: bool     # did the authoritative verifier receipt complete?
     errors: list[str] = Field(default_factory=list)
 ```
 
@@ -71,9 +103,11 @@ The reward gate is fail-closed:
 |-----------|-----------------|
 | `output_parseable=False` or `schema_valid=False` | `reward` must be `0.0` |
 | A stewardship evaluation is present and `stewardship.valid=False` | `reward` must be `0.0` |
-| The reward artefact is missing | Ingestion records `reward=0.0` and `verifier_completed=False` |
+| The verifier receipt does not complete | Evaluation records `reward=0.0` and `verifier_completed=False` |
 
-`verifier_completed` is otherwise diagnostic. It surfaces in reports with the parser and schema flags, so readers can distinguish "the agent was wrong" from "the agent did not produce anything usable".
+`verifier_completed` is a projection of the receipt outcome. It appears in
+reports with parser and schema flags so readers can distinguish an incorrect
+engineering answer from an execution or verifier failure.
 
 ## Evaluation result fields
 

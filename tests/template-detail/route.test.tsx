@@ -51,6 +51,8 @@ describe('task-template detail route', () => {
     await renderAsync('electrical', 'voltage-drop');
 
     expect(screen.getByRole('heading', { level: 1, name: /Voltage Drop/i })).toBeInTheDocument();
+    expect(screen.getByText('catalogue template')).toBeInTheDocument();
+    expect(screen.getByText('catalogue key')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Parameters' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Difficulty' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Example task' })).toBeInTheDocument();
@@ -58,6 +60,7 @@ describe('task-template detail route', () => {
     expect(screen.getByText(/sydney-cbd-commercial-submain-preview/)).toBeInTheDocument();
     expect(screen.getAllByText('vc_mv_per_a_m').length).toBeGreaterThan(0);
     expect(screen.getAllByText(/scores if within ±3% of the reference value/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/not task visibility policy/i)).toBeInTheDocument();
     expect(screen.queryByText(/all_given/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/tol 0\.03/i)).not.toBeInTheDocument();
     expect(screen.queryByText('1.71')).not.toBeInTheDocument();

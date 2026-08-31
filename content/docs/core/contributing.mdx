@@ -49,14 +49,29 @@ A good contribution distinguishes:
 - qualitative judgement that requires a rubric; and
 - statements that remain outside the benchmark's authority.
 
+## Declare identity and policy
+
+Every runnable task must declare `[identity].id`, `[identity].key`, and
+`[identity].version`, plus `[metadata].lifecycle` and
+`[metadata].visibility`. The key is the readable reference, the UUIDv7 is the
+stable identity, and the positive integer version records semantic change.
+Missing lifecycle or visibility is an error.
+
+Use `proposed` while a task is under review. Promote it to `active` only after
+its source, instructions, runtime, verifier, and failure cases pass review.
+Choose `private` or `holdout` only with the corresponding handling policy; do
+not use either value as another name for prompt difficulty.
+
 ## Verification
 
 Before opening a contribution:
 
 ```bash
 uv run aec-bench generate validate-template path/to/template
-uv run aec-bench generate task --template path/to/template --instances 3 --seed 42
+uv run aec-bench generate task --template path/to/template --instances 3 --seed 42 \
+  --lifecycle proposed --visibility public
 uv run aec-bench task validate path/to/generated/task
+uv run aec-bench task explain <canonical-task-key>
 ```
 
 Inspect at least one easy, medium, and hard instance where difficulty presets exist.
@@ -67,6 +82,9 @@ Exercise failure fixtures as well as golden passing output. The verifier should 
 - results outside declared tolerances;
 - unsupported source references; and
 - inconsistent intermediate and final values.
+
+Also exercise verifier process failures. A timeout, cancellation, non-zero exit,
+missing reward, or malformed reward must not produce a completed evaluation.
 
 `aec-bench init` installs the packaged contributor workflows under both
 `.claude/skills/` and `.agents/skills/`. Use `aec-bench init --update-skills`

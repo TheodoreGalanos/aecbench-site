@@ -111,7 +111,7 @@ ${outputs.map((output) => `  "${output.name}": <numeric_value>`).join(',\n')}
       {tab === 'instruction' && (
         <div role="tabpanel" className="max-h-[620px] overflow-auto py-3 text-landing-muted">
           <p className="mx-4 mb-3 border-l-2 border-accent-teal pl-3 text-xs leading-5 text-landing-muted">
-            Teal lines are Jinja visibility conditions. They render only when that input or tool is visible.
+            Teal lines show Jinja input conditions, not task visibility policy. A line renders only when that input or tool is visible.
           </p>
           <InstructionCode source={instruction} />
         </div>

@@ -232,6 +232,23 @@ uv run aec-bench dataset import electrical-core.tar.gz
 uv run aec-bench dataset results electrical-core@public-2026
 ```
 
+### `evidence`
+
+Rebuild the disposable metadata index and verify portable evidence:
+
+```bash
+uv run aec-bench evidence index rebuild \
+  --ledger-root artefacts/ledger \
+  --database artefacts/ledger/evidence-index.sqlite
+uv run aec-bench evidence verify --ledger-root artefacts/ledger
+uv run aec-bench evidence verify --run <run-id> --ledger-root artefacts/ledger
+```
+
+The index command reports indexed, unreadable, and conflicting records. Use
+the Python `EvidenceQuery` API for bounded metadata filters and cursor pages.
+The verification command checks structured records and referenced artefact
+bytes.
+
 ## Running Experiments
 
 ### Persisted run plans
@@ -280,6 +297,46 @@ uv run aec-bench run reconcile <run-key-or-uuid> \
 The result includes planned, succeeded, failed, cancelled, timed-out, invalid,
 missing, duplicate, and unexpected counts. It also returns completeness,
 validity, accepted trial identities, and quarantined trial identities.
+
+Control a ready persisted local artefact plan through the scheduler:
+
+```bash
+uv run aec-bench run start <run-id> \
+  --operational-store artefacts/operational.sqlite \
+  --plan-root artefacts/runs \
+  --tasks-root tasks
+uv run aec-bench run resume <run-id> \
+  --operational-store artefacts/operational.sqlite \
+  --plan-root artefacts/runs \
+  --tasks-root tasks
+uv run aec-bench run status <run-id> \
+  --operational-store artefacts/operational.sqlite \
+  --plan-root artefacts/runs
+uv run aec-bench run cancel <run-id> \
+  --operational-store artefacts/operational.sqlite
+```
+
+`run start` and `run resume` execute persisted local artefact plans. `run
+status` reads the shared progress projection, and `run cancel` requests
+cancellation for queued and active work. Open the same run-progress projection
+in the TUI with explicit roots:
+
+```bash
+uv run aec-bench tui \
+  --run-id <run-id> \
+  --operational-store artefacts/operational.sqlite \
+  --plan-root artefacts/runs
+```
+
+Start the web surface with explicit operational and plan roots:
+
+```bash
+uv run aec-bench web \
+  --operational-store artefacts/operational.sqlite \
+  --plan-root artefacts/runs
+```
+
+The endpoint is `GET /api/runs/{run_id}/status`.
 
 See [Runs and Plans](/docs/core/runs-and-plans) for the identity and accounting
 model.

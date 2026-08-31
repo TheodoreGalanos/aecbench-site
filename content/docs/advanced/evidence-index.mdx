@@ -1,0 +1,92 @@
+---
+title: Evidence Index
+description: Build a disposable SQLite metadata index for bounded TrialRecord queries while portable evidence remains authoritative.
+---
+
+The evidence index makes routine metadata queries fast and bounded. It is a
+rebuildable SQLite projection of portable `TrialRecord` files. The record JSON,
+run manifest, and referenced artefact bytes remain the evidence authority.
+
+## Build the index
+
+Rebuild the index from a portable evidence root:
+
+```bash
+uv run aec-bench evidence index rebuild \
+  --ledger-root artefacts/ledger \
+  --database artefacts/ledger/evidence-index.sqlite
+```
+
+The command scans structured trial records, validates their manifests and
+references, and replaces the index rows. Its result reports indexed,
+unreadable, and conflicting records, the rebuild generation, and any errors.
+The rebuild reads the portable evidence files and publishes a new metadata
+projection.
+
+The index stores metadata such as:
+
+- trial, run, and experiment identities;
+- task identity, revision, kind, and world profile;
+- dataset, adapter, model, attempt, reward, and status values;
+- start and completion times;
+- provider-evidence presence; and
+- the portable record path and SHA-256.
+
+## Query metadata in Python
+
+Use `EvidenceQuery` for bounded pages. The query reads index rows and returns
+portable record paths for a later evidence read.
+
+```python
+from pathlib import Path
+
+from aec_bench.ledger import EvidenceIndex, EvidenceQuery
+
+index = EvidenceIndex(Path("artefacts/ledger/evidence-index.sqlite"))
+query = EvidenceQuery(index)
+filters = {
+    "task_prefix": "electrical/",
+    "execution_status": "completed",
+    "provider_evidence_missing": True,
+}
+page = query.page(
+    page_size=100,
+    **filters,
+)
+
+for row in page.rows:
+    print(row.trial_id, row.record_path, row.reward)
+
+if page.next_cursor is not None:
+    next_page = query.page(
+        page_size=100,
+        after_cursor=page.next_cursor,
+        **filters,
+    )
+```
+
+`EvidenceQuery.page()` supports filters for run, experiment, task, task
+revision, task prefix, task kind, dataset, adapter, model, world profile,
+execution, evaluation, and evidence status, provider-evidence presence, trial,
+and attempt. Pages contain at most 1,000 rows. Cursors bind the filters and
+index generation, so a rebuild produces a new query generation.
+
+The query page returns bounded metadata rows and portable record paths. Use
+`record_path` to load the selected portable evidence record for detailed review.
+
+## Verify portable evidence
+
+Run an explicit verification pass over structured records and referenced
+artefact bytes:
+
+```bash
+uv run aec-bench evidence verify --ledger-root artefacts/ledger
+uv run aec-bench evidence verify --run <run-id> --ledger-root artefacts/ledger
+```
+
+The report counts records, receipts, finalizations, and artefacts, and lists
+validation errors. Verification reads current portable evidence and reports its
+findings.
+
+See [Review and Reporting](/docs/evaluation/reviewing) for how verified trial
+records enter review and reporting workflows.

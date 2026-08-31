@@ -16,6 +16,12 @@ Use `aec-bench run-local` for fast local development. Use `aec-bench run` when t
 
 Both paths use `run_experiment()` and `run_trial()` for ordinary artefact tasks. They use the selected agent harness and the same task-owned verifier, which defines correctness in every environment.
 
+Harbor also has a scheduler adapter at the Python composition boundary. It
+maps `TrialWorkItem` and `Attempt` values to Harbor submissions, then maps
+collected results back to the planned trial before finalization. Interactive
+World and finite lifecycle adapters use the same scheduler contracts while
+keeping their task-owned execution rules.
+
 ## What a backend does
 
 A backend starts the environment and translates the provider's model and tool protocols. AEC-Bench selects the tasks, and the task verifier defines correctness.
@@ -104,5 +110,11 @@ uv run aec-bench run-local tasks/electrical/voltage-drop \
 ```
 
 `run-local` executes on the host. Use a Harbor environment when the task must run inside a controlled container or remote sandbox.
+
+Persisted run control is a separate local artefact path. `aec-bench run start`
+and `aec-bench run resume` execute a ready local artefact plan through the
+scheduler with explicit operational and plan roots. The synchronous
+`aec-bench run` command above continues to dispatch a Harbor job and import its
+completed results.
 
 The installed library exposes the fixed backend set above. Add a new execution platform at the Harbor environment composition boundary and register it as a supported CLI value.

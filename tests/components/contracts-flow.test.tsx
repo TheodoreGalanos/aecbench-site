@@ -10,11 +10,12 @@ describe('ContractsFlow', () => {
 
     expect(
       screen.getByRole('img', {
-        name: /resolvedrunspec through runplan and trialrecord values to runaccounting/i,
+        name: /resolvedrunspec through runplan, trialworkitem, trialrecord values, and runaccounting/i,
       }),
     ).toBeInTheDocument();
     expect(screen.getAllByText('ResolvedRunSpec').length).toBeGreaterThan(0);
     expect(screen.getAllByText('RunPlan').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('TrialWorkItem').length).toBeGreaterThan(0);
     expect(screen.getAllByText('RunAccounting').length).toBeGreaterThan(0);
   });
 });

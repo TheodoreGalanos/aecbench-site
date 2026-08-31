@@ -4,8 +4,9 @@ const stages = [
   { label: 'Define Task', accent: 'teal' },
   { label: 'Resolve Run', accent: 'teal' },
   { label: 'Persist Plan', accent: 'teal' },
-  { label: 'Run Attempt(s)', accent: 'amber' },
-  { label: 'Verify Records', accent: 'amber' },
+  { label: 'Create Work Items', accent: 'amber' },
+  { label: 'Lease and Run Attempts', accent: 'amber' },
+  { label: 'Publish Trial Records', accent: 'amber' },
   { label: 'Reconcile Run', accent: 'amber' },
 ] as const;
 
@@ -55,26 +56,20 @@ export function BenchmarkRunFlow() {
         ))}
       </div>
 
-      <div className="relative hidden h-[18rem] w-full md:block">
-        <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 28" preserveAspectRatio="none" aria-hidden="true">
-          <defs>
-            <marker id="benchmark-run-flow-arrow" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
-              <path d="M 0 0 L 5 2.5 L 0 5 z" fill="#94a3b8" />
-            </marker>
-          </defs>
-          <line x1="28.6" y1="4" x2="35.1" y2="4" stroke="#94a3b8" strokeWidth="0.3" markerEnd="url(#benchmark-run-flow-arrow)" />
-          <line x1="64.6" y1="4" x2="71.1" y2="4" stroke="#94a3b8" strokeWidth="0.3" markerEnd="url(#benchmark-run-flow-arrow)" />
-          <path d="M 86 8.8 V 13.4 H 14 V 17.4" fill="none" stroke="#94a3b8" strokeWidth="0.3" markerEnd="url(#benchmark-run-flow-arrow)" />
-          <line x1="28.6" y1="22" x2="35.1" y2="22" stroke="#94a3b8" strokeWidth="0.3" markerEnd="url(#benchmark-run-flow-arrow)" />
-          <line x1="64.6" y1="22" x2="71.1" y2="22" stroke="#94a3b8" strokeWidth="0.3" markerEnd="url(#benchmark-run-flow-arrow)" />
-        </svg>
-
-        <div className="absolute left-0 top-0 w-[28%]"><FlowCard {...stages[0]} /></div>
-        <div className="absolute left-[36%] top-0 w-[28%]"><FlowCard {...stages[1]} /></div>
-        <div className="absolute right-0 top-0 w-[28%]"><FlowCard {...stages[2]} /></div>
-        <div className="absolute left-0 top-[64%] w-[28%]"><FlowCard {...stages[3]} /></div>
-        <div className="absolute left-[36%] top-[64%] w-[28%]"><FlowCard {...stages[4]} /></div>
-        <div className="absolute right-0 top-[64%] w-[28%]"><FlowCard {...stages[5]} /></div>
+      <div className="hidden items-center gap-2 md:grid md:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr]">
+        <FlowCard {...stages[0]} />
+        <span className="text-xs text-slate-400" aria-hidden="true">→</span>
+        <FlowCard {...stages[1]} />
+        <span className="text-xs text-slate-400" aria-hidden="true">→</span>
+        <FlowCard {...stages[2]} />
+        <span className="text-xs text-slate-400" aria-hidden="true">→</span>
+        <FlowCard {...stages[3]} />
+        <span className="col-span-full py-1 text-center text-slate-400" aria-hidden="true">↓</span>
+        <FlowCard {...stages[4]} />
+        <span className="text-xs text-slate-400" aria-hidden="true">→</span>
+        <FlowCard {...stages[5]} />
+        <span className="text-xs text-slate-400" aria-hidden="true">→</span>
+        <FlowCard {...stages[6]} />
       </div>
     </div>
   );

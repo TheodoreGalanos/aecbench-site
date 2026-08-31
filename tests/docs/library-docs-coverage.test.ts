@@ -27,9 +27,11 @@ describe('library documentation coverage', () => {
     expect(coreMeta).toContain('"lifecycles"');
     expect(coreMeta).toContain('"interactive-worlds"');
     expect(coreMeta).toContain('"runs-and-plans"');
+    expect(coreMeta).toContain('"execution-control"');
     expect(coreMeta).toContain('"contributing"');
     expect(evaluationMeta).toContain('"reviewing"');
     expect(referenceMeta).toContain('"library-catalogue"');
+    expect(advancedMeta).toContain('"evidence-index"');
   });
 
   it('keeps the contribution, review, and adaptive-harness guides public and focused', () => {
@@ -143,6 +145,36 @@ describe('library documentation coverage', () => {
     expect(deployment).toContain('HarborTrialTransport');
     expect(deployment).toContain('HarborImportReconciliation');
     expect(reviewing).toContain('run completeness and validity');
+  });
+
+  it('documents PRD3 execution control and evidence projections', () => {
+    const execution = readDoc('core/execution-control.mdx');
+    const evidence = readDoc('advanced/evidence-index.mdx');
+    const architecture = readDoc('core/architecture.mdx');
+    const contracts = readDoc('core/contracts.mdx');
+    const cli = readDoc('reference/cli.mdx');
+    const environment = readDoc('reference/environment.mdx');
+    const tasks = readDoc('core/tasks.mdx');
+
+    expect(execution).toContain('OperationalStore');
+    expect(execution).toContain('TrialWorkItem');
+    expect(execution).toContain('AttemptReceipt');
+    expect(execution).toContain('run resume');
+    expect(execution).toContain('ExecutionPolicy(max_concurrency=1)');
+    expect(execution).toContain('GET /api/runs/{run_id}/status');
+    expect(evidence).toContain('EvidenceIndex');
+    expect(evidence).toContain('EvidenceQuery');
+    expect(evidence).toContain('evidence index rebuild');
+    expect(evidence).toContain('evidence verify');
+    expect(architecture).toContain('OperationalStore');
+    expect(contracts).toContain('OperationalStore` owns mutable SQLite');
+    expect(cli).toContain('aec-bench run start <run-id>');
+    expect(cli).toContain('aec-bench tui');
+    expect(cli).toContain('--run-id <run-id>');
+    expect(cli).toContain('aec-bench evidence index rebuild');
+    expect(environment).toContain('AEC_BENCH_OPERATIONAL_STORE');
+    expect(tasks).toContain('WorkspaceDelta');
+    expect(tasks).toContain('primary_output');
   });
 
   it('documents the functional meta-harness ownership and specialist process', () => {

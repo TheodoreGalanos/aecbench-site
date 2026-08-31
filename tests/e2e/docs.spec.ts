@@ -77,6 +77,18 @@ test.describe('Documentation', () => {
     await expect(page.getByText('uv run aec-bench run reconcile').first()).toBeVisible();
   });
 
+  test('renders execution control and evidence index pages', async ({ page }) => {
+    await page.goto('/docs/core/execution-control');
+    await expect(page.getByRole('heading', { name: 'Execution Control' })).toBeVisible();
+    await expect(page.getByText('OperationalStore').first()).toBeVisible();
+    await expect(page.getByText('uv run aec-bench run resume').first()).toBeVisible();
+
+    await page.goto('/docs/advanced/evidence-index');
+    await expect(page.getByRole('heading', { name: 'Evidence Index' })).toBeVisible();
+    await expect(page.getByText('EvidenceQuery').first()).toBeVisible();
+    await expect(page.getByText('uv run aec-bench evidence index rebuild').first()).toBeVisible();
+  });
+
   test('renders the architecture flow diagram', async ({ page }) => {
     await page.setViewportSize({ width: 1024, height: 900 });
     await page.goto('/docs/core/architecture');

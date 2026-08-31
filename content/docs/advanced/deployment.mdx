@@ -9,6 +9,11 @@ waits for it to finish, and imports validated results into the evidence store.
 
 The public `aec-bench run` flow is synchronous. The command returns after Harbor finishes and the import step completes.
 
+Persisted local artefact plans use the scheduler control path. `run start` and
+`run resume` read a ready plan, create work items, and execute through the local
+artefact adapter. The synchronous Harbor command remains the path for a direct
+Harbor job.
+
 ## Where Harbor sits
 
 Harbor is the execution boundary around the task, agent harness, and verifier. Each component retains its role inside that boundary.
@@ -74,6 +79,11 @@ compute backend, execution family, and attempt.
 unexpected, and accepted trial identities. Accepted records retain Harbor job
 and trial names as execution metadata and use the AEC-Bench UUID as their trial
 identity.
+
+The scheduler-facing Harbor adapter is a Python composition boundary. It maps
+one planned trial to one backend submission and returns an `AttemptReceipt` and
+`TrialFinalization` for the shared execution layer. Harbor remains responsible
+for its environment and job protocol.
 
 ## Configuration
 

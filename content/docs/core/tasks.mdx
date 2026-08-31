@@ -184,6 +184,19 @@ the verifier process exit, timeout, cancellation, identity, version, and output
 parse status. A failed process cannot produce a completed evaluation. See
 [Scoring](/docs/evaluation/scoring) for the receipt and status rules.
 
+### Workspace evidence
+
+Artefact trials capture a base and final `WorkspaceManifest` for the isolated
+workspace. `WorkspaceDelta` classifies paths as `added`, `modified`, `deleted`,
+or `unchanged`. The final evidence records the declared `primary_output` and
+retains changed actor files and deletion paths with portable path and file
+facts.
+
+Unchanged task inputs remain represented by the base manifest. The retained
+trial output contains the primary output and meaningful workspace changes, so
+reviewers can inspect what the agent produced while the base manifest continues
+to identify the task inputs.
+
 ### Golden fixtures
 
 Most verifiers ship with test fixtures — a `golden_pass.md` that should score 1.0 and a `golden_fail.md` that should score less. These test the verifier itself.

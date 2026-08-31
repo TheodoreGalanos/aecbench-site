@@ -676,10 +676,10 @@ export function TaskTemplateDetail({
               )}
             </div>
             <aside className="min-w-0 overflow-hidden rounded border border-landing-border bg-[#050505] p-4">
-              <p className="font-mono text-xs uppercase tracking-wider text-landing-muted">template identity</p>
+              <p className="font-mono text-xs uppercase tracking-wider text-landing-muted">catalogue template</p>
               <dl className="mt-4 grid min-w-0 gap-2 font-mono text-xs">
                 <div className="grid gap-1">
-                  <dt className="text-landing-muted">task ID</dt>
+                  <dt className="text-landing-muted">catalogue key</dt>
                   <dd className="min-w-0 break-all text-landing-text">{entry.task_id}</dd>
                 </div>
                 {detail?.sourcePath && (
@@ -700,7 +700,7 @@ export function TaskTemplateDetail({
               </dl>
               {relatedVariants.length > 0 && (
                 <div className="mt-4 border-t border-landing-border pt-4">
-                  <p className="mb-2 font-mono text-xs text-landing-muted">same task id</p>
+                  <p className="mb-2 font-mono text-xs text-landing-muted">same catalogue key</p>
                   <div className="flex flex-wrap gap-2">
                     {relatedVariants.map((variant) => (
                       <Link

@@ -94,6 +94,34 @@ describe('library documentation coverage', () => {
     expect(scoring).toContain('experimental');
   });
 
+  it('documents explicit task identity, policy, and verifier process truth', () => {
+    const tasks = readDoc('core/tasks.mdx');
+    const contracts = readDoc('core/contracts.mdx');
+    const contributing = readDoc('core/contributing.mdx');
+    const scoring = readDoc('evaluation/scoring.mdx');
+    const cli = readDoc('reference/cli.mdx');
+    const config = readDoc('reference/config.mdx');
+    const quickstart = readDoc('start/quickstart.mdx');
+    const templates = readDoc('core/templates.mdx');
+
+    expect(tasks).toContain('[identity]');
+    expect(tasks).toContain('UUIDv7');
+    expect(tasks).toContain('Private');
+    expect(contracts).toContain('PortableRelativePath');
+    expect(contracts).toContain('public`, `private`, `holdout');
+    expect(contributing).toContain('--lifecycle proposed --visibility public');
+    expect(scoring).toContain('VerifierExecutionReceipt');
+    expect(scoring).toContain('A reward written before a crash or non-zero exit');
+    expect(scoring).not.toContain('verifier_completed: bool     # did reward.json appear?');
+    expect(cli).toContain('aec-bench task explain electrical/voltage-drop');
+    expect(cli).toContain('--lifecycle proposed');
+    expect(config).toContain('lifecycle_filter: ["active"]');
+    expect(config).toContain('visibility_filter: ["public"]');
+    expect(config).toContain('public | private | holdout');
+    expect(quickstart).toContain('--lifecycle proposed');
+    expect(templates).toContain('--lifecycle proposed');
+  });
+
   it('documents the functional meta-harness ownership and specialist process', () => {
     const runtime = readDoc('advanced/meta-harness-runtime.mdx');
     const cli = readDoc('reference/cli.mdx');

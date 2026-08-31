@@ -49,10 +49,13 @@ Task catalogue status and evidence progression are separate concepts.
 | Axis | Values | Meaning |
 |------|--------|---------|
 | **Task lifecycle** | `proposed`, `active`, `deprecated`, `retired` | Whether a task is ready and supported |
-| **Visibility** | `public`, `holdout` | Whether task material can enter public or protected surfaces |
+| **Visibility** | `public`, `private`, `holdout` | Whether task material can enter public or protected surfaces |
 | **Evidence lifecycle** | task-owned checkpoints | Which evidence stage is active during one bounded run |
 
-Visibility is explicit. A missing visibility value remains unknown and blocks publication.
+Lifecycle and visibility are explicit. A missing value is invalid. New
+selections normally use active, public tasks; other permitted states require an
+explicit selection or visibility context. Proposed and retired tasks cannot
+start new work.
 
 ## AgentOutput — what came back
 
@@ -114,12 +117,29 @@ Use each identity mechanism for one purpose:
 | Mechanism | Purpose |
 |-----------|---------|
 | Git revision | Exact repository source |
-| Stable domain ID | A task, dataset, run, trial, or candidate |
+| Human-readable key | A task or another domain object that people can find and discuss |
+| UUIDv7 | Stable unique identity for a task, run, trial, attempt, receipt, or another durable object |
+| Positive integer version | A semantic revision of one durable object |
 | `ArtifactRef` | Exact retained bytes |
 | Timestamp | A real event, such as start, completion, or publication |
 | Schema or protocol version | Compatibility of a document or wire contract |
 
-Schema labels such as v2 or v3 describe compatibility. Stable domain IDs identify tasks, datasets, and runs.
+The standard display reference combines a readable key with the final eight
+hexadecimal characters of its UUID, for example
+`electrical/voltage-drop · 3e8c21aa`. The suffix is not a separate identity.
+A key can change while the UUID stays stable, with the former key retained as
+an alias. Checksums identify exact bytes, not domain objects.
+
+Schema labels such as v2 or v3 describe compatibility. They do not replace the
+version of a task, dataset, or run.
+
+### Portable paths
+
+Untrusted or persisted relative paths use `PortableRelativePath`. It rejects
+absolute paths, drive-qualified paths, backslashes, empty components, `.` and
+`..`, and platform-reserved components. `resolve_below()` also checks the final
+resolved path, including symlinks, against its trusted root. Human-readable
+keys are not used as storage paths without this validation boundary.
 
 ## RunManifest — shared run identity
 

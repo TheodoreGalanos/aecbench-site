@@ -46,7 +46,6 @@ The output includes:
 | Artefact | Purpose |
 |----------|---------|
 | `experiment.json` | Declared experiment conditions and `PlannedTrial` values |
-| `source-digests.json` | Digests of the installed Python source files |
 | `ledger/` | Normal trial records, run manifests, and retained artefacts |
 | Trial evidence | Hydraulic packages and checkpoint evidence, dam accepted actions and diagnostics, or the canonical pump repository archive |
 
@@ -84,7 +83,7 @@ Each hydraulic seed identifies one project lineage. Assign the entire lineage to
 
 Train, development, and acceptance labels do not create a sealed holdout. Freeze and protect a separate acceptance bank before making a learning claim. See [Datasets](/docs/advanced/datasets) for exact dataset references and publication.
 
-Use the same package build and dependency environment when repeating conditions. Source digests identify code; they do not retain a source archive. Trial identities and outcomes can repeat, while execution timestamps and local paths describe each separate run.
+Use the same pinned library revision or package build and dependency environment when repeating conditions. The normal run manifest owns source references. A record with unresolved source does not establish code provenance. Trial identities and outcomes can repeat, while execution timestamps and local paths describe each separate run.
 
 ## Qualify the controls
 

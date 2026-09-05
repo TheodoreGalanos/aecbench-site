@@ -1,0 +1,113 @@
+---
+title: Engineering Decision Experiments
+description: Run reproducible hydraulic, dam, pump, and verifier controls through the existing lifecycle and world runtimes.
+---
+
+Engineering decision experiments compare declared conditions using reusable task capabilities. Each experiment saves its definition and planned trials, executes through the existing task runtime, and publishes normal `TrialRecord` values with retained evidence.
+
+## Capabilities, experiments, and qualification
+
+The library keeps three responsibilities separate:
+
+| Responsibility | What it supplies |
+|----------------|------------------|
+| Task capability | Hydraulic source generation and revision checks, dam investigation rules, or pump handover assessment |
+| Experiment | Selected conditions, partitions, seeds, policies, action limits, and comparison horizon |
+| Qualification | Checks that the same experiments produce their stated control outcomes and retain valid evidence |
+
+Task owners define state, actions, observations, and verifier meaning. Experiments select conditions without changing those rules. Qualification consumes the resulting records and diagnostics. It does not define another reward or world runtime.
+
+These experiments use deterministic Python controls. Their results describe synthetic environment and verifier behaviour. Model performance, transfer, and RL training require separate studies.
+
+## Choose a comparison
+
+| Experiment argument | Comparison | Evidence to inspect |
+|---------------------|------------|---------------------|
+| `hydraulic` | Baseline projects and their administrative, rainfall, outlet, and tailwater revisions | Retained and recomputed operations; baseline and revised physical readiness |
+| `dam` | Evidence-first, unsupported-response, and delayed-response policies across costed monitoring profiles | Response correctness, sufficient evidence, timeliness, expenditure, and rejections |
+| `pump` | Complete and omitted-work handovers from the same opening state to the same closing horizon | Handover omissions, replay validity, and delayed unresolved obligations |
+| `verifier` | Valid reordered decisions and submissions with stale sources, missing memo evidence, false readiness, or false authority | Expected acceptance and actual task-verifier gate results |
+
+Hydraulic execution uses `run_lifecycle_trial()`. Dam and pump execution use `run_world_experiment()` with the existing actor hosts. The normal ledger writer publishes their records and evidence.
+
+## Run one experiment
+
+From the library checkout, with its development dependencies installed:
+
+```bash
+uv run python -m aec_bench.experimentation.engineering_decisions dam \
+  --output artefacts/engineering-decisions/dam
+```
+
+Use `hydraulic`, `pump`, or `verifier` for the other comparisons. Each destination must be empty. These commands make no model-provider calls.
+
+The output includes:
+
+| Artefact | Purpose |
+|----------|---------|
+| `experiment.json` | Declared experiment conditions and `PlannedTrial` values |
+| `source-digests.json` | Digests of the installed Python source files |
+| `ledger/` | Normal trial records, run manifests, and retained artefacts |
+| Trial evidence | Hydraulic packages and checkpoint evidence, dam accepted actions and diagnostics, or the canonical pump repository archive |
+
+A failed control is still evidence. For example, a correct dam response can fail because the actor lacks sufficient evidence or misses the response deadline. An exhausted world action limit produces a failed, truncated trial with its observed state.
+
+## Repeat or change conditions
+
+Repeat a saved definition in a new directory:
+
+```bash
+uv run python -m aec_bench.experimentation.engineering_decisions dam \
+  --definition artefacts/engineering-decisions/dam/experiment.json \
+  --output artefacts/engineering-decisions/dam-repeat
+```
+
+`--definition` also accepts a JSON object containing only the experiment's conditions. For example, save this as `hydraulic-development.json`:
+
+```json
+{
+  "experiment_id": "hydraulic-counterfactual",
+  "partitions": [
+    {"split": "development", "seeds": [2, 8]}
+  ],
+  "revisions": ["administrative_no_op", "major_idf_revision"]
+}
+```
+
+```bash
+uv run python -m aec_bench.experimentation.engineering_decisions hydraulic \
+  --definition hydraulic-development.json \
+  --output artefacts/engineering-decisions/hydraulic-development
+```
+
+Each hydraulic seed identifies one project lineage. Assign the entire lineage to one partition before expanding revision siblings. Duplicate seed assignments are rejected. `HydraulicLineage` generates correlated source inputs; the experiment owns split membership.
+
+Train, development, and acceptance labels do not create a sealed holdout. Freeze and protect a separate acceptance bank before making a learning claim. See [Datasets](/docs/advanced/datasets) for exact dataset references and publication.
+
+Use the same package build and dependency environment when repeating conditions. Source digests identify code; they do not retain a source archive. Trial identities and outcomes can repeat, while execution timestamps and local paths describe each separate run.
+
+## Qualify the controls
+
+Run all four experiment definitions and check their expected behaviour:
+
+```bash
+uv run python -m aec_bench.experimentation.qualification.engineering_decisions \
+  --output artefacts/engineering-decisions/qualification
+```
+
+The command writes `qualification.json` and exits non-zero if a control expectation fails. It checks canonical trial evidence, hydraulic revision behaviour, verifier challenges, supported and timely dam decisions, and matched pump continuations. Each experiment keeps its own definition and ledger beneath the qualification directory.
+
+`--seeds 2 8` selects a custom hydraulic seed list for development qualification. The default definition declares separate train, development, and acceptance partitions. Neither mode seals acceptance data.
+
+Qualification reads retained trial diagnostics. A passing qualification result confirms these local controls; it does not establish hosted-provider readiness or measured model capability.
+
+## Interpret the evidence
+
+- **Hydraulic:** a physically inadequate design can still receive a valid review when the actor reports the failure correctly. Retention and invalidation follow actual operation input projections. Nearby scalar variants do not establish topology transfer.
+- **Dam:** investigation credits, costs, durations, and deadlines are public synthetic task constraints. Only accepted investigations consume the allowance. The private perfect-information minimum cost is a lower bound for one hidden scenario, not a policy's measured value of information.
+- **Pump:** a handover contains facts from one released actor view and grants no Operations authority. Compare terminal obligations over the common horizon. A bounded continuation does not establish complete operational success. The experiment's handover assessment remains separate from the reserved `handover_omission_count` metric.
+- **Verifier:** challenge submissions change before host acceptance. Accepted evidence remains immutable. The cases establish coverage for their declared faults, rather than proof against every exploit.
+
+The retained pump `world_run` ZIP contains the existing canonical repository. Restore it to a private directory and apply owner-only directory access and file read/write permissions before opening it for replay.
+
+See [Finite Lifecycles](/docs/core/lifecycles), [Interactive Worlds](/docs/core/interactive-worlds), and [Review and Reporting](/docs/evaluation/reviewing) for the underlying execution and evidence boundaries.

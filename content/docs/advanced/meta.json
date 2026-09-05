@@ -1,4 +1,17 @@
 {
   "title": "Advanced",
-  "pages": ["evolution", "avo", "swarm", "meta-harness-runtime", "adaptive-harnesses", "prime-lab", "datasets", "backends", "deployment", "evidence-index", "advisor"]
+  "pages": [
+    "evolution",
+    "avo",
+    "swarm",
+    "meta-harness-runtime",
+    "adaptive-harnesses",
+    "prime-lab",
+    "datasets",
+    "engineering-decisions",
+    "backends",
+    "deployment",
+    "evidence-index",
+    "advisor"
+  ]
 }

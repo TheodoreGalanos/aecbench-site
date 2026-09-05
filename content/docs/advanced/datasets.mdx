@@ -130,3 +130,9 @@ Use one identity mechanism for each purpose:
 - a stable ID for the dataset;
 - `ArtifactRef` for exact retained bundle bytes; and
 - a timestamp only for the real publication event.
+
+## Generated project lineages
+
+For related baseline and revision tasks, assign the complete project lineage to one partition before generating sibling rows. All revisions from that project stay together. This prevents a revised copy of a training project from entering an acceptance comparison.
+
+The [engineering decision experiments](/docs/advanced/engineering-decisions) apply this rule to hydraulic source generation with explicit seed-to-partition assignments. Their local `experiment.json` declares comparison conditions; formal dataset publication continues to use the exact references described above. Acceptance labels alone do not create a sealed holdout.

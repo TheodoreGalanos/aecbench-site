@@ -45,7 +45,7 @@ context_window = 10                       # recent turns to include
 enabled = true
 ```
 
-`max_uses` is a hard cap per trial.
+`max_uses` is a hard cap per trial. Disabled or exhausted advice makes no model request. Guided RLM exposes `ADVISOR()`; Lambda-RLM requests advice after review retries leave gaps. See [RLM and Lambda-RLM](/docs/agents/rlm#advisor-and-constitution).
 
 ## What the advisor sees
 
@@ -64,10 +64,11 @@ This lets the same advisor model help different harnesses without receiving thei
 
 ## Usage tracking
 
-Advisor calls are tracked separately from the main agent's token budget:
+Advisor usage is itemised so readers can distinguish advice from other model work. In RLM and Lambda-RLM report execution, advisor calls also count towards the aggregate run token budget:
 
 ```python
-class AdvisorUsageStats(StrictModel):
+@dataclass(frozen=True)
+class AdvisorUsageStats:
     calls_made: int
     calls_remaining: int
     advisor_input_tokens: int
@@ -75,11 +76,11 @@ class AdvisorUsageStats(StrictModel):
     advisor_cost_usd: float
 ```
 
-Reports can surface these alongside the base cost so readers can see the split: "this run cost USD 0.42 to execute, plus USD 0.18 in advisor calls".
+Reports can show the split within the total: "this run cost USD 0.60, including USD 0.18 in advisor calls". Do not add advisor cost a second time when it is already included in aggregate usage.
 
 ## Failure handling
 
-If the advisor call fails (network error, provider timeout, parsing failure), the agent receives a safe fallback response:
+The advisor interface can return a zero-confidence fallback when advice is unavailable:
 
 ```python
 AdvisorResponse(
@@ -90,7 +91,7 @@ AdvisorResponse(
 )
 ```
 
-A zero-confidence fallback lets the trial continue under the agent's own judgement.
+A malformed advice response can remain low-confidence guidance. A fallback does not erase a provider failure. RLM and Lambda-RLM report execution retain network errors, provider failures, and exhausted limits as partial execution with diagnostics. Unknown usage remains unknown. Advice cannot introduce source evidence or change the task's requirements.
 
 ## When to use it
 

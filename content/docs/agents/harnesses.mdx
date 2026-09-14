@@ -103,7 +103,7 @@ assistant: [writes /workspace/output.jsonl]
 
 ## RLM (Recursive Language Model)
 
-RLM is based on [Recursive Language Models](https://arxiv.org/abs/2512.24601) (Zhang, Kraska, Khattab, 2025). In aec-bench, it gives the model a sandboxed Python REPL, persistent scratchpad, helper functions, and optional compaction for long runs.
+RLM is based on [Recursive Language Models](https://arxiv.org/abs/2512.24601) (Zhang, Kraska, Khattab, 2025). In aec-bench, it gives the model a persistent Python REPL, scratchpad, helper functions, and optional compaction for long runs. The execution environment supplies the security boundary; the REPL and its source index are not a filesystem sandbox.
 
 ```toml
 # rlm.toml
@@ -113,18 +113,20 @@ max_iterations = 20
 max_subcall_depth = 3
 
 [execution]
-context_limit = 1_000_000
+context_limit = 128_000
 compaction_threshold_pct = 0.85
 ```
 
 Key features:
 
 - **Persistent notes**: `NOTE("key", value)` and `RECALL("key")` store working data outside the conversation history.
-- **REPL helpers**: `HELP`, `SHOW_VARS`, `grep`, `parallel`, `fill_parallel`, `FINAL`, and `FINAL_VAR` support file inspection, calculation, report filling, and finalisation.
+- **Context inspection**: `SHOW_VARS`, Python slices, `grep`, and bounded previews help the agent inspect large values without printing them in full.
+- **Model work**: declared subcalls and `parallel()` support bounded delegation and independent operations.
+- **Guided reports**: a loaded template provides `START`, `READ`, `VALIDATE`, `FILL`, `STATUS`, and `SUBMIT`. `fill_parallel()` shares the same section checks. Free-form runs use `FINAL` and `FINAL_VAR`.
 - **Compaction**: when context approaches `compaction_threshold_pct`, older turns can be summarised while preserving variables, scratchpad entries, and template progress.
 - **Guardrails**: `token_budget`, `max_iterations`, `max_subcall_depth`, and optional budget caps keep long runs bounded.
 
-Use RLM when the model needs to inspect documents in chunks, run calculations, preserve intermediate state, or resume from partial progress.
+Use RLM when the model needs to inspect documents in chunks, run calculations, and preserve intermediate state during an attempt. See [RLM and Lambda-RLM](/docs/agents/rlm) for context management, report tools, and a worked example.
 
 ## Lambda-RLM
 
@@ -160,14 +162,16 @@ token_budget = 500_000
 max_parallel_workers = 4
 ```
 
-Current Lambda-RLM runs can use:
+Lambda-RLM runs can use:
 
 - **Report templates** with guided sections, composed sections, fields, fragments, and required-output metadata
 - **Planning passes** that seed a compose scratchpad before section generation
 - **Block-task routing** so different section types can use different handlers
 - **Structure enforcement** that validates generated blocks against required fields and retries targeted gaps
 - **Grounding reports** that check whether generated content is supported by declared source material
-- **Best-of-K synthesis** where multiple candidate blocks can be generated and synthesised into a final section
+- **Candidate synthesis** where parallel section drafts are combined using public criteria and permitted references
+
+Lambda-RLM shares accepted section state, public writing rules, rubric guidance, and output assembly with guided RLM. Required checks and section dependencies control completion; the task verifier owns scoring. Optional advice, review, and synthesis count towards aggregate run usage. See the [report workflow](/docs/agents/rlm#a-report-run) and [configuration reference](/docs/reference/config#harness-configs).
 
 Lambda-RLM trades free-form exploration for repeatable extraction and composition. It is a poor fit for open-ended tasks where the agent must decide the workflow from scratch.
 
@@ -241,7 +245,7 @@ When something goes wrong, `failure_kind` tells the runner which structural cate
 | `timeout` | Harness exceeded the wall-clock budget |
 | `undeclared_tool_request` | Agent tried to use a tool not in the task whitelist |
 | `tool_execution_failed` | A tool call raised an error |
-| `missing_output` | Harness finished but no output file was written |
+| `missing_output` | Required output is absent or incomplete; report runs also check accepted section state and output bytes |
 
 The evaluation pipeline treats any `failure_kind` as a structural failure. The reward is `0.0`, regardless of how close the transcript looked.
 

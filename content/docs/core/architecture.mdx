@@ -50,6 +50,8 @@ With best-of execution, several `TaskAttempt` candidates belong to one planned t
 
 Templates and suites produce deterministic task instances before this flow starts. The generator can write replay inputs once in `generation-manifest.json` at the output root. Normal loading and execution use the runnable task directories; generation replay uses the sidecar.
 
+Report generation runs within this artefact-task flow. RLM and Lambda-RLM share report validation, section state, and assembly under the library's `templates/report/` owner. The harnesses control model work; task verification and evaluation keep their existing responsibilities. See [RLM and Lambda-RLM](/docs/agents/rlm) for the workflow.
+
 See [Tasks](/docs/core/tasks) and [Templates](/docs/core/templates) for the authoring path.
 
 ## Interactive Worlds

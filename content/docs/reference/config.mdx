@@ -150,85 +150,204 @@ Reviewer findings are separate from verifier rewards and human annotations.
 
 ## Harness configs
 
+RLM and Lambda-RLM read authored files from the staged task workspace. Experiment YAML `parameters` override matching TOML values; host request limits can only tighten the resolved limits. Unknown keys and unsupported modes fail validation. See [configuration precedence](/docs/agents/configuration#report-configuration-precedence) and the [RLM guide](/docs/agents/rlm).
+
 ### `rlm.toml`
 
-Harness-specific config for RLM runs:
+This example enables a guided report with bounded context and model work:
 
 ```toml
 [template]
-tier       = "flat"              # flat | dependency_tree
-definition = "report_template.toml"   # optional reference
-
-[inputs.source_doc]
-type        = "string"
-source      = "fixtures/spec.md"
-pre_parse   = false
-description = "Reference specification"
-
-[hints]
-phases     = ["understand", "calculate", "verify"]
-prohibited = ["guess", "skip_verification"]
-
-[subcalls.extract]
-enabled     = true
-custom_impl = null
-description = "Pull values from source doc"
+definition = "report_template.toml"
+source_mapping = "sources.toml"
+validation_rules = "checks.toml"
 
 [guardrails]
-token_budget         = 500_000
-max_iterations       = 100
-max_subcall_depth    = 1
-budget_warning_pct   = 80.0
-max_subcalls         = 0          # 0 = unlimited
-max_budget_usd       = 0.0
-billable_input_budget = 0
+token_budget = 100_000
+max_iterations = 20
+max_subcall_depth = 1
 
 [execution]
-scaffolding              = true
+scaffolding = true
+context_limit = 128_000
 compaction_threshold_pct = 0.85
-hard_ceiling_pct         = 0.95
-compaction_model         = null   # null = use agent's model
-subcall_model            = null
-context_limit            = 1_000_000
-max_parallel_workers     = 4
-
-[advisor]
-model               = "claude-haiku-4-5-20251001"
-max_uses            = 5
-max_response_tokens = 500
-context_window      = 10
-enabled             = true
+hard_ceiling_pct = 0.95
+max_parallel_workers = 4
 ```
+
+| Block | Settings |
+|-------|----------|
+| `template` | `tier`, `definition`, `source_mapping`, `validation_rules`. A loaded template supplies guided report state. |
+| `inputs.<name>` | `type`, `source`, `pre_parse`, `description` declare an input handle. |
+| `hints` | `phases` and `prohibited` supply execution guidance. |
+| `subcalls.<name>` | `enabled`, optional `custom_impl`, and `description` declare a typed subcall. |
+| `guardrails` | `token_budget` defaults to 500,000; `max_iterations` to 100; `max_subcall_depth` to 1; `budget_warning_pct` to 80. Optional `max_subcalls`, `max_budget_usd`, and `billable_input_budget` use 0 for no additional cap. |
+| `execution` | `scaffolding` defaults to true. `context_limit` defaults to 128,000 input tokens. Compaction and hard-ceiling fractions default to 0.85 and 0.95. `max_parallel_workers` defaults to 4. |
+| `advisor` | `enabled`, `model`, `max_uses`, `max_response_tokens`, and `context_window`. See [Advisor](/docs/advanced/advisor). |
+
+Optional `execution.compaction_model` and `execution.subcall_model` select secondary model routes. Omit them to use the main model. TOML has no `null` value; omit unset optional keys. Input-context limits must be positive, with `0 < compaction_threshold_pct < hard_ceiling_pct <= 1`.
 
 ### `lambda-rlm.toml`
 
+Lambda-RLM reads `lambda-rlm.toml`, then falls back to `rlm.toml`, then condition values alone. A fallback file with RLM-only options fails validation. Use separate compatible files when a task supports both harnesses.
+
 ```toml
 [template]
-tier       = "dependency_tree"
-definition = null
+definition = "report_template.toml"
+source_mapping = "sources.toml"
+validation_rules = "checks.toml"
 
 [planner]
-context_window_chars  = 100_000
-accuracy_target       = 0.80
-leaf_accuracy         = 0.95
-compose_accuracy      = 0.90
-max_branching_factor  = 20
+context_window_chars = 100_000
+max_branching_factor = 20
 
 [review]
-enabled                     = true
-max_retries_per_source      = 1
+enabled = true
+trigger = "always"
+max_retries_per_source = 1
 max_supplements_per_section = 1
 
 [execution]
 max_parallel_workers = 4
 
 [guardrails]
-token_budget = 500_000
-
-[advisor]
-model   = "claude-haiku-4-5-20251001"
-enabled = true
+token_budget = 100_000
 ```
+
+| Block | Settings |
+|-------|----------|
+| `template` | `tier`, `definition`, `source_mapping`, `validation_rules` declare the report assets. |
+| `planner` | `context_window_chars` defaults to 100,000 characters and `max_branching_factor` to 20. `accuracy_target`, `leaf_accuracy`, and `compose_accuracy` default to 0.80, 0.95, and 0.90. |
+| `extract` | `k_candidates` defaults to 1; `temperature` to 0.7. `keep_candidates_artifact` retains extraction candidates when enabled. |
+| `review` | `enabled` defaults to true and `trigger` to `always`. Other triggers are `uncertainty`, `consistency`, `both`, and `never`. Retry and supplement limits default to 1. |
+| `uncertainty` | `lambda`, `min_confidence_eps`, `min_samples`, and `review_joint_threshold` control the joint uncertainty signal. See [extraction review](/docs/agents/configuration#lambda-rlm-extraction-review). |
+| `structure_enforcement` | `enabled`, `max_retries`, and `validator_model` control an optional model check for required structure. The retry default is 2. |
+| `grounding` | `check` is `default` or `off`; optional `custom_facts` supplies pattern checks. Grounding findings remain advisory. |
+| `compose` | `mode` selects `orchestrated` or `agentic` composition. Agentic composition can reuse extracted values from a scratchpad. |
+| `planning_phase` | With agentic composition, `enabled`, `sources`, and `extract_slots` seed the scratchpad. Optional `back_brief` and `scope_evolution` passes have their own sources, model, and output limit. These passes are inactive in orchestrated mode. |
+| `sandbox` | `enabled` enables document and anchor access; `extractor_overrides` selects document extractors. `tool_use = true` is unsupported. |
+| `execution` | `max_parallel_workers` bounds parallel work and defaults to 4. RLM context and compaction keys do not apply to this pipeline. |
+| `guardrails` | `token_budget` defaults to 500,000 and counts all model phases. |
+| `advisor` | Uses the same declared model and advice limits as RLM. |
+
+`review.confidence_threshold` defaults to 0.6 and `review.consistency_threshold` to 0.7. `consistency` and `both` require `extract.k_candidates > 1`; a single-sample configuration fails before model work.
+
+### Report assets
+
+`template.definition` resolves relative to the harness file, or the workspace for condition-only configuration. `source_mapping`, `validation_rules`, and explicit `[boilerplate].path` values resolve relative to the template. All resolved paths must stay inside the actor workspace, including through symlinks.
+
+A report template declares its sections in order:
+
+```toml
+# report_template.toml
+[[sections]]
+id = "findings"
+title = "Findings"
+input_mapping = ["inspection"]
+writing_guidance = ["State the observed count and cite the source ID."]
+fields = [{ name = "text", dtype = "str", required = true }]
+
+[[sections]]
+id = "summary"
+title = "Summary"
+depends_on = ["findings"]
+fields = [{ name = "text", dtype = "str", required = true }]
+```
+
+Field types are `str`, `int`, `float`, `bool`, `list`, `dict`, and `table`. Source priorities use `input_mapping = { sources = ["inspection"], priority = { inspection = 1 } }`; lower numbers mean higher authority. Priorities can only refer to mapped sources. Section IDs must be unique, and dependencies must name existing sections without forming a cycle.
+
+The mapping gives source IDs an explicit public path:
+
+```toml
+# sources.toml
+[sources.inspection]
+path = "documents/inspection.txt"
+visibility = "public"
+
+[sections.findings]
+sources = ["inspection"]
+```
+
+Public writing rules have an ID, kind, message, and optional section and field scope. Error-level pattern failures block acceptance; warnings do not. A `prose` rule remains `unchecked` by deterministic validation; a model review can supply separate findings.
+
+```toml
+# checks.toml
+visibility = "public"
+
+[[rules]]
+id = "observed-count"
+kind = "required_pattern"
+pattern = "12"
+message = "State the recorded count of 12."
+severity = "error"
+```
+
+Pattern kinds are `required_pattern` and `forbidden_pattern`; patterns must compile. Required fields and types are checked independently from these rules. The [synthetic example](/docs/agents/rlm#synthetic-inspection-example) also includes a public rubric with weighted dimensions, criterion categories, and reference scope.
+
+### Section candidates
+
+This Lambda-RLM example generates three drafts for the summary and synthesises one result:
+
+```toml
+[fill_section]
+k_candidates = 3
+temperature = 1.0
+tournament_mode = "synthesis"
+apply_to_sections = ["summary"]
+
+[fill_section.synthesis]
+synthesiser_model = "anthropic:claude-sonnet-4-6"
+synthesis_mode = "plain"
+max_input_tokens = 16_000
+max_output_tokens = 2_000
+```
+
+Choose a `synthesiser_model` supported by the configured provider route. Secondary model settings cannot raise the provider client's per-call maximum. All candidate and synthesis calls count towards the run budget.
+
+At `k_candidates = 1`, one section is generated. Larger K requires `tournament_mode = "synthesis"`; an empty `apply_to_sections` list applies it to all sections. Only plain synthesis is supported. The worker limit is `execution.max_parallel_workers`. Extraction samples and CLI whole-attempt `--best-of` are [separate controls](/docs/agents/rlm#optional-candidates-and-synthesis).
+
+### Fixed constitutional parameters
+
+Set `constitution.path` to a declared constitution file, or supply inline parameters. RLM accepts its parameter tables directly under `constitution`:
+
+```toml
+# rlm.toml
+[constitution.information_minimality]
+default_threshold = 2000
+search_threshold = 10000
+preview_length = 200
+truncation_strategy = "metadata"
+
+[constitution.state_persistence]
+preserve_variables = true
+preserve_scratchpad = true
+compaction_strategy = "llm_summary"
+
+[constitution.source_fidelity]
+require_source_tracing = true
+tbd_placeholder = "[TBD]"
+gap_framing = "exclude"
+```
+
+Lambda-RLM uses `constitution.inline` and supports information previews and source fidelity:
+
+```toml
+# lambda-rlm.toml
+[constitution.inline.information_minimality]
+default_threshold = 2000
+search_threshold = 10000
+preview_length = 200
+truncation_strategy = "head"
+
+[constitution.inline.source_fidelity]
+require_source_tracing = true
+tbd_placeholder = "[TBD]"
+gap_framing = "tbd"
+```
+
+Preview strategies are `metadata`, `head`, and `tail`. RLM state persistence supports `llm_summary`, `state_only`, and `full_reset`; task instructions, system policy, report state, and bindings remain protected. RLM also accepts progress nudge and stall thresholds under `constitution.progress_obligation`, and an initial mode under `constitution.earned_autonomy`. The initial modes are `constrained`, `guided`, and `autonomous`; they do not enable automatic promotion.
+
+In a separate constitution file, use the parameter tables at the top level. Lambda-RLM rejects REPL state-persistence, progress, and autonomy tables. Constitutional model inference is unsupported for report execution; declare fixed parameters instead.
 
 ## `evolution.yaml`
 

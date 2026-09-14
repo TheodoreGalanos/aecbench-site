@@ -24,6 +24,7 @@ describe('library documentation coverage', () => {
     expect(advancedMeta).toContain('"swarm"');
     expect(advancedMeta).toContain('"avo"');
     expect(agentsMeta).toContain('"prime-agent"');
+    expect(agentsMeta).toContain('"rlm"');
     expect(coreMeta).toContain('"lifecycles"');
     expect(coreMeta).toContain('"interactive-worlds"');
     expect(coreMeta).toContain('"runs-and-plans"');
@@ -361,6 +362,10 @@ describe('library documentation coverage', () => {
 
   it('keeps public docs out of internal winning-work scope', () => {
     const docs = [
+      readDoc('agents/rlm.mdx'),
+      readDoc('agents/harnesses.mdx'),
+      readDoc('agents/configuration.mdx'),
+      readDoc('reference/config.mdx'),
       readDoc('advanced/prime-lab.mdx'),
       readDoc('advanced/swarm.mdx'),
       readDoc('reference/library-catalogue.mdx'),

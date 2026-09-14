@@ -20,6 +20,7 @@ describe('LLM documentation routes', () => {
     expect(response.headers.get('content-type')).toBe('text/plain; charset=utf-8');
     expect(body).toMatch(/^# aec-bench\n\n> /);
     expect(body).toContain('[Quickstart](/docs/start/quickstart)');
+    expect(body).toContain('[RLM and Lambda-RLM](/docs/agents/rlm)');
     expect(body).toContain('[Engineering Decision Experiments](/docs/advanced/engineering-decisions)');
     expect(body).toContain('[Full documentation](/llms-full.txt)');
     expect(body).toContain('[Task library](/tasks)');
@@ -35,6 +36,9 @@ describe('LLM documentation routes', () => {
     expect(response.headers.get('content-type')).toBe('text/plain; charset=utf-8');
     expect(body).toContain('# aec-bench Documentation (/docs)');
     expect(body).toContain('# Contracts (/docs/core/contracts)');
+    expect(body).toContain('# RLM and Lambda-RLM (/docs/agents/rlm)');
+    expect(body).toContain('START(section_id)');
+    expect(body).toContain('Unknown provider usage remains unknown.');
     expect(body).toContain('# Engineering Decision Experiments (/docs/advanced/engineering-decisions)');
     expect(body).toContain('RunManifest');
     expect(body).toContain('# CLI (/docs/reference/cli)');

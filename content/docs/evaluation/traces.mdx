@@ -88,6 +88,14 @@ A failed execution can still have useful diagnostics. Keep each status visible s
 
 Each trial can record model calls, input and output tokens, cache use, advisor use, and an estimated USD cost. Reports use `CostRecord` as the aggregate usage authority. Provider-specific metadata can remain in provider evidence when it is needed for diagnosis.
 
+## Report harness evidence
+
+[RLM and Lambda-RLM](/docs/agents/rlm) retain the effective report configuration under `configuration_record["report_assets"]`: the resolved template, public writing rules, public rubric, and source IDs. Retained task artefacts provide source-file integrity. The report configuration does not introduce a second set of file hashes.
+
+Review findings and section candidate traces describe work inside an attempt. They do not create another trial or replace verifier evidence. Completion requires the submitted bytes to match the accepted report state. Partial runs retain diagnostics even when an output file exists.
+
+Aggregate run usage includes extraction, retries, review, section candidates, synthesis, advice, subcalls, and compaction. Secondary calls are not free work outside the budget. Already admitted parallel calls can take observed usage past the stop limit; an overrun remains partial. Unknown usage from a failed provider call is not recorded as zero-cost success.
+
 ## Retained records
 
 Accepted run manifests, trial records, and retained evidence cannot be overwritten. New review or diagnostic detail is stored as another artefact that refers to the existing trial. Source code and temporary workspaces can still change normally.

@@ -62,6 +62,12 @@ Rubric rewards round to 4 decimals and must land in `[0.0, 1.0]`. If a verifier
 writes `reward.json` directly, that value is eligible for use after output and
 receipt validation.
 
+## Public report rubrics
+
+The [report harnesses](/docs/agents/rlm#rubric-and-review) can expose a rubric explicitly marked `visibility = "public"` to the agent. Dimension weights, criterion categories, and section and reference scopes guide drafting, review, and synthesis. Private verifier criteria remain outside the actor workspace and model requests.
+
+Public writing checks and model reviews help prepare the artefact. Required fields, error-level rules, and unresolved structural checks can block harness completion; warnings, unchecked prose requirements, and grounding findings remain visible as diagnostics. A successful `SUBMIT()` does not award reward. The task verifier checks the submitted artefact and evaluation records the result through the normal scoring contract.
+
 ## Verifier process receipt
 
 The receipt records the verifier key and version, process interval, redacted

@@ -95,7 +95,7 @@ max_budget_usd = 5.00
 
 [execution]
 scaffolding = true
-context_limit = 1_000_000
+context_limit = 128_000
 compaction_threshold_pct = 0.85
 max_parallel_workers = 4
 ```
@@ -124,7 +124,33 @@ token_budget = 500_000
 max_parallel_workers = 4
 ```
 
-RLM and Lambda-RLM configuration files live in the staged task workspace. The experiment manifest selects the harness and model; the workspace TOML controls the harness-specific runtime behaviour.
+### Report configuration precedence
+
+RLM and Lambda-RLM configuration files live in the staged task workspace. RLM reads `rlm.toml`. Lambda-RLM looks for `lambda-rlm.toml`, then `rlm.toml`. Either harness can use condition values alone when no file is present. A fallback file must contain options supported by the selected harness.
+
+The experiment manifest selects the harness and model. Nested `parameters` override the corresponding authored TOML defaults. For example, this agent entry changes the report's total token budget and enables consistency-based extraction review:
+
+```yaml
+agents:
+  - name: report-consistency-review
+    harness: lambda-rlm
+    model: $REPORT_MODEL
+    parameters:
+      guardrails:
+        token_budget: 100000
+      extract:
+        k_candidates: 3
+      review:
+        enabled: true
+        trigger: consistency
+        max_retries_per_source: 1
+```
+
+Host request limits can only tighten the resolved limits. Unknown file keys, unsupported block options, and incompatible modes fail before model requests. The effective configuration retains the resolved settings and public report assets.
+
+`guardrails.token_budget` counts all model phases, including secondary models and advice. Once reported usage reaches the limit, no further model work is admitted. Already admitted parallel calls finish and count towards actual usage. RLM `max_turns` bounds main iterations; Lambda-RLM `max_turns` bounds model calls.
+
+The RLM input-context default is 128,000 tokens; choose a value appropriate for the model. See [RLM and Lambda-RLM](/docs/agents/rlm) for the report workflow and [Harness configs](/docs/reference/config#harness-configs) for asset paths, context controls, fixed constitutional parameters, and section synthesis.
 
 ### Lambda-RLM extraction review
 
@@ -134,7 +160,7 @@ one to fan out candidate extractions, then select a `review.trigger`:
 
 | Trigger | Behaviour |
 |---------|-----------|
-| `always` | Review every section; this is the compatibility default |
+| `always` | Review every section; this is the default |
 | `never` | Skip review for an explicit ablation |
 | `uncertainty` | Review when joint uncertainty crosses its configured threshold |
 | `consistency` | Review when mean candidate consistency falls below its threshold |
@@ -154,7 +180,7 @@ trigger = "both"
 consistency_threshold = 0.7
 ```
 
-Some triggers need evidence from several candidate extractions. For example, `consistency` requires `k_candidates` of at least 2. If the required evidence is missing, the harness reviews every section and records why in its trajectory.
+`consistency` and `both` require `extract.k_candidates` of at least 2. A configuration with only one extraction sample fails validation before model work. `extract.k_candidates` controls extraction samples; [section candidate generation](/docs/reference/config#section-candidates) uses `fill_section.k_candidates`. CLI `--best-of` runs separate whole attempts.
 
 The trajectory also records candidate payloads, confidence, consistency, uncertainty, and the resulting review decision. The task and verifier remain the authority for task meaning and scoring.
 

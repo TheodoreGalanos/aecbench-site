@@ -64,6 +64,35 @@ test.describe('Documentation', () => {
     }
   });
 
+  test('opens the RLM guide from the harness overview and renders its report flow', async ({ page }) => {
+    await page.goto('/docs/agents/harnesses');
+    await page.locator('article').getByRole('link', { name: 'RLM and Lambda-RLM', exact: true }).click();
+    await expect(page).toHaveURL(/\/docs\/agents\/rlm$/);
+    await expect(page.getByRole('heading', { name: 'RLM and Lambda-RLM', exact: true })).toBeVisible();
+    await expect(page.locator('aside').getByRole('link', { name: 'RLM and Lambda-RLM', exact: true }).first()).toBeAttached();
+    await expect(page.getByRole('heading', { name: 'Guided report tools', exact: true })).toBeVisible();
+    await expect(page.locator('code').filter({ hasText: 'START("findings")' })).toBeVisible();
+
+    const diagram = page.locator('article svg').filter({ hasText: 'Task instruction and public assets' });
+    await expect(diagram).toBeVisible();
+    await expect(diagram).toContainText('Tournament synthesis');
+    await expect(diagram).toContainText('Task verifier and evaluation');
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    const flow = page.getByRole('img', { name: /^Report workflow:/ });
+    await expect(flow).toBeVisible();
+    const layout = await flow.evaluate((element) => ({
+      overflow: getComputedStyle(element).overflowX,
+      width: element.clientWidth,
+      contentWidth: element.scrollWidth,
+      pageWidth: document.documentElement.scrollWidth,
+      viewportWidth: window.innerWidth,
+    }));
+    expect(layout.overflow).toBe('auto');
+    expect(layout.contentWidth).toBeGreaterThan(layout.width);
+    expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+  });
+
   test('renders installation page with provider table', async ({ page }) => {
     await page.goto('/docs/start/installation');
     await expect(page.getByText('ANTHROPIC_API_KEY')).toBeVisible();

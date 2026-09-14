@@ -77,6 +77,8 @@ class AgentOutput(StrictModel):
 
 The harness reports completion and location. Evaluation owns parsing and scoring the task-specific output.
 
+For [report harnesses](/docs/agents/rlm#budgets-and-completion), completion also requires all required section checks to pass and the output bytes to match accepted report state. A successful public writing check or `SUBMIT()` is not a verifier result. Private verifier inputs remain outside the actor workspace and model requests.
+
 ## ResolvedRunSpec and RunPlan — what will run
 
 `ResolvedTaskInstance` combines the validated `TaskDefinition` with the exact task directory and resolved environment, verifier, and tool paths. It is the direct task input to artefact-task execution.

@@ -144,6 +144,8 @@ WORKDIR /workspace
 
 Some tasks stage input files such as spreadsheets, drawings, code extracts, or reference data into the runtime via fixture directories. The agent reads them as normal files on disk.
 
+Report tasks can stage a template, public source mapping, and writing checks alongside their documents. The [synthetic inspection example](/docs/agents/rlm#synthetic-inspection-example) shows this asset pack. Keep private verifier inputs and hidden criteria outside the actor workspace.
+
 ### The verifier
 
 The verifier computes ground truth independently, reads the agent's output, and writes a reward (0.0–1.0) plus per-field details. For Harbor-backed runs, `tests/test.sh` is the entry point; it usually calls `tests/verify.py`.

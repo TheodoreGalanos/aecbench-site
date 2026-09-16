@@ -6,9 +6,9 @@ description: Scoring turns an agent's output into a validated reward by reading 
 When a trial finishes, the execution backend runs the task's verifier against
 the agent output file. AEC-Bench records the process in a
 `VerifierExecutionReceipt`, parses valid verifier output into an
-`EvaluationResult`, and attaches both forms of evidence to the trial. The
-receipt decides whether the verifier completed; the presence of a reward file
-does not.
+`EvaluationResult`, and attaches both forms of evidence to the trial. The receipt records whether the verifier completed successfully.
+
+To assess a saved answer after changing the verifier, see [Regrading](/docs/evaluation/regrading).
 
 ## The verifier contract
 
@@ -66,24 +66,28 @@ receipt validation.
 
 The [report harnesses](/docs/agents/rlm#rubric-and-review) can expose a rubric explicitly marked `visibility = "public"` to the agent. Dimension weights, criterion categories, and section and reference scopes guide drafting, review, and synthesis. Private verifier criteria remain outside the actor workspace and model requests.
 
-Public writing checks and model reviews help prepare the artefact. Required fields, error-level rules, and unresolved structural checks can block harness completion; warnings, unchecked prose requirements, and grounding findings remain visible as diagnostics. A successful `SUBMIT()` does not award reward. The task verifier checks the submitted artefact and evaluation records the result through the normal scoring contract.
+Public writing checks and model reviews help prepare the artefact. Required fields, error-level rules, and unresolved structural checks can block harness completion; warnings, unchecked prose requirements, and grounding findings remain visible as diagnostics. The task verifier checks the submitted artefact and evaluation records the result through the normal scoring contract.
 
 ## Verifier process receipt
 
-The receipt records the verifier key and version, process interval, redacted
-arguments, exit code, timeout or cancellation, bounded stdout and stderr,
-reward and details artefacts, output parse status, and any failure reason.
+Use the receipt to check which verifier ran and whether its result is usable:
+
+| Evidence | Recorded details |
+|----------|------------------|
+| Verifier identity | Key and version |
+| Process | Start and end times, redacted arguments, and exit code |
+| Diagnostics | Timeout or cancellation, bounded stdout and stderr, and any failure reason |
+| Result | Reward and details artefacts, with output parse status |
 
 A verifier is complete only when all of these conditions are true:
 
 1. the receipt matches the expected verifier key and version;
-2. the process was not cancelled and did not time out;
+2. the process ran to completion within its time limit;
 3. the process exited with code `0`;
 4. `reward.json` exists and parses as valid verifier output; and
 5. the reward artefact is retained with the trial evidence.
 
-A reward written before a crash or non-zero exit cannot turn that process into
-a successful verification.
+A crash or non-zero exit produces a failed verification, even if the process wrote a reward file.
 
 | Receipt outcome | Evaluation status | Reward treatment |
 |-----------------|-------------------|------------------|
@@ -109,7 +113,7 @@ The reward gate is fail-closed:
 |-----------|-----------------|
 | `output_parseable=False` or `schema_valid=False` | `reward` must be `0.0` |
 | A stewardship evaluation is present and `stewardship.valid=False` | `reward` must be `0.0` |
-| The verifier receipt does not complete | Evaluation records `reward=0.0` and `verifier_completed=False` |
+| The verifier receipt records an incomplete process | Evaluation records `reward=0.0` and `verifier_completed=False` |
 
 `verifier_completed` is a projection of the receipt outcome. It appears in
 reports with parser and schema flags so readers can distinguish an incorrect
@@ -130,7 +134,7 @@ class EvaluationResult(StrictModel):
     stewardship: StewardshipEvaluation | None  # optional interactive-world evaluation
 ```
 
-`stewardship` carries the integrity gates, metrics, and evidence identities for supported stewardship worlds. The field is reserved for supported stewardship-world results.
+`stewardship` carries the integrity gates, metrics, and evidence identities for supported stewardship worlds.
 
 ## Error taxonomy
 
@@ -160,10 +164,6 @@ class Annotation(StrictModel):
 ```
 
 `Annotation` records sit alongside the automated reward, so disagreement between a reviewer and a verifier stays visible on the record.
-
-## Conditional evidence
-
-Conditional evidence is experimental, and no registered lifecycle uses it. Evidence requests can change what an agent sees, but the task verifier still defines correctness and supplies reward evidence.
 
 ## Descriptive holdout results
 

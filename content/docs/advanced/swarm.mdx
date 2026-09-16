@@ -3,7 +3,7 @@ title: Swarm
 description: Run several workspace-evolution agents in parallel and keep strong candidates that use meaningfully different strategies.
 ---
 
-`aec-bench swarm` runs several evolution agents in parallel. Each agent changes a private copy of the workspace. A shared archive keeps strong candidates that solve the tasks in different ways. This approach is called **quality-diversity search**.
+`aec-bench swarm` runs several evolution agents in parallel, each working on a private copy of the workspace. They contribute to a shared archive that keeps strong candidates with different ways of solving the tasks, an approach called **quality-diversity search**.
 
 ## When to use it
 
@@ -78,7 +78,7 @@ _swarm_runs/
 └── summary.json
 ```
 
-`swarm_state.json` records the current decisions. `candidates.json` stores the exact candidate content. The other files store accepted candidates, rejected candidates, ancestry, notes, budget, and a readable event history. Recovery uses the state and candidate files; the event history explains what happened.
+Recovery uses the decisions in `swarm_state.json` together with the exact content in `candidates.json`. Use the supporting archive and lineage records to inspect those decisions, and the event history to follow how the run reached its current state.
 
 The current output layout uses one flat state directory. A later run in the same workspace uses the same snapshot paths and appends to the same event log. Use a separate workspace when runs must remain isolated.
 
@@ -96,7 +96,7 @@ uv run aec-bench swarm history \
 
 `status` validates `swarm_state.json` and its supporting candidate, archive, graveyard, lineage, note, and budget material. It rejects a different run ID or unresolved candidate identity. `history` scans validated persisted swarm states.
 
-`swarm run` is still a foreground process. The CLI has no `stop` or `resume` command. Keep the process attached until completion, and use a separate workspace when runs must remain isolated.
+`swarm run` is a foreground process. Keep the process attached until completion, and use a separate workspace when runs must remain isolated.
 
 ## How coordination works
 
@@ -107,7 +107,7 @@ In the Python API, these values are `SwarmAssignment` and `CandidateProposal`.
 The manager then:
 
 1. plans a shared selection batch;
-2. checks the assigned parent and submitted child without blocking other evaluations;
+2. checks the assigned parent and submitted child while other evaluations continue;
 3. attaches the resulting `TrialRecord` evidence to the exact candidates;
 4. updates selection, rejection, budget, and ancestry state in one short protected operation; and
 5. saves the shared state and candidate content.
@@ -131,7 +131,7 @@ Two workspaces can have the same reward and still be worth keeping if they solve
 
 ## Budget behaviour
 
-The budget pool is shared across agents. At the wind-down threshold, agents receive a warning to focus their remaining evaluations. At the final threshold, they receive a stronger warning. Agents retire only after recorded spend reaches the configured maximum, so concurrently running evaluations can take total spend past that value.
+Agents share one budget pool and receive warnings at the wind-down and final thresholds to focus their remaining evaluations. They retire when recorded spend reaches the configured maximum; evaluations already running can take total spend past that value.
 
 Start small:
 

@@ -21,16 +21,13 @@ TrialFinalization → TrialRecord
 
 ## Operational state
 
-`OperationalStore` is a SQLite coordination store. It keeps mutable run,
-plan, planned-trial, work-item, attempt, backend-submission, and lease rows.
-Short transactions update scheduler state while portable run plans and trial
-evidence stay in the evidence store.
+`OperationalStore` uses SQLite to coordinate a run's planned trials and execution attempts. Short transactions update scheduler state while portable plans and trial evidence stay in the evidence store.
 
 The store records the state needed to dispatch work and recover a process:
 
 | Record | Role |
 |---|---|
-| `TrialWorkItem` | One schedulable row bound to a run, plan, trial, backend, route, resource class, priority, and retry policy |
+| `TrialWorkItem` | A planned trial with its execution routes, resource requirements, priority, and retry policy |
 | `Attempt` | One execution try under a stable trial and work-item identity |
 | `Lease` | A time-limited worker claim with heartbeat and release state |
 | `BackendSubmission` | The provider submission identity and observed backend state |
@@ -43,10 +40,15 @@ published `TrialRecord` to its selected attempt.
 
 ## Scheduler policy
 
-`ExecutionPolicy` is part of the resolved run condition. It contains the global
-concurrency limit, retry policy, lease timing, priority ageing, and scoped
-limits for runs, backends, provider routes, model routes, resource classes, and
-execution families.
+`ExecutionPolicy` fixes the scheduling rules as part of the resolved run condition:
+
+| Control | Scope |
+|---------|-------|
+| Global concurrency | Maximum concurrent work across the scheduler |
+| Scoped concurrency | Limits by run, backend, provider route, model route, resource class, or execution family |
+| Retry policy | Which failures can be retried and when |
+| Lease timing | How long a worker can claim work and when it must renew ownership |
+| Priority ageing | How waiting affects scheduling priority |
 
 The local scheduler leases ready work when all applicable limits allow it. It
 applies priority ageing, records backoff, renews heartbeats, and releases or
@@ -91,11 +93,16 @@ backend result is reconciled before the work reaches a terminal state.
 
 ## Progress
 
-`RunProgress` projects one authoritative `RunPlan` with the operational rows.
-It reports planned, queued, leased, running, succeeded, failed, cancelled,
-invalid, unknown, and missing work and trial counts. It also reports attempts,
-backend submissions, active and expired leases, retries, timestamps, and the
-remaining work count.
+Use `RunProgress` to see how much of the plan has finished and what is holding up the rest. It combines the authoritative `RunPlan` with operational rows:
+
+| Progress detail | Counts and values |
+|-----------------|-------------------|
+| Plan | Planned and remaining work |
+| Active work | Queued, leased, and running work items and trials |
+| Terminal outcomes | Succeeded, failed, cancelled, and invalid work items and trials |
+| Gaps | Unknown and missing work items and trials |
+| Recovery | Attempts, backend submissions, retries, and active or expired leases |
+| Timing | Recorded timestamps |
 
 The CLI reads this projection with:
 
@@ -111,11 +118,7 @@ operational store and plan root configured.
 
 ## Execution-family composition
 
-The shared scheduler accepts execution-family adapters at a Python composition
-boundary. Artefact tasks use the local artefact adapter for `run start` and
-`run resume`. Interactive World, finite lifecycle, and Harbor integrations
-compose their family-specific worker with the same work, attempt, lease,
-receipt, and finalization contracts.
+The scheduler accepts each execution family's worker through a Python adapter. `run start` and `run resume` use the local artefact adapter; Interactive World, finite lifecycle, and Harbor integrations compose their own workers against the same [operational contracts](#operational-state).
 
 Each family keeps its task meaning, state transitions, verifier, and evidence
 rules. The scheduler controls work ownership and recovery, while the task

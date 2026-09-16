@@ -15,7 +15,7 @@ AEC-Bench separates three concepts:
 | Exact reference | One repository commit and manifest path, or one retained bundle `ArtifactRef` |
 | Publication label | Human discovery name that resolves to one exact reference |
 
-`dataset_id` defines dataset identity. A publication label such as `public-2026` is a permanent discovery name for one exact release. Use a fixed label rather than `latest` so later runs select the same material.
+`dataset_id` defines dataset identity. A publication label such as `public-2026` is a permanent discovery name for one exact release. Use a fixed label so later runs select the same material.
 
 ## Semantic manifest
 
@@ -45,7 +45,7 @@ AEC-Bench separates three concepts:
 }
 ```
 
-The manifest contains semantic task identity and repository-relative paths. `task_kind: "artifact"` selects `task.toml` loading. `task_kind: "world"` selects an `instruction.md` and `world.toml` package. The published dataset reference carries exact source or bundle identity.
+The manifest identifies tasks by their semantic identity and repository-relative paths. Set `task_kind` to `"artifact"` for a `task.toml` directory or `"world"` for an `instruction.md` and `world.toml` package. Publishing binds this selection to an exact source or bundle reference.
 
 The optional `generation` field records replay inputs for the selection. Exact source or byte identity stays in the published dataset reference.
 
@@ -77,9 +77,9 @@ Creation is local and write-once for one `dataset_id`. Publish it under a new la
 uv run aec-bench dataset publish electrical-core --label public-2026
 ```
 
-The current `dataset create` command discovers artefact tasks through the task registry. To compose a mixed or world-only dataset today, use the Python dataset API or write the exact semantic manifest with `task_kind: "world"`, then validate and publish it. This is a creation-surface limit; dataset loading and `aec-bench run` support world entries.
+`dataset create` discovers artefact tasks through the task registry. To compose a mixed or world-only dataset, use the Python dataset API or write the exact semantic manifest with `task_kind: "world"`, then validate and publish it. `aec-bench run` executes both task kinds.
 
-The default publication stores a deterministic detached bundle and references its exact bytes with `ArtifactRef`. Use `--repository` to bind the manifest to the current full Git commit and repository path instead:
+The default publication stores a deterministic detached bundle and references its exact bytes with `ArtifactRef`. Use `--repository` to bind the manifest to the current full Git commit and repository path:
 
 ```bash
 uv run aec-bench dataset publish electrical-core \
@@ -105,7 +105,7 @@ uv run aec-bench run --config experiment.yaml
 
 `dataset config` resolves the interactive label before it writes `experiment.yaml`. Persisted run identity contains the exact repository or bundle reference.
 
-At execution time, `aec-bench run` loads each entry through its declared task kind, plans all tasks with `plan_trials()`, groups artefact and world work behind their existing application functions, and restores the declared plan order in the returned records. Unsupported world and provider combinations fail before execution begins.
+At execution time, `aec-bench run` loads each entry through its declared task kind, plans all tasks with `plan_trials()`, groups artefact and world work behind their existing application functions, and restores the declared plan order in the returned records. The runner validates the world and provider combination before execution.
 
 ## Inspect and move datasets
 
@@ -135,4 +135,4 @@ Use one identity mechanism for each purpose:
 
 For related baseline and revision tasks, assign the complete project lineage to one partition before generating sibling rows. All revisions from that project stay together. This prevents a revised copy of a training project from entering an acceptance comparison.
 
-The [engineering decision experiments](/docs/advanced/engineering-decisions) apply this rule to hydraulic source generation with explicit seed-to-partition assignments. Their local `experiment.json` declares comparison conditions; formal dataset publication continues to use the exact references described above. Acceptance labels alone do not create a sealed holdout.
+The [engineering decision experiments](/docs/advanced/engineering-decisions) apply this rule to hydraulic source generation with explicit seed-to-partition assignments. Their local `experiment.json` declares comparison conditions; formal dataset publication continues to use the exact references described above. A sealed holdout requires a frozen, protected acceptance bank.

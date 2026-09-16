@@ -17,7 +17,7 @@ TOGETHER_API_KEY=...
 MORPH_API_KEY=...
 ```
 
-Don't commit `.env` — the project template adds it to `.gitignore`.
+Keep `.env` local. The project template adds it to `.gitignore`.
 
 ## Provider credentials
 
@@ -83,7 +83,7 @@ The harness usually sets these automatically. Custom adapter shells can override
 | `MORPH_API_KEY` | Morph Cloud through Harbor | Required when `--backend morph` is used |
 | Prime CLI auth | Prime hosted eval/training | Managed by the `prime` CLI |
 
-Keep these credentials in the shell, `.env`, or the provider's own auth store. Do not put secrets in experiment YAML.
+Keep these credentials in the shell, `.env`, or the provider's own auth store.
 
 ## File layout
 

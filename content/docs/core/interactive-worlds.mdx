@@ -102,7 +102,7 @@ Store episode IDs, step indexes, provider data, repository paths, and content di
 
 A trial covers the complete journey from the selected scenario to verified final evidence. It can contain several actions or provider sessions.
 
-A complete world trial selects the profile, runs the actor journey, closes the provider session, verifies task-owned evidence, evaluates the result, retains referenced artefacts, and returns one `TrialRecord`. Returned artefact references remain valid after temporary session directories are removed.
+A world trial runs the actor's complete journey under the selected profile. After the provider session closes, the task verifies and evaluates the evidence, returning one `TrialRecord` whose retained artefacts remain readable after temporary session cleanup.
 
 The complete public application functions are asynchronous:
 
@@ -136,7 +136,7 @@ records = await run_world_experiment(
 )
 ```
 
-`run_world_experiment()` preserves the declared trial order and validates that each returned record matches its task and plan. Unsupported world and provider combinations fail before execution begins.
+`run_world_experiment()` preserves the declared trial order and validates that each returned record matches its task and plan. The runner validates the world and provider combination before execution.
 
 Current complete routes are:
 

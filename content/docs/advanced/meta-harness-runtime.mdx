@@ -50,7 +50,7 @@ study = await run_harness_study(
 )
 ```
 
-`evaluate_candidate` connects each generic candidate value to its real runtime and returns that runtime's normal `TrialRecord` values. It can be a synchronous function or an asynchronous function. `assess_candidates` owns the comparison result. It can return a metric summary, study conclusion, decision object, or another normal Python value.
+Supply a synchronous or asynchronous `evaluate_candidate` function that runs each candidate and returns its `TrialRecord` values. Then use `assess_candidates` to compare those records and return the result your application needs, such as a metric summary or a selection decision.
 
 A one-shot study returns `study.assessment` for the caller to interpret. Use the bounded refinement API when selection belongs inside the process.
 
@@ -150,7 +150,7 @@ uv run aec-bench meta-harness recipe \
   --output artefacts/meta-harness/demo
 ```
 
-The command writes a workspace for the brief, baseline and candidate problem models, task-run evidence, model endpoint configuration, and comparison output. Existing problem-model, run, or experiment files can be supplied when they already exist.
+The command creates a comparison workspace containing the brief and both problem models, with their task-run evidence and endpoint configuration. Supply existing model or run files when available; the workspace also holds the comparison output.
 
 After both evidence sets are complete, compare them deterministically:
 
@@ -164,11 +164,13 @@ uv run aec-bench meta-harness compare \
   --output comparison
 ```
 
-The supported file flags retain `world` in their names. In this workflow, those files contain generated problem representations. Registered [Interactive Worlds](/docs/core/interactive-worlds) use a separate runtime. `compare` delegates candidate evaluation and assessment to the functional study API. Use `example --output <directory>` for a provider-free worked comparison before connecting model endpoints.
+The `--baseline-world` and `--candidate-world` files contain the generated problem representations to compare. The command evaluates and assesses them through the functional study API.
+
+For a provider-free worked comparison, run `example --output <directory>` before connecting model endpoints.
 
 ## Diagnose and repair a benchmark problem
 
-The pauseable CLI workflow helps diagnose a benchmark failure before changing the task or its generator. It gathers the task description, run evidence, verifier output, reviewer notes, proposed operations, and approval decisions in one process. If required input is missing, the process stops in a named waiting state until that input arrives.
+Use the pauseable CLI workflow to investigate a benchmark failure and propose a task or generator change from the available evidence. Each stage retains its inputs and decisions, and waits in a named state until any required input arrives.
 
 This workflow is one use of the generic API. Model-backed stages are optional. Automation can continue when providers or queued artefacts become available, but explicit limits and approval gates still apply.
 
@@ -201,11 +203,11 @@ The problem model is a JSON description of the task unit, allowed operations, ex
 
 | State | Meaning |
 |-------|---------|
-| `awaiting_problem_space_brief` | Prose exists, but no structured brief is available |
-| `awaiting_world_generation` | A brief exists, but no problem model is available |
-| `awaiting_task_run` | A problem model exists, but no run evidence is available |
-| `awaiting_operation_plan` | Run evidence exists, but no operation plan is available |
-| `awaiting_governance_decision` | A proposal exists, but governance has not decided |
+| `awaiting_problem_space_brief` | Provide a structured brief for the supplied prose |
+| `awaiting_world_generation` | Provide a problem model for the brief |
+| `awaiting_task_run` | Supply run evidence for the problem model |
+| `awaiting_operation_plan` | Provide an operation plan based on the run evidence |
+| `awaiting_governance_decision` | Supply a governance decision for the proposal |
 | `accepted_for_run` | Governance accepted a run-only directive |
 | `accepted_for_world_generation` | Governance approved a schema or generator repair and emitted a new request |
 

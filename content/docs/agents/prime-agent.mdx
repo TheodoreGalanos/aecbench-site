@@ -16,9 +16,9 @@ pip install aec-bench
 # Follow the upstream Prime Agent installation so prime-agent is on PATH.
 ```
 
-The executable is maintained by [Prime Intellect](https://github.com/PrimeIntellect-ai/prime-agent#getting-started). aec-bench checks for it when the harness is selected and reports a direct installation error if it is absent.
+The executable is maintained by [Prime Intellect](https://github.com/PrimeIntellect-ai/prime-agent#getting-started). Install it on `PATH` before selecting this harness.
 
-The integration is tested against Prime Agent 0.7.0 and JSON event-stream version 3. Unsupported stream versions fail explicitly.
+The integration is tested against Prime Agent 0.7.0 and JSON event-stream version 3.
 
 ## Artefact tasks
 
@@ -30,7 +30,7 @@ aec-bench run-local tasks/<task> \
   --model anthropic/<model-id>
 ```
 
-aec-bench stages the task, starts Prime Agent in JSON mode, and then uses the normal output, normalisation, verifier, evaluation, and ledger-import flow. The model string is passed to Prime Agent unchanged.
+aec-bench stages the task and starts Prime Agent in JSON mode with the supplied model string. After execution, the normal trial pipeline normalises and verifies the output before evaluating and importing the result.
 
 Each trial uses isolated configuration and session directories under `logs/prime/`. Ambient skills, extensions, prompt templates, themes, and context files are disabled. Provider credentials can still be inherited by the process; provenance excludes them.
 
@@ -43,7 +43,11 @@ The retained evidence includes:
 - the submitted task output; and
 - normal trial, evaluation, usage, and artefact references.
 
-Unsupported event streams fail explicitly and retain their raw execution evidence.
+## Child traces
+
+After a JSON run or ACP session closes, AEC-Bench converts the saved session evidence into `trajectory.jsonl`. The trace retains parent and child sessions, their messages, and recorded usage. Each child can link back to the tool call that started it, including calls that finish out of order.
+
+Use these links to follow a delegated request from the parent tool call to the child's work and response. The entries use the shared [trajectory schema](/docs/evaluation/traces#model-responses-and-child-calls).
 
 ## Interactive World sessions
 
@@ -61,7 +65,7 @@ AEC-Bench currently supports:
 - one dam-seepage monitoring episode; and
 - one fresh Prime session per checkpoint for the hydraulic-review lifecycle.
 
-Dam and pump sessions use the shared `run_prime_world_actor_session()` actor boundary. A complete benchmark call uses `run_dam_seepage_trial()` or `run_pump_station_trial()` instead. These functions run the task-owned journey, verify and evaluate the result, retain the evidence artefacts, and return one `TrialRecord`.
+Dam and pump sessions use the shared `run_prime_world_actor_session()` actor boundary. For a complete benchmark trial, call `run_dam_seepage_trial()` or `run_pump_station_trial()`. These functions run the task-owned journey, verify and evaluate the result, retain the evidence artefacts, and return one `TrialRecord`.
 
 Use asynchronous `run_world_experiment()` to apply a complete world trial function to an ordered plan. Each trial covers the full world journey and can contain several actions or provider sessions. Returned `TrialRecord` artefacts remain available after temporary session cleanup.
 
@@ -73,13 +77,13 @@ Task termination, host truncation, model completion, and provider error remain s
 
 World sessions install explicit generic skills by default. Prime receives the task objective, actor-visible starting material, and the allowed actor capability. A study can add task-family methods or solution plans as a declared treatment.
 
-The pump-station journey can close Prime at an Operations boundary, apply one deterministic task-owned host control, and start a fresh session from the exact new snapshot. The host chooses and applies that control. Dam and pump state, journeys, controls, persistence, verification, and evaluation remain separate and task-owned.
+At a pump-station Operations boundary, the host can close Prime and apply a deterministic control before starting a fresh session from the resulting snapshot. Each world owns these state changes and the rules for retaining and evaluating its evidence.
 
 Prime runtime state is isolated for each session. World state, replay, and verification remain with the task owner.
 
 ## Security boundary
 
-For artefact tasks, Prime Agent executes model-generated Python and shell commands with the current user's operating-system permissions. Trial-specific directories and disabled ambient configuration improve reproducibility, but they are not a security sandbox.
+For artefact tasks, Prime Agent executes model-generated Python and shell commands with the current user's operating-system permissions. Trial-specific directories and disabled ambient configuration improve reproducibility.
 
 ACP world and lifecycle sessions select an explicit isolation mode. `development_same_user` has the same local security limit. On macOS, `macos_sandbox` uses `sandbox-exec` and a scoped actor socket; only a successful session in this mode is marked as benchmark-valid isolation.
 

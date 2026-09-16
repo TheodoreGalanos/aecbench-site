@@ -5,7 +5,7 @@ description: Run candidate checks, bounded proposals, and selection over version
 
 Evolution improves the workspace an agent reads while keeping the base model and benchmark tasks fixed. Prompts and skills change under version control. Each candidate is checked against selected public AEC-Bench tasks before the search policy decides what to keep.
 
-Use the YAML workflow for a standard run. Use the Python API when you want to replace the candidate checks, the candidate proposer, or both without rebuilding the evolution loop.
+Use the YAML workflow for a standard run. Use the Python API when you want to replace the candidate checks, the candidate proposer, or both within the same evolution loop.
 
 ## The cycle
 
@@ -140,7 +140,7 @@ result = run_evolution(
 )
 ```
 
-`run_evolution()` gives the selected parent to `propose`. The AVO proposer uses `revision_checks` while it works and returns a `CandidateProposal`. `run_evolution()` then uses `selection_checks` to assess the returned child against its parent. Only selection evidence reaches `gate_candidate()`.
+After `run_evolution()` passes the selected parent to `propose`, AVO uses `revision_checks` to develop a `CandidateProposal`. The outer loop then compares the submitted child with its parent through `selection_checks` and passes that selection evidence to `gate_candidate()`.
 
 `CandidateChecks` groups batch planning, execution, and optional observation enrichment for both roles. Separate instances keep draft feedback apart from promotion evidence.
 
@@ -150,20 +150,20 @@ result = run_evolution(
 | `build_local_checks()` | Use local AEC-Bench tasks as a check capability |
 | `build_avo()` | Create the built-in candidate proposer |
 | `gate_candidate()` | Return a pure accept, reject, or skip decision |
-| `next_evolution_state()` | Return the next search state without applying effects |
+| `next_evolution_state()` | Calculate and return the next search state |
 | `run_evolution()` | Coordinate checks, proposals, decisions, and persistence |
 
 ## Search strategies
 
 `strategy: hill_climb` selects the best evaluated candidate as the next parent. A valid child can continue until the configured stagnation window is reached. Clearing the improvement threshold resets the stagnation counter and updates the best candidate.
 
-`strategy: qd` uses a quality-diversity archive. A valid candidate can enter a new archive cell or improve an occupied cell without becoming the global best. The host owns the shortlist, mutation strategy, archive insertion, and strategy-bandit feedback.
+With `strategy: qd`, each cell in the quality-diversity archive keeps its best candidate. A valid candidate can fill a new cell or improve an occupied one, while the host controls which candidates and mutation strategies enter the comparison and records the resulting feedback.
 
 Use [Swarm](/docs/advanced/swarm) when several independent agents should explore this archive in parallel.
 
 ## Candidate identity and evidence
 
-Each candidate has one stable `candidate_id`. Its `source_revision` is the full Git commit containing its source. `parent_candidate_id` records explicit evolutionary lineage. An optional immutable label provides a human-friendly discovery name.
+Use `candidate_id` to identify a candidate and `source_revision` to find its exact source commit. Follow `parent_candidate_id` to trace its evolutionary lineage, or assign an immutable label to make the candidate easier to find.
 
 Parent and child evidence remain separate. Both must use the same ordered evaluation cases before comparison. The task verifier remains the reward authority, and `TrialRecord` remains the evidence authority.
 
@@ -182,4 +182,4 @@ Evolution is useful when:
 - you have enough tasks and budget to distinguish a real signal from one lucky run; and
 - a person can review promoted changes before broader use.
 
-For a benchmark run without evolution, use a fixed harness. For multi-step work inside a proposal, use [AVO](/docs/advanced/avo). For parallel quality-diversity search, use [Swarm](/docs/advanced/swarm).
+For a fixed benchmark condition, use a fixed harness. For multi-step work inside a proposal, use [AVO](/docs/advanced/avo). For parallel quality-diversity search, use [Swarm](/docs/advanced/swarm).

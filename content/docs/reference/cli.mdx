@@ -73,7 +73,7 @@ Useful options:
 | `--tool-mode MODE` | Override the template's tool mode |
 | `--lifecycle proposed|active|deprecated|retired` | Write explicit lifecycle policy into each task |
 | `--visibility public|private|holdout` | Write explicit visibility policy into each task |
-| `--dry-run` | Show the plan without writing task instances |
+| `--dry-run` | Preview the task generation plan |
 
 ### `generate validate-template`
 
@@ -112,9 +112,7 @@ Check a task directory:
 uv run aec-bench task validate tasks/electrical/voltage-drop
 ```
 
-Validation reports the task's readable display reference, UUID, version,
-lifecycle, visibility, runnable state, verifier entry point, and verifier
-protocol version. Missing identity or policy values are errors.
+Validation confirms the task's identity and whether it can run under its declared lifecycle and visibility policy. The result also identifies the verifier entry point and protocol version; missing identity or policy values are errors.
 
 ### `task explain`
 
@@ -124,9 +122,7 @@ Resolve a canonical task key, alias, or UUID and inspect its current contract:
 uv run aec-bench task explain electrical/voltage-drop
 ```
 
-The result includes the canonical key, aliases, UUID, version, lifecycle,
-visibility, runnable state, output contract, verifier entry point, and verifier
-protocol version.
+Use the result to check which task a reference resolves to and what output its verifier expects. It includes the canonical identity and aliases alongside the task's policy and verifier details.
 
 ### `task genome` and task structure analysis
 
@@ -173,7 +169,16 @@ aec-bench task lifecycle study ablation
 aec-bench task lifecycle study calibration-freeze
 ```
 
-`start` releases the next checkpoint. `submit` archives the active checkpoint submission. `status` reads state, and `revisit` reads an accepted checkpoint while preserving progression. `branch` creates a separate run from a submitted checkpoint and inherits the accepted prefix. `run` resumes from the current lifecycle state and always follows that accepted history.
+Choose a lifecycle command for the next operation:
+
+| Command | Action |
+|---------|--------|
+| `start` | Release the next checkpoint |
+| `submit` | Archive the active checkpoint submission |
+| `status` | Read current state |
+| `revisit` | Read an accepted checkpoint while preserving progression |
+| `branch` | Create a separate run from a submitted checkpoint, inheriting the accepted prefix |
+| `run` | Resume from current state and follow the accepted history |
 
 The Interactive World hierarchy is:
 
@@ -193,7 +198,7 @@ aec-bench task world pump-station run-harbor
 aec-bench task world pump-station import-harbor-trial
 ```
 
-`task world run` creates one provider-neutral `WorldTask`, plans its repetitions, validates the world and provider route, and then runs the complete trials. Use `--dry-run` to validate and inspect the plan without calling a provider:
+`task world run` creates one provider-neutral `WorldTask`, plans its repetitions, validates the world and provider route, and then runs the complete trials. Use `--dry-run` to validate and inspect the plan:
 
 ```bash
 uv run aec-bench task world run dam-seepage-monitoring \
@@ -205,7 +210,7 @@ uv run aec-bench task world run dam-seepage-monitoring \
   --dry-run
 ```
 
-The pump-station subcommands expose task-owned actor, control, verification, branching, evaluation, and Harbor application functions. Branch creation materialises a child and leaves later execution, evaluation, selection, and merging to separate commands.
+Use the pump-station subcommands to run an actor or apply host controls, then verify and evaluate the resulting state. The branch commands let you create a child run and compare its outcome before selecting or merging it.
 
 See [Finite Lifecycles](/docs/core/lifecycles) and [Interactive Worlds](/docs/core/interactive-worlds) for their separate execution contracts.
 
@@ -294,9 +299,7 @@ uv run aec-bench run reconcile <run-key-or-uuid> \
   --store-root artefacts/runs
 ```
 
-The result includes planned, succeeded, failed, cancelled, timed-out, invalid,
-missing, duplicate, and unexpected counts. It also returns completeness,
-validity, accepted trial identities, and quarantined trial identities.
+The result accounts for each planned trial and reports whether the run is complete and valid. Use its accepted trial identities for reporting and inspect quarantined identities separately. See [RunAccounting](/docs/core/contracts#runaccounting--the-complete-result-set) for outcome and membership details.
 
 Control a ready persisted local artefact plan through the scheduler:
 
@@ -349,9 +352,9 @@ Run an experiment manifest:
 uv run aec-bench run --config experiment.yaml --tasks-root tasks
 ```
 
-The dataset manifest can contain `task_kind: "artifact"` and `task_kind: "world"` entries. `run` loads each task through its declared kind, groups execution by runtime family, and returns results in the planned order. Unsupported world and provider combinations fail before execution.
+The dataset manifest can contain `task_kind: "artifact"` and `task_kind: "world"` entries. `run` loads each task through its declared kind, groups execution by runtime family, and returns results in the planned order. The runner validates the world and provider combination before execution.
 
-For a config-backed run, the manifest owns the model, harness, backend, and repetitions. The accepted CLI overrides are `--tasks-root`, `--dry-run`, `--no-verify`, and the reviewer options.
+For a config-backed run, the manifest selects the model, harness, backend, and repetitions. The common overrides below apply to both manifest and inline runs.
 
 For an inline run, supply a task path and model:
 
@@ -363,7 +366,18 @@ uv run aec-bench run tasks/electrical/voltage-drop \
   --repetitions 3
 ```
 
-The inline form also accepts `--tasks-root`, `--dry-run`, `--no-verify`, and reviewer options. The CLI accepts `--adapter` as an alias for `--harness`. Use `--reviewer-model MODEL` or `--reviewer-models-config PATH` to enable the optional post-verifier LLM reviewer.
+| Flag | Purpose |
+|------|---------|
+| `--tasks-root PATH` | Resolve task selections against this root |
+| `--dry-run` | Validate and display the run plan |
+| `--no-verify` | Skip task verification |
+| `--stream`, `--no-stream` | Override the manifest's live sandbox setting |
+| `--reviewer-model MODEL` | Enable post-verifier LLM review with one model |
+| `--reviewer-models-config PATH` | Enable review using configured endpoints |
+
+The CLI also accepts `--adapter` as an alias for `--harness`.
+
+For public artefact tasks on Docker or Daytona, `--stream` enables the [Harbor viewer's live Stream](/docs/evaluation/traces#harbor-viewer). It overrides `compute.stream` in the manifest; `--no-stream` switches it off for that run.
 
 Move a completed run as one deterministic package:
 
@@ -395,15 +409,16 @@ Useful options:
 | `--selector self` | Select the first candidate that completed with a primary output |
 | `--keep-workspace` | Preserve the temporary workspace for debugging |
 | `--no-verify` | Skip verifier execution after the agent run |
-| `--no-import` | Do not import the local result into the ledger |
+| `--no-import` | Keep the result in local run output only |
 | `--no-normalise` | Skip canonical-reference normalisation before verification |
-| `--constitutional-model MODEL` | Accepted option; constitutional inference is rejected for report execution. Use fixed constitutional parameters instead. |
 | `--reviewer` | Run the optional post-verifier LLM reviewer stage |
 | `--reviewer-model MODEL` | Enable the optional post-verifier LLM reviewer with one model |
 | `--reviewer-models-config PATH` | Enable the reviewer with JSON or YAML endpoint configuration |
 | `--fail-on-reviewer-error` | Fail the run if the reviewer stage cannot complete |
 
-Best-of candidates use separate isolated workspaces but belong to one planned trial. The built-in `self` selector is deterministic and reward-blind: it selects the first candidate that completed with a primary output. The official task verifier runs once on the selected output. Experiment repetitions remain separate trials alongside `--best-of` candidate attempts. Lambda-RLM [section candidates](/docs/agents/rlm#optional-candidates-and-synthesis) run inside one attempt and use a separate configuration. See [RLM and Lambda-RLM](/docs/agents/rlm#synthetic-inspection-example) for a report task example.
+Best-of candidates run in isolated workspaces within one planned trial. The built-in `self` selector chooses the first candidate that completed with a primary output, then the official verifier scores that output once.
+
+Use experiment repetitions to create separate trials. For multiple drafts of a report section within one attempt, configure Lambda-RLM [section candidates](/docs/agents/rlm#optional-candidates-and-synthesis). The [report task example](/docs/agents/rlm#synthetic-inspection-example) shows how to run either report harness.
 
 ### `import`, `import-local`, and `import-prime-eval`
 
@@ -418,6 +433,19 @@ uv run aec-bench import-prime-eval <prime-eval-id> --experiment prime-eval-001
 `import-prime-eval` reads Prime hosted eval samples and writes normal aec-bench ledger artefacts, so hosted rollouts can be inspected with the same trace and behavioural report commands as local runs.
 
 ## Analysis and Review
+
+### `evaluation regrade`
+
+Run a revised verifier against a completed Harbor trial:
+
+```bash
+uv run aec-bench evaluation regrade jobs/<job>/<trial> \
+  --task revised-tasks/voltage-drop \
+  --output runs/regrades/voltage-drop-check \
+  --backend docker
+```
+
+Use `--dry-run` to validate the plan. The output directory must be new. See [Regrading](/docs/evaluation/regrading) for the retained-input and verifier setup.
 
 ### `evaluate`
 
@@ -439,6 +467,8 @@ uv run aec-bench report leaderboard
 uv run aec-bench report traces --experiment-id exp-001
 uv run aec-bench report behavioral --experiment-id exp-001 --classifier claude-sonnet-4-20250514
 ```
+
+`report summary` includes [model usage and cost](/docs/evaluation/reviewing#model-usage-and-cost). Use the global `--json` flag for the per-model rows and cost-completeness fields.
 
 ### `ledger`
 
@@ -488,7 +518,7 @@ uv run aec-bench meta-harness compare --help
 uv run aec-bench meta-harness example --output comparison-example
 ```
 
-Lifecycle execution and lifecycle-specific studies are under `aec-bench task lifecycle`, not `meta-harness`. The meta-harness remains runtime-neutral and can compare lifecycle candidates through returned `TrialRecord` evidence.
+Use `aec-bench task lifecycle` for lifecycle execution and lifecycle-specific studies. The meta-harness remains runtime-neutral and can compare lifecycle candidates through returned `TrialRecord` evidence.
 
 See [Meta-Harness Composition](/docs/advanced/meta-harness-runtime) for the Python API, comparison workflow, and problem-model governance boundaries.
 
@@ -544,7 +574,7 @@ uv run aec-bench swarm status <run-id> --state-dir workspaces/my-ws/_swarm_runs
 uv run aec-bench swarm history --state-dir workspaces/my-ws/_swarm_runs
 ```
 
-`status` validates the explicit persisted swarm state and exact candidate material. The current CLI has no `stop` or `resume` command. Keep `swarm run` attached for process supervision.
+`status` validates the explicit persisted swarm state and exact candidate material. Keep `swarm run` attached for process supervision.
 
 See [Evolution](/docs/advanced/evolution), [Agentic Variation](/docs/advanced/avo), and [Swarm](/docs/advanced/swarm).
 
@@ -573,7 +603,7 @@ uv run aec-bench prime train train.toml
 uv run aec-bench prime smoke --name aec-smoke --task electrical/voltage-drop
 ```
 
-See [Prime Lab](/docs/advanced/prime-lab) for task and local lifecycle export lanes, deployed adapter discovery, adapter eval, hosted training, online difficulty filtering, and hosted rollout import.
+Follow the [Prime Lab guide](/docs/advanced/prime-lab) to export tasks, run an evaluation, and inspect its results before training or scaling up.
 
 ## Exit Codes
 

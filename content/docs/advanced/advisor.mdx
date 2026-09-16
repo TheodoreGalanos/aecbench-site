@@ -45,11 +45,11 @@ context_window = 10                       # recent turns to include
 enabled = true
 ```
 
-`max_uses` is a hard cap per trial. Disabled or exhausted advice makes no model request. Guided RLM exposes `ADVISOR()`; Lambda-RLM requests advice after review retries leave gaps. See [RLM and Lambda-RLM](/docs/agents/rlm#advisor-and-constitution).
+`max_uses` is a hard cap per trial. Guided RLM exposes `ADVISOR()`; Lambda-RLM requests advice after review retries leave gaps. See [RLM and Lambda-RLM](/docs/agents/rlm#advisor-and-constitution).
 
 ## What the advisor sees
 
-Different agent harnesses provide different context. A tool loop might show recent tool calls and results. An RLM harness might show recent REPL commands and scratchpad notes. The internal `AdvisorContextStrategy` protocol builds this context:
+Each harness sends context relevant to its next decision: recent tool results for a tool loop, for example, or REPL commands and scratchpad notes for RLM. The internal `AdvisorContextStrategy` protocol builds that context:
 
 ```python
 class AdvisorContextStrategy(Protocol):
@@ -60,7 +60,7 @@ class AdvisorContextStrategy(Protocol):
     ) -> list[dict[str, str]]: ...
 ```
 
-This lets the same advisor model help different harnesses without receiving their full transcripts.
+The same advisor model can help different harnesses through these focused requests.
 
 ## Usage tracking
 
@@ -76,7 +76,7 @@ class AdvisorUsageStats:
     advisor_cost_usd: float
 ```
 
-Reports can show the split within the total: "this run cost USD 0.60, including USD 0.18 in advisor calls". Do not add advisor cost a second time when it is already included in aggregate usage.
+Reports can show the split within the total: "this run cost USD 0.60, including USD 0.18 in advisor calls". Advisor cost is included in aggregate usage.
 
 ## Failure handling
 
@@ -91,7 +91,7 @@ AdvisorResponse(
 )
 ```
 
-A malformed advice response can remain low-confidence guidance. A fallback does not erase a provider failure. RLM and Lambda-RLM report execution retain network errors, provider failures, and exhausted limits as partial execution with diagnostics. Unknown usage remains unknown. Advice cannot introduce source evidence or change the task's requirements.
+A malformed advice response can remain low-confidence guidance. RLM and Lambda-RLM report execution retain network errors, provider failures, and exhausted limits as partial execution with diagnostics. Unknown usage remains unknown.
 
 ## When to use it
 

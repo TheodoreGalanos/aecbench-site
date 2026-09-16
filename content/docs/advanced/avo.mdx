@@ -78,7 +78,7 @@ An `AVOBudget` uses these defaults:
 | Stagnant revision checks | 3 |
 | Advisor interventions | 0 |
 
-`AVOBudget()` by itself allows no advisor calls. The normal `build_avo()` setup enables one unless you supply a different budget.
+`build_avo()` enables one advisor call by default. Supply an explicit `AVOBudget` to set a different allowance.
 
 Token and USD limits are optional. If a configured limit needs a token count or cost that the provider did not report, AVO stops. A `0.0` cost means known free usage; `None` means unknown.
 
@@ -106,7 +106,7 @@ When checkpointing is enabled, AVO saves enough state to continue an interrupted
 - retained memory and advice; and
 - whether a model call or check was interrupted.
 
-On resume, AVO verifies that the run, parent, workspace, and configuration still match. If the interruption occurred during a model call or revision check, AVO determines whether that work completed before retrying it. Completed paid work is not repeated. If the proposal already finished, resume returns the recorded result.
+On resume, AVO verifies that the run, parent, workspace, and configuration still match. If the interruption occurred during a model call or revision check, AVO determines whether that work completed before retrying it. Resume reuses the results of completed paid work. If the proposal already finished, resume returns the recorded result.
 
 ## Python composition
 
@@ -125,11 +125,11 @@ propose = build_avo(
 )
 ```
 
-When no advisor model is supplied, AVO reuses the proposal model. The `aec-bench evolve run` command builds the revision checks and proposer from YAML, so Python composition is optional.
+AVO uses the proposal model for advice by default. The `aec-bench evolve run` command builds the revision checks and proposer from YAML, so Python composition is optional.
 
 ## What is tested
 
-The AEC-Bench test suite covers AVO tools, budgets, revision evidence, advice, memory, and resume behavior with provider-free test doubles. Evidence that a particular model improves a workspace requires a separate model-backed study.
+The AEC-Bench test suite covers AVO tools, budgets, revision evidence, advice, memory, and resume behavior with provider-free test doubles.
 
 Measure model quality and cost with a public-task development run, then use separate holdout qualification before promoting the result.
 

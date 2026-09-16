@@ -15,9 +15,9 @@ The library keeps three responsibilities separate:
 | Experiment | Selected conditions, partitions, seeds, policies, action limits, and comparison horizon |
 | Qualification | Checks that the same experiments produce their stated control outcomes and retain valid evidence |
 
-Task owners define state, actions, observations, and verifier meaning. Experiments select conditions without changing those rules. Qualification consumes the resulting records and diagnostics. It does not define another reward or world runtime.
+Task owners define state, actions, observations, and verifier meaning. Experiments select conditions. Qualification checks the resulting records and diagnostics against the expected control outcomes.
 
-These experiments use deterministic Python controls. Their results describe synthetic environment and verifier behaviour. Model performance, transfer, and RL training require separate studies.
+These experiments use deterministic Python controls. Their results describe synthetic environment and verifier behaviour.
 
 ## Choose a comparison
 
@@ -39,7 +39,7 @@ uv run python -m aec_bench.experimentation.engineering_decisions dam \
   --output artefacts/engineering-decisions/dam
 ```
 
-Use `hydraulic`, `pump`, or `verifier` for the other comparisons. Each destination must be empty. These commands make no model-provider calls.
+Use `hydraulic`, `pump`, or `verifier` for the other comparisons. Each destination must be empty. These commands run the deterministic Python controls locally.
 
 The output includes:
 
@@ -81,9 +81,9 @@ uv run python -m aec_bench.experimentation.engineering_decisions hydraulic \
 
 Each hydraulic seed identifies one project lineage. Assign the entire lineage to one partition before expanding revision siblings. Duplicate seed assignments are rejected. `HydraulicLineage` generates correlated source inputs; the experiment owns split membership.
 
-Train, development, and acceptance labels do not create a sealed holdout. Freeze and protect a separate acceptance bank before making a learning claim. See [Datasets](/docs/advanced/datasets) for exact dataset references and publication.
+Freeze and protect a separate acceptance bank before making a learning claim. See [Datasets](/docs/advanced/datasets) for exact dataset references and publication.
 
-Use the same pinned library revision or package build and dependency environment when repeating conditions. The normal run manifest owns source references. A record with unresolved source does not establish code provenance. Trial identities and outcomes can repeat, while execution timestamps and local paths describe each separate run.
+Use the same pinned library revision or package build and dependency environment when repeating conditions. The normal run manifest owns source references. Trial identities and outcomes can repeat, while execution timestamps and local paths describe each separate run.
 
 ## Qualify the controls
 
@@ -96,16 +96,16 @@ uv run python -m aec_bench.experimentation.qualification.engineering_decisions \
 
 The command writes `qualification.json` and exits non-zero if a control expectation fails. It checks canonical trial evidence, hydraulic revision behaviour, verifier challenges, supported and timely dam decisions, and matched pump continuations. Each experiment keeps its own definition and ledger beneath the qualification directory.
 
-`--seeds 2 8` selects a custom hydraulic seed list for development qualification. The default definition declares separate train, development, and acceptance partitions. Neither mode seals acceptance data.
+`--seeds 2 8` selects a custom hydraulic seed list for development qualification. The default definition declares separate train, development, and acceptance partitions.
 
-Qualification reads retained trial diagnostics. A passing qualification result confirms these local controls; it does not establish hosted-provider readiness or measured model capability.
+Qualification reads retained trial diagnostics. A passing qualification result confirms that the local controls produced their expected outcomes and retained valid evidence.
 
 ## Interpret the evidence
 
-- **Hydraulic:** a physically inadequate design can still receive a valid review when the actor reports the failure correctly. Retention and invalidation follow actual operation input projections. Nearby scalar variants do not establish topology transfer.
-- **Dam:** investigation credits, costs, durations, and deadlines are public synthetic task constraints. Only accepted investigations consume the allowance. The private perfect-information minimum cost is a lower bound for one hidden scenario, not a policy's measured value of information.
-- **Pump:** a handover contains facts from one released actor view and grants no Operations authority. Compare terminal obligations over the common horizon. A bounded continuation does not establish complete operational success. The experiment's handover assessment remains separate from the reserved `handover_omission_count` metric.
-- **Verifier:** challenge submissions change before host acceptance. Accepted evidence remains immutable. The cases establish coverage for their declared faults, rather than proof against every exploit.
+- **Hydraulic:** a physically inadequate design can still receive a valid review when the actor reports the failure correctly. Retention and invalidation follow actual operation input projections.
+- **Dam:** investigation credits, costs, durations, and deadlines are public synthetic task constraints. Only accepted investigations consume the allowance. The private perfect-information minimum cost is a lower bound for one hidden scenario.
+- **Pump:** a handover contains facts from one released actor view. Compare terminal obligations over the common horizon.
+- **Verifier:** challenge submissions change before host acceptance. Accepted evidence remains immutable. The cases establish coverage for their declared faults.
 
 The retained pump `world_run` ZIP contains the existing canonical repository. Restore it to a private directory and apply owner-only directory access and file read/write permissions before opening it for replay.
 

@@ -5,17 +5,33 @@ description: A trace combines per-turn trajectory evidence with a run manifest a
 
 ## The trajectory
 
-During execution, an agent harness can append to `/workspace/trajectory.jsonl`. The file starts with a `TrajectoryEntry`. Every non-blank line uses that schema:
+During execution, an agent harness can append to `/workspace/trajectory.jsonl`, where each non-blank line is a `TrajectoryEntry`:
 
 ```jsonl
 {"step": 0, "role": "system", "content": "You are a senior electrical engineer...", "timestamp": "2026-08-15T01:02:03.000Z"}
 {"step": 0, "role": "user", "content": "Calculate voltage drop...", "timestamp": "2026-08-15T01:02:03.001Z"}
 {"step": 1, "role": "assistant", "content": "I'll compute R and X contributions...", "call_type": "main", "timestamp": "2026-08-15T01:02:04.000Z"}
-{"step": 1, "role": "tool_call", "tool_name": "python", "command": "python calc.py", "call_type": "main", "timestamp": "2026-08-15T01:02:05.000Z"}
-{"step": 1, "role": "tool_result", "tool_name": "python", "stdout": "V_drop = 5.2V", "stderr": "", "exit_code": 0, "duration_ms": 142, "call_type": "main", "timestamp": "2026-08-15T01:02:05.142Z"}
+{"step": 1, "role": "tool_call", "tool_name": "python", "tool_call_id": "calc-1", "command": "python calc.py", "call_type": "main", "timestamp": "2026-08-15T01:02:05.000Z"}
+{"step": 1, "role": "tool_result", "tool_name": "python", "tool_call_id": "calc-1", "stdout": "V_drop = 5.2V", "stderr": "", "exit_code": 0, "duration_ms": 142, "call_type": "main", "timestamp": "2026-08-15T01:02:05.142Z"}
 ```
 
-Each entry carries `step` and `role`. Tool entries can also carry `tool_name`, `command`, `arguments`, `stdout`, `stderr`, `exit_code`, `duration_ms`, media, and structured metadata. A timestamp records the real step event; the retained artefact reference identifies the trace.
+Use `step` and `role` to follow the sequence of events. Tool entries describe the request and its result, so you can inspect a command alongside its output and exit code. Timestamps place events in time, while the retained artefact reference identifies the complete trace.
+
+### Model responses and child calls
+
+`tool_call_id` links a tool request to its result. Additional entry types record the model response and delegated work:
+
+| Role | Evidence |
+|------|----------|
+| `reasoning` | Thinking text or a reasoning summary exposed by the provider |
+| `model_response` | Model and provider identity, response ID, and available token counts |
+| `subagent` | A child trajectory entry, its child ID, and the parent tool-call ID when recorded |
+
+When the provider exposes reasoning under the model's configured settings, the trace stores it separately from the assistant's answer. Token counts come from reported usage; missing counts remain unspecified.
+
+Child IDs let you follow delegated work even when several children run concurrently. Tool-loop advisors and RLM subcalls use these IDs to group each child's requests, responses, and errors; RLM advisors and Lambda-RLM plan calls use the same structure.
+
+[Prime Agent](/docs/agents/prime-agent#child-traces) and [DeepSeek Harness](/docs/agents/harnesses#deepseek-harness) build their trajectories from retained session evidence after execution.
 
 ## Shared run identity
 
@@ -30,8 +46,6 @@ Many trials can share the same dataset, agent, source revision, and execution se
 - an exact dataset reference when the run uses one;
 - expected evidence authorities; and
 - optional evaluation and qualification requirements.
-
-The local record store keeps the manifest once. Each trial refers to it through `run_id`.
 
 ## The trial result
 
@@ -61,9 +75,9 @@ class TrialRecord(StrictModel):
     extension_refs: tuple[TrialExtensionRef, ...]
 ```
 
-`TrialInput` carries the instruction, task revision, task kind, visibility, and optional input-file references. `TrialOutput` references the retained raw output, conversation, trajectory, and other output artefacts with `ArtifactRef`.
+Read `TrialInput` to establish which task revision and instruction the agent received, including references to staged input files. `TrialOutput` links to the retained answer and execution evidence through `ArtifactRef` values.
 
-The `attempt` field is the planned repetition number. Internal `TaskAttempt` candidates use separate `attempt_id` values. When a trial uses candidate selection, its extension references include the retained selection evidence and the trajectory points to the selected attempt.
+The `attempt` field identifies the planned repetition, while `attempt_id` identifies an internal `TaskAttempt` candidate. For trials that select among candidates, extension references retain the selection evidence and the trajectory points to the selected attempt.
 
 ## Result status
 
@@ -86,19 +100,21 @@ A failed execution can still have useful diagnostics. Keep each status visible s
 
 ## Cost tracking
 
-Each trial can record model calls, input and output tokens, cache use, advisor use, and an estimated USD cost. Reports use `CostRecord` as the aggregate usage authority. Provider-specific metadata can remain in provider evidence when it is needed for diagnosis.
+Use `CostRecord` to read a trial's total model usage and cost, including cached tokens and advisor work. Provider evidence retains additional metadata for diagnosis.
+
+For a breakdown by model, Harbor records `CostRecord.model_usage`. [Model usage reports](/docs/evaluation/reviewing#model-usage-and-cost) show each model's token counts and costs alongside the trial totals.
 
 ## Report harness evidence
 
-[RLM and Lambda-RLM](/docs/agents/rlm) retain the effective report configuration under `configuration_record["report_assets"]`: the resolved template, public writing rules, public rubric, and source IDs. Retained task artefacts provide source-file integrity. The report configuration does not introduce a second set of file hashes.
+[RLM and Lambda-RLM](/docs/agents/rlm) retain the effective report configuration under `configuration_record["report_assets"]`: the resolved template, public writing rules, public rubric, and source IDs. Retained task artefacts provide source-file integrity.
 
-Review findings and section candidate traces describe work inside an attempt. They do not create another trial or replace verifier evidence. Completion requires the submitted bytes to match the accepted report state. Partial runs retain diagnostics even when an output file exists.
+Use review findings and section candidate traces to follow how an attempt developed its report. A completed report must match the accepted section state; partial runs retain diagnostics that explain why completion stopped.
 
-Aggregate run usage includes extraction, retries, review, section candidates, synthesis, advice, subcalls, and compaction. Secondary calls are not free work outside the budget. Already admitted parallel calls can take observed usage past the stop limit; an overrun remains partial. Unknown usage from a failed provider call is not recorded as zero-cost success.
+All main and secondary model calls count towards run usage. Calls already running in parallel can take usage past the stop limit, producing a partial result. Usage remains unknown when a failed provider call omits its usage data.
 
 ## Retained records
 
-Accepted run manifests, trial records, and retained evidence cannot be overwritten. New review or diagnostic detail is stored as another artefact that refers to the existing trial. Source code and temporary workspaces can still change normally.
+Accepted run manifests, trial records, and retained evidence are immutable. New review or diagnostic detail is stored as another artefact that refers to the existing trial.
 
 ## Imported Prime rollouts
 
@@ -109,8 +125,35 @@ uv run aec-bench import-prime-eval <prime-eval-id> \
   --experiment prime-eval-medium-stateful
 ```
 
-The import retains the Prime sample and conversation as artefacts. It maps provider execution, evaluation, and evidence separately. Imported samples are useful for rollout review. Leaderboard claims still need an exact dataset, reconstructive source, repeated trials, verifier evidence, and the selected publication policy.
+The import keeps the Prime sample and conversation together for review through AEC-Bench's trace and behaviour reports. For benchmark publication, use repeated trials with an exact dataset and source reference, and check the [result statuses](#result-status) against the run's publication policy.
 
 ## Inspect a trace
 
-The evaluation layer loads `trajectory.jsonl` first and can fall back to `conversation.jsonl`. Trace summaries expose turn counts, tool errors, the first error, and the behavioural classification described in [Classification](/docs/evaluation/classification). The retained trace artefact is the step-by-step evidence surface.
+Start with a trace summary to locate tool errors or understand the run's [behavioural classification](/docs/evaluation/classification), then open the retained trace to inspect individual steps. Evaluation reads `trajectory.jsonl` when available and falls back to `conversation.jsonl`.
+
+### Harbor viewer
+
+Harbor reads an **ATIF-v1.8** view at `agent/trajectory.json` in the trial directory. AEC-Bench derives this file from `trajectory.jsonl`, including recorded tool links, response metrics, reasoning, and child trajectories. The original JSONL remains available with the trial evidence.
+
+For a live tool-loop view, use a public artefact task on Docker or Daytona. In a source checkout:
+
+```bash
+uv sync --extra execution --extra local-agents
+
+uv run aec-bench run tasks/electrical/voltage-drop \
+  --model "<model-id>" --harness tool_loop --backend docker --stream
+```
+
+In another terminal on the same machine:
+
+```bash
+uv run harbor view jobs
+```
+
+Open the printed viewer URL and select the active trial. The trajectory updates as complete messages and tool calls arrive.
+
+The **Stream** tab opens the sandbox editor and terminal for use during development. File edits and commands become part of the execution you are observing.
+
+Run the viewer and browser on the same machine. For Daytona, install its Harbor extra and provide credentials in both the run and viewer environments.
+
+For manifest-driven runs, set `compute.stream: true`. The CLI options `--stream` and `--no-stream` override that setting. Completed runs also export available trajectory evidence for later viewing.

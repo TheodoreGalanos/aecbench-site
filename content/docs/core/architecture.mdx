@@ -46,11 +46,11 @@ ResolvedRunSpec -> RunPlan -> TrialWorkItem -> Attempt -> TrialRecord -> RunAcco
 
 [`AttemptRecipe`](/docs/core/contracts#taskattempt--one-isolated-agent-execution) controls whether one trial runs one attempt or several candidates. It starts and tracks attempts, while the outer trial runner retains verifier and reward access. `HarnessSpec` describes how one agent execution works.
 
-With best-of execution, several `TaskAttempt` candidates belong to one planned trial. The selector uses only its permitted candidate view. The official verifier evaluates the selected output once. Selection evidence is retained with the trial, and the selected output and trajectory remain resolvable after every temporary attempt workspace is removed.
+With best-of execution, a selector chooses among several `TaskAttempt` candidates using its permitted view of their results. The official verifier evaluates the selected output once, and the trial retains the selection evidence with the output and trajectory so they remain readable after temporary workspace cleanup.
 
 Templates and suites produce deterministic task instances before this flow starts. The generator can write replay inputs once in `generation-manifest.json` at the output root. Normal loading and execution use the runnable task directories; generation replay uses the sidecar.
 
-Report generation runs within this artefact-task flow. RLM and Lambda-RLM share report validation, section state, and assembly under the library's `templates/report/` owner. The harnesses control model work; task verification and evaluation keep their existing responsibilities. See [RLM and Lambda-RLM](/docs/agents/rlm) for the workflow.
+[RLM and Lambda-RLM](/docs/agents/rlm) generate reports within this artefact-task flow, using shared section state, validation, and assembly from `templates/report/`. The harnesses direct model work, then pass the submitted report to the normal task verification and evaluation steps.
 
 See [Tasks](/docs/core/tasks) and [Templates](/docs/core/templates) for the authoring path.
 
@@ -62,23 +62,23 @@ The world owns its state, rules, and evaluation. The runner connects the agent t
 
 The current catalogue includes wastewater pump-station stewardship and dam-seepage monitoring. Both use the same world interfaces, while each task keeps its own state, rules, and evaluation.
 
-[`WorldTask`](/docs/core/interactive-worlds#define-a-world-task-in-files) binds an objective to an exact registered world build and profile. The persisted plan binds each world trial to that exact world and profile release. A complete dam, pump, or Harbor world-trial function then returns a `TrialRecord`. Asynchronous `run_world_experiment()` applies that operation in plan order and can persist each completed record.
+[`WorldTask`](/docs/core/interactive-worlds#define-a-world-task-in-files) binds an objective to the exact registered build and profile used by each planned trial. `run_world_experiment()` runs complete journeys in plan order through the selected world-trial function, returning a `TrialRecord` for each journey with optional persistence.
 
-Persistence, recovery, host controls, branching, rollouts, staged evidence, and provider integration are optional capabilities. Add these capabilities when the world requires them.
+Add capabilities such as recovery or branching when the world requires them.
 
 See [Interactive Worlds](/docs/core/interactive-worlds) for the contributor-facing model.
 
 ## Finite lifecycles
 
-A finite lifecycle is a separate execution family. It declares a bounded sequence of evidence stages before execution. The task owns each stage's objective, visible evidence, required result, and verifier rules. The host owns release, progression, failure, and finalisation.
+A finite lifecycle declares its sequence of evidence stages before execution. The task defines what each stage requires and how to verify it; the host releases stages and controls progression through to the final result.
 
 Use a lifecycle when the work has known stages and controlled evidence release. Use an Interactive World when actions change an ongoing causal state. Use an artefact task when one workspace or submission is sufficient.
 
-Finite lifecycles use one coordinator for all stage changes. The Python functions `release_checkpoint()`, `submit_checkpoint()`, `read_lifecycle()`, `revisit_checkpoint()`, `branch_lifecycle()`, and `run_lifecycle()` use those same rules. A branch can start only from an accepted submission and leaves its parent unchanged.
+The lifecycle [Python API](/docs/core/lifecycles#python-api) uses one coordinator for all stage changes, including submissions and branches. Each branch starts from an accepted submission and preserves its parent's state.
 
 [`LifecycleTrial`](/docs/core/lifecycles#python-api) combines one planned trial with its lifecycle package, run directory, context mode, and visibility policy. `run_local_lifecycle()` keeps fresh and persistent agent sessions separate because they have different memory and recovery rules. Both return the state and evidence needed to construct a trial record.
 
-`run_lifecycle_trial()` executes and verifies one lifecycle, then returns a normal `TrialRecord`. It saves the record only when the caller asks. `run_lifecycle_experiment()` applies the same operation to several planned trials in order. Lifecycle-specific studies keep their own study design, recovery, and selection rules.
+Use `run_lifecycle_trial()` to execute and verify one lifecycle, or `run_lifecycle_experiment()` to process several planned trials in order. Both return normal `TrialRecord` values, with persistence selected by the caller. Lifecycle studies define their own recovery and selection rules.
 
 A lifecycle evaluator connects lifecycle execution to the separate runtime-neutral meta-harness API through normal `TrialRecord` values.
 
@@ -88,13 +88,13 @@ See [Finite Lifecycles](/docs/core/lifecycles).
 
 `aec_bench.experimentation.meta_harness` compares candidates across the existing execution families. The caller supplies each candidate, the function that runs it, and the function that compares its `TrialRecord` results. It supports both one-off comparisons and bounded rounds of proposal and refinement.
 
-Each evaluator defines how its candidate runs, and each assessment function defines what the evidence means. Artefact-task, lifecycle, Interactive World, adaptive, and repair code retain their own execution and evidence rules. Evaluation owns metric meaning; governance owns approval. Failed and invalid trials remain available to the assessment function.
+Each evaluator runs its candidate through the relevant task runtime, then passes the resulting trials to the assessment function, including failed or invalid results. The runtime keeps its execution and evidence rules; evaluation defines metrics and governance controls approval.
 
 Meta-harness results are normal in-memory Python values. Existing task runtimes and trial records supply persistence and execution. See [Meta-Harness Composition](/docs/advanced/meta-harness-runtime).
 
 ## Agent workspace evolution
 
-`run_evolution()` coordinates changes to versioned prompt-and-skill workspaces. It receives a `CandidateChecks` capability and a candidate proposer. Checks own batch planning, execution, and optional observation enrichment. The proposer owns scratch work and returns a `CandidateProposal`; the outer loop owns scoring, acceptance, and persistence.
+`run_evolution()` combines a candidate proposer with `CandidateChecks` to improve versioned prompt-and-skill workspaces. The proposer develops a `CandidateProposal` in scratch, while the checks plan and run the comparison. The outer loop uses those results to decide which changes to accept and persist.
 
 The built-in proposer is [Agentic Variation](/docs/advanced/avo). AVO can make and check several bounded scratch revisions before submission. The outer application checks the submitted child against its selected parent, applies the search policy, and only then updates canonical workspace, archive, graveyard, and lineage state.
 
@@ -106,10 +106,10 @@ Swarm uses the same proposal and evidence boundaries concurrently. Each worker h
 |---------|-------|----------|
 | Task meaning | Task, template, lifecycle, or world | Keeps engineering inputs, actions, and verifier rules together |
 | Run planning and accounting | Experiment orchestration | Owns the resolved condition, exact trial membership, plan state, and final result-set status |
-| Execution coordination | `OperationalStore` and the local scheduler | Owns mutable work, attempt, lease, submission, retry, cancellation, reconciliation, and progress state |
+| Execution coordination | `OperationalStore` and the local scheduler | Dispatches planned work and tracks its progress through completion or recovery |
 | Artefact-task orchestration | `run_experiment()` and `run_trial()` | Owns attempt tracking, selection, official verification, optional review, retained artefacts, and cleanup |
 | Lifecycle orchestration | `aec_bench.lifecycles.application` and the lifecycle host | Applies checkpoint progression, local execution, trial construction, and optional persistence while task semantics stay with the task |
-| Interactive World orchestration | World trial application and task-owned host | Uses the shared actor boundary, then applies task-owned journeys, controls, persistence, verification, evaluation, evidence retention, and trial construction |
+| Interactive World orchestration | World trial application and task-owned host | Runs the journey through the shared actor boundary and returns a verified trial with retained evidence |
 | Harness studies and refinement | `aec_bench.experimentation.meta_harness` | Composes caller-owned candidates, `TrialRecord` evidence, and injected policies across existing runtimes and metrics |
 | Agent workspace evolution | `aec_bench.evolution` | Runs candidate checks, bounded proposals, selection, and persistence |
 | Agent execution | Agent harness and provider integration | Translates model and tool protocols; task and evaluation owners retain benchmark policy |
@@ -129,17 +129,22 @@ results back to the planned UUID before finalization. The synchronous
 `aec-bench run` command remains the direct Harbor workflow described in
 [Backends](/docs/advanced/backends).
 
-Prime is separate from Harbor. Prime Lab exports public artefact tasks into packages for hosted evaluation and training. Its finite-lifecycle export is local-only and keeps references to the source packages and checkout. Prime Agent runs the upstream executable directly for local artefact tasks or through bounded ACP sessions for supported Interactive Worlds.
+Prime Lab exports public artefact tasks for hosted evaluation and training, and finite lifecycles for local evaluation against their source packages. Prime Agent runs the upstream executable directly for local artefact tasks or through bounded ACP sessions for supported Interactive Worlds.
 
 See [Execution Backends](/docs/advanced/backends), [Prime Lab](/docs/advanced/prime-lab), and [Prime Agent](/docs/agents/prime-agent).
 
 ## How evidence is stored
 
-`ResolvedRunSpec` stores the complete requested condition. `RunPlan` stores the
-ordered expected trial set. `RunManifest` stores shared execution context for
-trial evidence, and each `TrialRecord` records one planned result through its
-run and trial identities. A trial can contain one attempt or select from
-several candidates.
+Follow the saved records from the requested condition to its results:
+
+| Record | Contents |
+|--------|----------|
+| `ResolvedRunSpec` | Complete requested condition |
+| `RunPlan` | Ordered expected trial set |
+| `RunManifest` | Execution context shared by trials in the run |
+| `TrialRecord` | One planned result, linked through run and trial identities |
+
+A trial can contain one attempt or select from several candidates.
 
 `OperationalStore` stores the mutable SQLite coordination rows used while work
 is queued, leased, retried, cancelled, reconciled, and reported. The
@@ -152,7 +157,7 @@ verification.
 run completeness, validity, terminal outcome counts, accepted record identities,
 and quarantined record identities for reporting.
 
-`TrialRecord` answers three separate questions: Did the agent run? Was the output evaluated? Is the required evidence complete? It also links to retained outputs, trajectories, and usage information so reports do not depend on temporary workspaces.
+Read the [three trial statuses](/docs/evaluation/traces#result-status) to assess execution, evaluation, and evidence completeness. The same record links to the output and trajectory for review, with usage information for cost reporting.
 
 Producing authorities own their evidence documents, and trials refer to those documents. Provider evidence has its own single-manifest reference. Keyless protocol proof and live-provider qualification remain separate claims.
 
@@ -168,8 +173,8 @@ Dependencies follow ownership:
 - shared world-runtime code remains independent of concrete worlds;
 - canonical run planning expands a `ResolvedRunSpec` into one exact `RunPlan`;
 - artefact-task orchestration can depend on task and runtime boundaries while `HarnessSpec` remains an execution-capability description;
-- lifecycle application composition depends on the lifecycle coordinator, normal trial contracts, and explicit execution effects, not task, world, provider, Harbor, or Prime implementations;
-- meta-harness composition depends on `TrialRecord` and caller-supplied functions, not concrete runtimes, providers, or task families;
+- lifecycle application composition depends on the lifecycle coordinator, normal trial contracts, and explicit execution effects;
+- meta-harness composition depends on `TrialRecord` and caller-supplied functions;
 - evolution composition depends on check and proposal capabilities; AVO proposes candidates, while Evolution owns selection and persistence;
 - evaluation owns policy and consumes verifier evidence, while persistence stores the resulting records; and
 - CLI, TUI, web, and reports compose lower-level capabilities.
@@ -182,7 +187,7 @@ When design goals conflict, aec-bench uses this order:
 
 | Priority | Principle | What it protects |
 |----------|-----------|------------------|
-| 1 | **Validity** | Results reflect real agent capability, not benchmark artefacts |
+| 1 | **Validity** | Results reflect real agent capability |
 | 2 | **Reproducibility** | Recorded inputs and revisions can reconstruct a result |
 | 3 | **Coverage** | The benchmark spans meaningful AEC work |
 | 4 | **Cost** | Experiments remain affordable to repeat |

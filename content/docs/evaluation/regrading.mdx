@@ -1,0 +1,82 @@
+---
+title: Regrading
+description: Run a revised verifier against the saved output of a completed Harbor trial.
+---
+
+Use regrading when you have corrected a verifier or changed its scoring rules and want to assess an existing answer again. AEC-Bench runs the revised verifier against retained trial artefacts and saves the assessment in a separate directory.
+
+## Prepare the inputs
+
+Start with a finished, single-step Harbor trial for a public artefact task. Keep its `result.json`, `artifacts/manifest.json`, and the files required by the revised verifier.
+
+Make a copy of the task and edit its verifier. Keep the task directory name the same as the source trial's `task_name`. For example, a trial for `voltage-drop` can use a revised task at `revised-tasks/voltage-drop`.
+
+In the revised `task.toml`, declare the saved inputs and select a separate verifier environment. Put `artifacts` at the top level, before any section headers, and keep the task's other metadata:
+
+```toml
+artifacts = [{source = "/workspace/output.md", destination = "agent/output.md"}]
+
+[metadata]
+visibility = "public"
+
+[verifier]
+environment_mode = "separate"
+```
+
+The example maps the original container path `/workspace/output.md` to the retained file `artifacts/agent/output.md` in the source trial. Match both paths to the source manifest. Declare each input the revised verifier needs; Harbor checks that the recorded files are available before starting the verifier environment.
+
+Harbor restores declared inputs at their original container paths. The verifier can therefore read `/workspace/output.md` as it did during the original run.
+
+The `tests/` directory is the separate verifier's build context. Give it a `Dockerfile` with the verifier's dependencies. For a verifier that needs only Python and a shell:
+
+```dockerfile title="tests/Dockerfile"
+FROM python:3.13-slim
+COPY . /tests
+```
+
+Keep `tests/test.sh` as the entry point and write rewards and details under `/logs/verifier/`, following the [scoring contract](/docs/evaluation/scoring#the-verifier-contract).
+
+## Check and run
+
+In an AEC-Bench source checkout, install Harbor execution support:
+
+```bash
+uv sync --extra execution
+```
+
+Check the source record, revised task, and output location:
+
+```bash
+uv run aec-bench evaluation regrade jobs/<job>/<trial> \
+  --task revised-tasks/voltage-drop \
+  --output runs/regrades/voltage-drop-check \
+  --dry-run
+```
+
+Choose a fresh output directory outside both input directories. Then run the assessment on Docker:
+
+```bash
+uv run aec-bench evaluation regrade jobs/<job>/<trial> \
+  --task revised-tasks/voltage-drop \
+  --output runs/regrades/voltage-drop-check \
+  --backend docker
+```
+
+The dry run validates the plan. The execution also checks complete artefact coverage before starting the environment. Regrading uses the saved agent output, so its execution cost is the verifier's compute and any services the verifier calls.
+
+## Read the assessment
+
+The output directory contains:
+
+| Path | Contents |
+|------|----------|
+| `source/` | Retained source result and agent artefacts |
+| `task/<task-name>/` | The revised task used for this assessment |
+| `inputs.json` | Source trial identity and SHA-256 hashes of the retained inputs |
+| `verification/result.json` | Harbor's assessment result, rewards, and any execution error |
+| `verification/lock.json` | Resolved task and environment settings |
+| `verification/verifier/` | Verifier logs and reward artefacts |
+
+The original trial and its ledger record keep their original result. Read the regrade as a separate assessment of the same answer under the revised verifier. Agent usage in the retained source result still belongs to the original execution.
+
+If verification fails, the command returns a non-zero exit status and retains the assessment evidence. Inspect `verification/result.json` and the verifier logs before revising the task and choosing another output directory.

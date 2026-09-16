@@ -164,7 +164,7 @@ uv run aec-bench prime eval \
   --eval-name aec-electrical-adapter-medium
 ```
 
-AEC-Bench sends Prime the model string `<base-model>:<adapter-id>`. If you have a training run rather than a deployed adapter ID, let the command resolve the deployment:
+AEC-Bench sends Prime the model string `<base-model>:<adapter-id>`. To resolve a deployed adapter from its training run, use:
 
 ```bash
 uv run aec-bench prime eval \
@@ -184,7 +184,10 @@ uv run aec-bench prime eval \
   --eval-name aec-electrical-adapter-medium
 ```
 
-For base-versus-adapter comparisons, keep the environment slug, split, difficulty, harness, seed, number of examples, rollout count, and token budget fixed. Change only the model adapter.
+To compare a base model with an adapter, change only the model adapter and hold these settings fixed:
+
+- **Task selection:** environment slug, split, difficulty, seed, and number of examples.
+- **Execution:** harness, rollout count, and token budget.
 
 ## Hosted training
 
@@ -248,14 +251,14 @@ After training finishes, use `aec-bench prime adapters` to find the deployed inf
 
 ## Bring hosted results back into AEC-Bench
 
-Import a hosted evaluation when you want to inspect it with the same reports used for local and Harbor runs. Each Prime sample includes the prompt, model messages, tool calls, reward, timing, token use, stop reason, and environment metrics:
+Import a hosted evaluation to review its conversations and results with the same reports used for local and Harbor runs:
 
 ```bash
 uv run aec-bench import-prime-eval <prime-eval-id> \
   --experiment prime-eval-medium-stateful
 ```
 
-The importer writes one `TrialRecord` per Prime sample. It also retains the conversation, raw Prime sample, and submitted output when available. The result can then use normal AEC-Bench trace and behaviour reports.
+Each imported Prime sample becomes a `TrialRecord` linked to the raw sample and conversation, plus the submitted output when available. These retained artefacts support the normal AEC-Bench trace and behaviour reports.
 
 Provider completion, evaluation, and evidence are separate facts. A sample can have a reward and still have failed execution or incomplete evidence. Check `execution_status`, `evaluation_status`, and `evidence_status` with the verifier result.
 
@@ -271,7 +274,7 @@ uv run aec-bench report behavioral \
   --output prime-eval-behaviour.json
 ```
 
-Use the same import-and-report path for base and adapter evals. For comparison reports, keep the experiment ids distinct and compare aggregate reward, stop conditions, tool-call counts, `submit_answer` calls, and behavioural classifications side by side.
+Use distinct experiment ids for base and adapter evals so their reports can be compared side by side. Read reward alongside the behaviour checks below to see how each model reached its result.
 
 ## What to inspect
 
@@ -283,4 +286,4 @@ For stateful AEC-Bench exports, inspect mean reward together with:
 - Per-example reward rows alongside the aggregate
 - Token budget and max-turn behaviour for RLM-style tasks
 
-The Prime path should remain explicit: select the task slice, export it, smoke it, run a small hosted eval, import the hosted rollouts, inspect behaviour, then scale.
+Inspect imported results from a small hosted evaluation before scaling the run.

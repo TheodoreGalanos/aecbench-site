@@ -136,7 +136,20 @@ timing, priority ageing, and scoped limits. The CLI planning path
 resolves `max_concurrency` to `1`; this policy is persisted for inspection and
 Python composition.
 
-`compute.timeout_override` sits alongside `resource_limits` and overrides the per-task trial timeout.
+`compute.timeout_override` sits alongside `resource_limits` and overrides the task's agent timeout.
+
+For Harbor jobs, these fields control concurrency and live viewing:
+
+| Field | Meaning |
+|-------|---------|
+| `compute.resource_limits.n_concurrent_trials` | Maximum active trials in the job; defaults to `1` |
+| `agents[].n_concurrent` | Optional positive limit on this agent's active execution phases |
+| `agents[].concurrency_group` | Agents with the same group share one `n_concurrent` allowance |
+| `compute.stream` | Enable live sandbox access in Harbor's Stream tab; defaults to `false` |
+
+Agent limits sit alongside `harness` and `model`, outside `parameters`. Each limit must be at most the overall trial limit. Members of a shared group must set the same limit. See [concurrency examples](/docs/advanced/backends#limit-concurrent-agent-work).
+
+Live Stream uses public artefact tasks on Docker or Daytona. `run --stream` and `run --no-stream` override the manifest setting. See [Harbor viewer setup](/docs/evaluation/traces#harbor-viewer).
 
 The optional `reviewer` block runs after deterministic verification:
 
@@ -185,11 +198,11 @@ max_parallel_workers = 4
 | `execution` | `scaffolding` defaults to true. `context_limit` defaults to 128,000 input tokens. Compaction and hard-ceiling fractions default to 0.85 and 0.95. `max_parallel_workers` defaults to 4. |
 | `advisor` | `enabled`, `model`, `max_uses`, `max_response_tokens`, and `context_window`. See [Advisor](/docs/advanced/advisor). |
 
-Optional `execution.compaction_model` and `execution.subcall_model` select secondary model routes. Omit them to use the main model. TOML has no `null` value; omit unset optional keys. Input-context limits must be positive, with `0 < compaction_threshold_pct < hard_ceiling_pct <= 1`.
+Optional `execution.compaction_model` and `execution.subcall_model` select secondary model routes. Omit unset optional keys; both model routes default to the main model. Input-context limits must be positive, with `0 < compaction_threshold_pct < hard_ceiling_pct <= 1`.
 
 ### `lambda-rlm.toml`
 
-Lambda-RLM reads `lambda-rlm.toml`, then falls back to `rlm.toml`, then condition values alone. A fallback file with RLM-only options fails validation. Use separate compatible files when a task supports both harnesses.
+Lambda-RLM reads `lambda-rlm.toml`, then falls back to `rlm.toml`, then condition values alone. Use separate compatible files when a task supports both harnesses.
 
 ```toml
 [template]
@@ -224,9 +237,9 @@ token_budget = 100_000
 | `structure_enforcement` | `enabled`, `max_retries`, and `validator_model` control an optional model check for required structure. The retry default is 2. |
 | `grounding` | `check` is `default` or `off`; optional `custom_facts` supplies pattern checks. Grounding findings remain advisory. |
 | `compose` | `mode` selects `orchestrated` or `agentic` composition. Agentic composition can reuse extracted values from a scratchpad. |
-| `planning_phase` | With agentic composition, `enabled`, `sources`, and `extract_slots` seed the scratchpad. Optional `back_brief` and `scope_evolution` passes have their own sources, model, and output limit. These passes are inactive in orchestrated mode. |
-| `sandbox` | `enabled` enables document and anchor access; `extractor_overrides` selects document extractors. `tool_use = true` is unsupported. |
-| `execution` | `max_parallel_workers` bounds parallel work and defaults to 4. RLM context and compaction keys do not apply to this pipeline. |
+| `planning_phase` | With agentic composition, `enabled`, `sources`, and `extract_slots` seed the scratchpad. Optional `back_brief` and `scope_evolution` passes have their own sources, model, and output limit. |
+| `sandbox` | `enabled` enables document and anchor access; `extractor_overrides` selects document extractors. |
+| `execution` | `max_parallel_workers` bounds parallel work and defaults to 4. |
 | `guardrails` | `token_budget` defaults to 500,000 and counts all model phases. |
 | `advisor` | Uses the same declared model and advice limits as RLM. |
 
@@ -254,7 +267,7 @@ depends_on = ["findings"]
 fields = [{ name = "text", dtype = "str", required = true }]
 ```
 
-Field types are `str`, `int`, `float`, `bool`, `list`, `dict`, and `table`. Source priorities use `input_mapping = { sources = ["inspection"], priority = { inspection = 1 } }`; lower numbers mean higher authority. Priorities can only refer to mapped sources. Section IDs must be unique, and dependencies must name existing sections without forming a cycle.
+Field types are `str`, `int`, `float`, `bool`, `list`, `dict`, and `table`. Source priorities use `input_mapping = { sources = ["inspection"], priority = { inspection = 1 } }`; lower numbers mean higher authority. Priorities can only refer to mapped sources. Section IDs must be unique, and dependencies must name existing sections in an acyclic graph.
 
 The mapping gives source IDs an explicit public path:
 
@@ -268,7 +281,7 @@ visibility = "public"
 sources = ["inspection"]
 ```
 
-Public writing rules have an ID, kind, message, and optional section and field scope. Error-level pattern failures block acceptance; warnings do not. A `prose` rule remains `unchecked` by deterministic validation; a model review can supply separate findings.
+Public writing rules have an ID, kind, message, and optional section and field scope. Error-level pattern failures block acceptance; warnings are advisory. A `prose` rule remains `unchecked` by deterministic validation; a model review can supply separate findings.
 
 ```toml
 # checks.toml
@@ -302,9 +315,11 @@ max_input_tokens = 16_000
 max_output_tokens = 2_000
 ```
 
-Choose a `synthesiser_model` supported by the configured provider route. Secondary model settings cannot raise the provider client's per-call maximum. All candidate and synthesis calls count towards the run budget.
+Choose a `synthesiser_model` supported by the configured provider route. Secondary model limits are capped by the provider client's per-call maximum. All candidate and synthesis calls count towards the run budget.
 
-At `k_candidates = 1`, one section is generated. Larger K requires `tournament_mode = "synthesis"`; an empty `apply_to_sections` list applies it to all sections. Only plain synthesis is supported. The worker limit is `execution.max_parallel_workers`. Extraction samples and CLI whole-attempt `--best-of` are [separate controls](/docs/agents/rlm#optional-candidates-and-synthesis).
+At `k_candidates = 1`, the harness generates one draft per section. To generate alternatives and combine them, increase K and set `tournament_mode = "synthesis"` with `synthesis_mode = "plain"`.
+
+Use `apply_to_sections` to select sections; an empty list applies synthesis to all of them. Bound parallel work with `execution.max_parallel_workers`. See [candidate controls](/docs/agents/rlm#optional-candidates-and-synthesis) for extraction samples and whole-attempt `--best-of`.
 
 ### Fixed constitutional parameters
 
@@ -345,9 +360,18 @@ tbd_placeholder = "[TBD]"
 gap_framing = "tbd"
 ```
 
-Preview strategies are `metadata`, `head`, and `tail`. RLM state persistence supports `llm_summary`, `state_only`, and `full_reset`; task instructions, system policy, report state, and bindings remain protected. RLM also accepts progress nudge and stall thresholds under `constitution.progress_obligation`, and an initial mode under `constitution.earned_autonomy`. The initial modes are `constrained`, `guided`, and `autonomous`; they do not enable automatic promotion.
+Choose the controls supported by the selected harness:
 
-In a separate constitution file, use the parameter tables at the top level. Lambda-RLM rejects REPL state-persistence, progress, and autonomy tables. Constitutional model inference is unsupported for report execution; declare fixed parameters instead.
+| Control | Settings |
+|---------|----------|
+| Output preview | `metadata`, `head`, or `tail` |
+| RLM state persistence | `llm_summary`, `state_only`, or `full_reset` |
+| RLM progress | Nudge and stall thresholds under `constitution.progress_obligation` |
+| RLM initial mode | `constrained`, `guided`, or `autonomous` under `constitution.earned_autonomy` |
+
+RLM preserves task instructions and system policy under each state-persistence mode, together with report state and command bindings.
+
+In a separate constitution file, use the parameter tables at the top level. Lambda-RLM uses the information-minimality and source-fidelity parameters shown above.
 
 ## `evolution.yaml`
 
@@ -505,4 +529,4 @@ Generated Prime environments apply task selection in this order: difficulty filt
 
 ## `configs/endpoints.toml`
 
-In Prime Lab workspaces, endpoint aliases live in `configs/endpoints.toml` and are referenced by Prime commands and generated experiment configs. Keep provider credentials in environment variables or the provider's own auth store, not in this file.
+In Prime Lab workspaces, endpoint aliases live in `configs/endpoints.toml` and are referenced by Prime commands and generated experiment configs. Keep provider credentials in environment variables or the provider's own auth store.

@@ -17,11 +17,7 @@ uv run aec-bench evidence index rebuild \
   --database artefacts/ledger/evidence-index.sqlite
 ```
 
-The command scans structured trial records, validates their manifests and
-references, and replaces the index rows. Its result reports indexed,
-unreadable, and conflicting records, the rebuild generation, and any errors.
-The rebuild reads the portable evidence files and publishes a new metadata
-projection.
+The command rebuilds the index from validated portable records and their manifests. Its report identifies unreadable or conflicting records alongside the indexed count and rebuild generation, so you can investigate errors before querying the results.
 
 The index stores metadata such as:
 
@@ -65,11 +61,17 @@ if page.next_cursor is not None:
     )
 ```
 
-`EvidenceQuery.page()` supports filters for run, experiment, task, task
-revision, task prefix, task kind, dataset, adapter, model, world profile,
-execution, evaluation, and evidence status, provider-evidence presence, trial,
-and attempt. Pages contain at most 1,000 rows. Cursors bind the filters and
-index generation, so a rebuild produces a new query generation.
+Use `EvidenceQuery.page()` to narrow a query by:
+
+| Filter group | Available filters |
+|--------------|-------------------|
+| Run identity | Run, experiment, trial, and attempt |
+| Task selection | Task, revision, prefix, kind, and dataset |
+| Execution setup | Adapter, model, and world profile |
+| Result | Execution, evaluation, and evidence status; provider-evidence presence |
+
+Each page contains at most 1,000 rows. Cursors bind the filters to the current
+index generation, so start a new query after rebuilding the index.
 
 The query page returns bounded metadata rows and portable record paths. Use
 `record_path` to load the selected portable evidence record for detailed review.

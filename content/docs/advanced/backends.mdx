@@ -70,11 +70,43 @@ compute:
 
 `n_concurrent_trials` configures the local Harbor orchestrator. `timeout_override` applies an agent timeout override to the generated Harbor job.
 
-Use `--dry-run` for planning: validate task selection and inspect the trial plan.
+Use `--dry-run` to check task selection, the generated Harbor configuration, agent options, and environment resource policies before starting a job:
 
 ```bash
 uv run aec-bench run --config experiment.yaml --dry-run
 ```
+
+## Limit concurrent agent work
+
+Use `n_concurrent_trials` for the overall job limit and `n_concurrent` for each agent's active execution phases. Agents that share a provider allowance can use the same `concurrency_group`:
+
+```yaml
+agents:
+  - name: tool-loop
+    harness: tool_loop
+    model: "<model-id>"
+    n_concurrent: 2
+    concurrency_group: provider-account
+  - name: rlm
+    harness: rlm
+    model: "<model-id>"
+    n_concurrent: 2
+    concurrency_group: provider-account
+compute:
+  backend: docker
+  resource_limits:
+    n_concurrent_trials: 8
+```
+
+This job can have eight active trials, with at most two agent phases across the shared group. Environment setup and verification use the overall limit. Every group member needs the same positive `n_concurrent` value, at most the overall limit. Omit `concurrency_group` to give an agent its own allowance.
+
+These settings limit active agent phases within one Harbor job. A harness can make several provider requests during one phase; allow for those calls when choosing a cap.
+
+## Follow a job
+
+The CLI reports environment setup, agent execution, verification, and attempt completion as the job runs. Harbor can retry an attempt that ends with an error. Final trial records enter the ledger after the job completes.
+
+For messages, tool calls, and sandbox files, open the [Harbor viewer](/docs/evaluation/traces#harbor-viewer). Live Stream uses Docker or Daytona with a public artefact task. Set `compute.stream: true` in the manifest, or pass `--stream` to `run`.
 
 ## Morph Cloud through Harbor
 

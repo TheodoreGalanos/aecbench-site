@@ -86,9 +86,9 @@ aec-bench task lifecycle submit \
   --run-dir artefacts/lifecycle-runs/hydraulic-review
 ```
 
-`start` creates a run when required and releases its next checkpoint. The actor must write the required submission before `submit` archives it. `status` reads the current state without advancing it.
+`start` creates a run when required and releases its next checkpoint. The actor must write the required submission before `submit` archives it. `status` displays the current state.
 
-Revisit an accepted checkpoint without changing the active checkpoint:
+Inspect an accepted checkpoint while preserving the active checkpoint:
 
 ```bash
 aec-bench task lifecycle revisit \
@@ -110,7 +110,7 @@ aec-bench task lifecycle branch \
   --reason "Test a different decision"
 ```
 
-A branch receives the accepted prefix through the selected checkpoint, reopens that checkpoint, and leaves its parent unchanged. The host rejects an unsubmitted branch point. There is no `start_at` option that bypasses the accepted history.
+A branch receives the accepted prefix through the selected checkpoint, reopens that checkpoint, and leaves its parent unchanged. The host rejects an unsubmitted branch point.
 
 Run or resume the lifecycle with a local agent harness:
 
@@ -139,7 +139,14 @@ from aec_bench.lifecycles.application import (
 )
 ```
 
-These functions use the same lifecycle rules as the CLI. `read_lifecycle()` returns the current authoritative state. `revisit_checkpoint()` only reads an accepted stage. `branch_lifecycle()` creates a separate run from accepted work, and `run_lifecycle()` continues from the current state with a fresh agent context.
+These functions use the same lifecycle rules as the CLI:
+
+| Function | Use |
+|----------|-----|
+| `read_lifecycle()` | Read the current authoritative state |
+| `revisit_checkpoint()` | Read an accepted stage |
+| `branch_lifecycle()` | Create a separate run from accepted work |
+| `run_lifecycle()` | Continue from current state with a fresh agent context |
 
 Lifecycle execution and trial composition use ordinary in-memory values:
 

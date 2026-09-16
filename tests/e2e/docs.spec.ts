@@ -37,7 +37,7 @@ test.describe('Documentation', () => {
     await expect(page.getByRole('heading', { name: 'Finite Lifecycles' })).toBeVisible();
     await expect(page.getByText('aec-bench task lifecycle branch')).toBeVisible();
     await expect(page.locator('code').filter({ hasText: 'run_lifecycle_trial' }).first()).toBeVisible();
-    await expect(page.getByText(/There is no start_at option/)).toBeVisible();
+    await expect(page.getByText(/A branch receives the accepted prefix through the selected checkpoint/)).toBeVisible();
   });
 
   test('renders public Interactive World discovery and execution paths', async ({ page }) => {

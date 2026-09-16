@@ -19,7 +19,7 @@ binds the final result to its planned trial.
 
 ## TaskDefinition — what to solve
 
-A `TaskDefinition` is the validated description of one artefact or workspace task. It carries task identity, lifecycle, visibility, instruction, environment, verifier, tools, limits, and metadata.
+A `TaskDefinition` describes one artefact or workspace task. It binds the instruction to the task's identity and execution requirements, including the verifier that will assess the result.
 
 The task directory supplies the public files:
 
@@ -60,8 +60,7 @@ Task catalogue status and evidence progression are separate concepts.
 
 Lifecycle and visibility are explicit. A missing value is invalid. New
 selections normally use active, public tasks; other permitted states require an
-explicit selection or visibility context. Proposed and retired tasks cannot
-start new work.
+explicit selection or visibility context. New work requires an active task or an explicitly selected deprecated task.
 
 ## AgentOutput — what came back
 
@@ -77,45 +76,42 @@ class AgentOutput(StrictModel):
 
 The harness reports completion and location. Evaluation owns parsing and scoring the task-specific output.
 
-For [report harnesses](/docs/agents/rlm#budgets-and-completion), completion also requires all required section checks to pass and the output bytes to match accepted report state. A successful public writing check or `SUBMIT()` is not a verifier result. Private verifier inputs remain outside the actor workspace and model requests.
+For [report harnesses](/docs/agents/rlm#budgets-and-completion), completion also requires all required section checks to pass and the output bytes to match accepted report state. The task verifier scores the submitted artefact. Private verifier inputs remain outside the actor workspace and model requests.
 
 ## ResolvedRunSpec and RunPlan — what will run
 
 `ResolvedTaskInstance` combines the validated `TaskDefinition` with the exact task directory and resolved environment, verifier, and tool paths. It is the direct task input to artefact-task execution.
 
-`ResolvedRunSpec` records the requested run condition: exact task releases,
-agent conditions, compute settings, repetitions, verification, evaluation,
-visibility, execution policy, and provider route.
+`ResolvedRunSpec` fixes the condition for a run. `RunPlan` expands it into an ordered set of `PlannedTrial` values, each bound to that condition:
 
-`RunPlan` expands that condition into an ordered set of `PlannedTrial` values.
-Each trial carries its UUIDv7 identity, readable key, ordinal, run identity,
-task release, agent condition, compute configuration, repetition, execution
-family, attempt recipe, and evaluation profile. World and lifecycle trials also
-carry their exact family release.
+| Part of the condition | What it fixes |
+|-----------------------|---------------|
+| Task selection | Exact task releases and visibility |
+| Agent execution | Agent conditions, compute settings, and provider route |
+| Repetition and scheduling | Repetition count and execution policy |
+| Assessment | Verification and evaluation settings |
 
-`EvidenceRunStore` persists the resolved specification, draft plan, ready plan,
-and portable trial evidence. `OperationalStore` owns mutable SQLite
-coordination for runs, plans, work items, attempts, backend submissions, and
-leases. A ready plan has contiguous ordinals, unique trial identities and keys,
-complete task and agent coverage, and summary counts that match its trial set.
+Each planned trial has a UUIDv7 identity and readable key, plus an ordinal that places it within the run. It binds one task-agent-repetition combination to its compute configuration, execution family, attempt recipe, and evaluation profile. World and lifecycle trials also carry their exact family release.
+
+`EvidenceRunStore` persists the specification and plans with portable trial evidence. `OperationalStore` coordinates execution in SQLite through the [execution control records](#execution-control-contracts).
+
+A ready plan has complete task and agent coverage, with unique trial identities and keys in contiguous ordinal order. Its summary counts must match that trial set.
 
 ## Execution control contracts
 
-`ExecutionPolicy` records the resolved global and scoped scheduler limits,
-lease timing, priority ageing, and retry policy. A `TrialWorkItem` binds one
-planned trial to its execution family, backend, provider and model routes,
-resource class, priority, and current state.
+`ExecutionPolicy` fixes the scheduler limits and recovery rules for a run. The scheduler uses these records to dispatch a planned trial and retain its result:
 
-An `Attempt` is one execution try. A `Lease` records worker ownership for a
-bounded time. `BackendSubmission` records the external submission and observed
-backend state. After collection, an `AttemptReceipt` records process status,
-cancellation, resource usage, output references, verifier and authority
-evidence, failure classification, and reconciliation state.
+| Contract | Purpose |
+|----------|---------|
+| `TrialWorkItem` | Bind a planned trial to its execution routes and scheduling requirements; track its current state |
+| `Attempt` | Record one execution try |
+| `Lease` | Give a worker ownership for a bounded time |
+| `BackendSubmission` | Track an external submission and its observed state |
+| `AttemptReceipt` | Retain the collected result, usage, and evidence, including failure and reconciliation details |
+| `TrialFinalization` | Point to the published `TrialRecord` selected from the attempt receipts |
+| `RunProgress` | Combine the authoritative plan and operational rows into a read-only progress view |
 
-`TrialFinalization` points to the published `TrialRecord` selected from the
-attempt receipts. `RunProgress` is a read-only projection of the authoritative
-`RunPlan` and mutable operational rows. See [Execution Control](/docs/core/execution-control)
-for the scheduler and recovery workflow.
+See [Execution Control](/docs/core/execution-control) for scheduler limits and the recovery workflow.
 
 ## TaskAttempt — one isolated agent execution
 
@@ -145,7 +141,7 @@ the complete workflow.
 
 `CandidateChecks` plans a candidate-independent batch, runs it, optionally enriches its observations, and returns an `EvaluatedCandidate`. A parent and child remain separate evaluated values and must use the same ordered evaluation cases before comparison. `TrialRecord` remains the evidence authority.
 
-`CandidateProposalRequest` supplies a selected parent, reference candidate snapshots (`inspirations`), goal, strategy, history, and bounded memory to a proposer. A submitted `CandidateProposal` carries the child snapshot, mutation summary, and evaluated revision attempt. An abstained, budget-exhausted, or cancelled proposal carries no child material.
+`CandidateProposalRequest` supplies a selected parent, reference candidate snapshots (`inspirations`), goal, strategy, history, and bounded memory to a proposer. A submitted `CandidateProposal` carries the child snapshot, mutation summary, and evaluated revision attempt.
 
 The proposer changes scratch only. The application can write canonical workspace state only after selection checks pass and the search gate accepts the child. See [Evolution](/docs/advanced/evolution) and [Agentic Variation](/docs/advanced/avo).
 
@@ -180,20 +176,18 @@ Use each identity mechanism for one purpose:
 
 The standard display reference combines a readable key with the final eight
 hexadecimal characters of its UUID, for example
-`electrical/voltage-drop · 3e8c21aa`. The suffix is not a separate identity.
+`electrical/voltage-drop · 3e8c21aa`.
 A key can change while the UUID stays stable, with the former key retained as
-an alias. Checksums identify exact bytes, not domain objects.
+an alias. Checksums identify exact bytes.
 
-Schema labels such as v2 or v3 describe compatibility. They do not replace the
-version of a task, dataset, or run.
+Schema labels such as v2 or v3 describe document compatibility.
 
 ### Portable paths
 
 Untrusted or persisted relative paths use `PortableRelativePath`. It rejects
 absolute paths, drive-qualified paths, backslashes, empty components, `.` and
 `..`, and platform-reserved components. `resolve_below()` also checks the final
-resolved path, including symlinks, against its trusted root. Human-readable
-keys are not used as storage paths without this validation boundary.
+resolved path, including symlinks, against its trusted root. Human-readable keys pass this validation before use as storage paths.
 
 ## RunManifest — shared trial evidence context
 
@@ -259,7 +253,7 @@ Publication policy evaluates these facts with the run manifest. A reportable res
 
 Finite lifecycle, Interactive World, adaptation, and proposal-session details use typed extension references. The main trial links to each optional forensic structure. Functional meta-harness results are normal in-memory composition values, and each runtime returns its existing `TrialRecord` evidence.
 
-A complete Interactive World trial returns one `TrialRecord`. A world action and a provider session are lower-level events, not trials. The dam, pump, and Harbor trial functions retain their task-owned authority evidence and provider evidence before temporary session cleanup.
+A complete Interactive World trial returns one `TrialRecord`. Each trial groups the world actions and provider sessions for its complete journey. The dam, pump, and Harbor trial functions retain their task-owned authority evidence and provider evidence before temporary session cleanup.
 
 World branch creation materialises child branches through rollout control and the task's branch port. Later application operations execute, evaluate, select, or merge a child. The parent stays unchanged.
 
@@ -335,7 +329,7 @@ Provider transcripts remain separate when an external or sealed workflow require
 
 Lifecycle run records keep session identity, execution mode, memory visibility, status, usage, and content-bound artefacts. The final trial references that evidence, while lifecycle state remains in its producing record.
 
-`LifecycleTrial` and `LifecycleExecution` are ordinary in-memory application values, not persisted schemas. `LifecycleTrial` carries the planned trial, package and run locations, execution mode, and visibility policy. `LifecycleExecution` carries canonical lifecycle state plus the agent and tool evidence required for trial construction.
+`LifecycleTrial` and `LifecycleExecution` are in-memory application values. `LifecycleTrial` carries the planned trial, package and run locations, execution mode, and visibility policy. `LifecycleExecution` carries canonical lifecycle state plus the agent and tool evidence required for trial construction.
 
 `run_lifecycle_trial()` converts one execution and its verifier result to the normal protected `TrialRecord`. Persistence is an explicit optional effect. `run_lifecycle_experiment()` returns the records that it creates directly to the caller.
 
@@ -345,7 +339,7 @@ See [Finite Lifecycles](/docs/core/lifecycles).
 
 ## Interactive World contracts
 
-A registered world definition binds an exact executable build and profile to task-owned state, observation, action, transition, and evaluation functions. The episode host adds decisions, recording, limits, termination, and truncation.
+A registered world definition binds an exact executable build and profile to the functions that govern task state and evaluate actions. The episode host runs those decisions within declared limits and records how the episode ends.
 
 A world episode can enter a trial through one verified episode artefact. Shared trial fields reference task-owned snapshots, transitions, and replay facts through that artefact.
 

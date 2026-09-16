@@ -34,8 +34,7 @@ same rule. Record:
 - units and applicability conditions; and
 - any benchmark-owned simplification.
 
-Do not copy proprietary source text into public fixtures unless redistribution is
-permitted. A citation is not permission to publish the underlying rulebook.
+Include proprietary source text in public fixtures only when its redistribution terms permit publication.
 
 ## Make every scored input visible
 
@@ -59,8 +58,7 @@ Missing lifecycle or visibility is an error.
 
 Use `proposed` while a task is under review. Promote it to `active` only after
 its source, instructions, runtime, verifier, and failure cases pass review.
-Choose `private` or `holdout` only with the corresponding handling policy; do
-not use either value as another name for prompt difficulty.
+Choose `private` or `holdout` with the corresponding handling policy. Set prompt difficulty separately.
 
 ## Verification
 
@@ -83,14 +81,9 @@ Exercise failure fixtures as well as golden passing output. The verifier should 
 - unsupported source references; and
 - inconsistent intermediate and final values.
 
-Also exercise verifier process failures. A timeout, cancellation, non-zero exit,
-missing reward, or malformed reward must not produce a completed evaluation.
+Also exercise verifier process failures. Check that a timeout, cancellation, non-zero exit, missing reward, or malformed reward produces a failed or invalid evaluation.
 
-`aec-bench init` installs the packaged contributor workflows under both
-`.claude/skills/` and `.agents/skills/`. Use `aec-bench init --update-skills`
-to refresh them while preserving project configuration. The installed skills
-cover task addition, template creation, local agent setup, verifier checks,
-task generation, experiment runs, and result review.
+`aec-bench init` installs contributor workflows under both `.claude/skills/` and `.agents/skills/`, covering task authoring through execution and result review. Refresh them with `aec-bench init --update-skills` to keep project configuration intact.
 
 ## Maritime and class-society tasks
 
@@ -104,11 +97,9 @@ Record:
 - whether the task uses a formula directly or a benchmark-owned reduction;
 - every coefficient and unit conversion;
 - applicability limits; and
-- material that cannot be redistributed.
+- redistribution restrictions on source material.
 
-Use class-society terminology precisely. Do not present a simplified benchmark check as
-class approval, plan approval, certification, or a complete rules-compliance
-assessment.
+Use class-society terminology precisely. Describe a simplified benchmark check by the rule and scope it actually evaluates.
 
 ### Source-backed maritime task checklist
 
@@ -134,5 +125,5 @@ Reviewers should be able to answer:
 - Does the task stay inside the source's applicability?
 - Can the expected result be reproduced independently?
 - Are all scored inputs visible?
-- Does the verifier test engineering substance rather than formatting alone?
+- Does the verifier test the engineering substance of the answer?
 - Is the strongest public claim narrower than professional approval?

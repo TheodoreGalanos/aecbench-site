@@ -35,7 +35,7 @@ tasks/electrical/voltage-drop/
         └── golden_fail.md
 ```
 
-The loader requires `task.toml`, `instruction.md`, and a verifier entry point. Add an environment `Dockerfile` before Harbor execution; without it, validation reports a promotion warning. `solution/` and golden fixtures remain private review aids.
+The loader requires `task.toml`, `instruction.md`, and a verifier entry point. Add an environment `Dockerfile` before Harbor execution. `solution/` and golden fixtures remain private review aids.
 
 ### The prompt
 
@@ -102,8 +102,7 @@ allow_internet = true
 ```
 
 The loader requires `[identity].id`, `[identity].key`, `[identity].version`,
-`[metadata].lifecycle`, and `[metadata].visibility`. It does not infer missing
-policy values. The existing top-level `version` field is separate from
+`[metadata].lifecycle`, and `[metadata].visibility`. The existing top-level `version` field is separate from
 `[identity].version`; the identity version records a semantic revision of the
 task.
 
@@ -118,14 +117,9 @@ version:  3
 display:  electrical/voltage-drop · 3e8c21aa
 ```
 
-The key is the readable reference used in commands and reviews. The UUIDv7 is
-the stable identity used to join records. The positive integer version changes
-when the task's meaning, verifier, lifecycle, visibility, or output contract
-changes. A renamed key can remain as an alias for the same UUID. The short UUID
-suffix is for display only.
+Use the key in commands and reviews, and the UUIDv7 to join records across runs. Renaming a task can preserve its former key as an alias for the same UUID; the short UUID suffix makes that identity easier to recognise in displays.
 
-Checksums have a different purpose: they verify retained bytes. Matching file
-content does not make two tasks the same task.
+Increase the positive integer version when the task's meaning or output contract changes. Changes to its verifier, lifecycle, or visibility also require a new version. Checksums identify the exact retained bytes.
 
 ### The environment
 
@@ -181,9 +175,7 @@ The verifier writes two files under `/logs/verifier/`:
 
 Each field is scored independently with configurable tolerances. Numerical fields typically allow 3% relative tolerance; boolean/categorical fields require an exact match.
 
-The reward file is not proof that the verifier completed. AEC-Bench also records
-the verifier process exit, timeout, cancellation, identity, version, and output
-parse status. A failed process cannot produce a completed evaluation. See
+AEC-Bench records the verifier process exit, timeout, cancellation, identity, version, and output parse status. A completed evaluation requires both a successful verifier process and valid reward output. See
 [Scoring](/docs/evaluation/scoring) for the receipt and status rules.
 
 ### Workspace evidence
@@ -216,7 +208,7 @@ Vd% = 3.0400 / 400 x 100 = 0.7600%
 
 Tasks use four catalogue states: `proposed` → `active` → `deprecated` → `retired`.
 
-- **Proposed** — draft task or source spec under review; not ready for a published dataset
+- **Proposed** — draft task or source spec under review
 - **Active** — reviewed benchmark task eligible for datasets and reports
 - **Deprecated** — superseded by a better version but still runnable for historical comparison
 - **Retired** — archived and excluded from new benchmark selections
@@ -230,9 +222,8 @@ Visibility is a separate policy axis:
   individual results remain protected so they can test whether public exposure
   influenced a model.
 
-New selections normally use active, public tasks. Deprecated tasks require
-explicit inclusion. Proposed and retired tasks cannot start a new run. The
-runner checks these rules again before planning. Publication eligibility still
+New selections normally use active, public tasks. Explicit inclusion also permits
+deprecated tasks. The runner checks lifecycle and visibility before planning. Publication eligibility still
 requires review and promotion checks beyond successful filesystem loading.
 
 ## Task categories

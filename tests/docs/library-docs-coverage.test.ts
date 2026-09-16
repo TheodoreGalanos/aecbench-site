@@ -31,6 +31,7 @@ describe('library documentation coverage', () => {
     expect(coreMeta).toContain('"execution-control"');
     expect(coreMeta).toContain('"contributing"');
     expect(evaluationMeta).toContain('"reviewing"');
+    expect(evaluationMeta).toContain('"regrading"');
     expect(referenceMeta).toContain('"library-catalogue"');
     expect(advancedMeta).toContain('"evidence-index"');
   });
@@ -94,8 +95,7 @@ describe('library documentation coverage', () => {
     expect(backends).not.toContain('class ComputeBackend');
     expect(tasks).toContain('Container extensions');
     expect(tasks).toContain('returns_image = true');
-    expect(scoring).toContain('Conditional evidence');
-    expect(scoring).toContain('experimental');
+    expect(scoring).toContain('/docs/evaluation/regrading');
   });
 
   it('documents explicit task identity, policy, and verifier process truth', () => {
@@ -115,7 +115,7 @@ describe('library documentation coverage', () => {
     expect(contracts).toContain('public`, `private`, `holdout');
     expect(contributing).toContain('--lifecycle proposed --visibility public');
     expect(scoring).toContain('VerifierExecutionReceipt');
-    expect(scoring).toContain('A reward written before a crash or non-zero exit');
+    expect(scoring).toContain('A crash or non-zero exit produces a failed verification');
     expect(scoring).not.toContain('verifier_completed: bool     # did reward.json appear?');
     expect(cli).toContain('aec-bench task explain electrical/voltage-drop');
     expect(cli).toContain('--lifecycle proposed');
@@ -168,7 +168,7 @@ describe('library documentation coverage', () => {
     expect(evidence).toContain('evidence index rebuild');
     expect(evidence).toContain('evidence verify');
     expect(architecture).toContain('OperationalStore');
-    expect(contracts).toContain('OperationalStore` owns mutable SQLite');
+    expect(contracts).toContain('OperationalStore` coordinates execution in SQLite');
     expect(cli).toContain('aec-bench run start <run-id>');
     expect(cli).toContain('aec-bench tui');
     expect(cli).toContain('--run-id <run-id>');
@@ -246,7 +246,7 @@ describe('library documentation coverage', () => {
     expect(cli).not.toContain('--legacy-script');
     expect(cli).not.toContain('generate dataset');
     expect(swarm).toContain('provides `run`, `status`, and `history`');
-    expect(swarm).toContain('The CLI has no `stop` or `resume` command');
+    expect(swarm).toContain('Keep the process attached until completion');
     expect(cli).not.toContain('aec-bench swarm resume');
     expect(cli).not.toContain('aec-bench swarm stop');
   });
@@ -266,7 +266,7 @@ describe('library documentation coverage', () => {
     expect(evolution).toContain('Qualification checks');
     expect(evolution).toContain('draft feedback');
     expect(evolution).toContain('promotion decision');
-    expect(evolution).toContain('Only selection evidence reaches `gate_candidate()`');
+    expect(evolution).toContain('passes that selection evidence to `gate_candidate()`');
     expect(evolution).not.toContain('CandidateEvaluator');
 
     expect(avo).toContain('arxiv.org/abs/2603.24517');
@@ -276,8 +276,8 @@ describe('library documentation coverage', () => {
     expect(avo).toContain('reference candidates that may contain useful approaches');
     expect(avo).toContain('at most 24 short facts');
     expect(avo).toContain('saves enough state to continue an interrupted proposal');
-    expect(avo).toContain('Completed paid work is not repeated');
-    expect(avo).toContain('particular model improves a workspace requires a separate model-backed study');
+    expect(avo).toContain('Resume reuses the results of completed paid work');
+    expect(avo).toContain('Measure model quality and cost with a public-task development run');
 
     expect(advisor).toContain('AVO advisor');
     expect(swarm).toContain('SwarmAssignment');
@@ -328,7 +328,7 @@ describe('library documentation coverage', () => {
     expect(datasets).toContain('`ArtifactRef`');
     expect(datasets).toContain('task_kind: "world"');
     expect(datasets).toContain('world.toml');
-    expect(datasets).toContain('`dataset create` command discovers artefact tasks');
+    expect(datasets).toContain('`dataset create` discovers artefact tasks');
     expect(datasets).not.toContain('content_hash');
   });
 

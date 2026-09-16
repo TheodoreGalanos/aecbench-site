@@ -42,7 +42,7 @@ Morph also needs its provider extra:
 pip install "aec-bench[execution,morph]"
 ```
 
-Keep provider credentials in environment variables or the provider's authentication store. Do not put them in the experiment manifest.
+Keep provider credentials in environment variables or the provider's authentication store.
 
 ## Dispatch and import
 
@@ -71,9 +71,7 @@ write a `HarborTrialTransport` sidecar for a persisted `RunPlan`. The transport
 record carries the planned AEC-Bench trial UUID with the Harbor job and trial
 names.
 
-`HarborImportExperimentRunner.import_harbor_plan()` reads that mapping, restores
-the planned identity, and validates the returned task release, agent condition,
-compute backend, execution family, and attempt.
+`HarborImportExperimentRunner.import_harbor_plan()` uses the mapping to restore the planned identity. It checks the returned task and agent against the plan, together with the backend, execution family, and attempt.
 
 `HarborImportReconciliation` reports expected, observed, missing, duplicate,
 unexpected, and accepted trial identities. Accepted records retain Harbor job

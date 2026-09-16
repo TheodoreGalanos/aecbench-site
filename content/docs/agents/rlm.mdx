@@ -14,11 +14,11 @@ For reports, the two harnesses share templates, public writing checks, section s
 | **RLM** | The model chooses REPL operations, inspects results, and keeps intermediate values between turns | The next useful step depends on what the agent finds |
 | **Lambda-RLM** | The harness plans extraction, reviews findings, generates sections, and assembles the report | The output structure and source pack are known before execution |
 
-RLM also supports free-form analysis without a report template. Lambda-RLM suits reports, scopes, compliance summaries, and other documents with declared sections. See [Agent Harnesses](/docs/agents/harnesses) for comparison with the other execution strategies.
+RLM also supports free-form analysis. Lambda-RLM suits reports, scopes, compliance summaries, and other documents with declared sections. See [Agent Harnesses](/docs/agents/harnesses) for comparison with the other execution strategies.
 
 ## Inspecting context with RLM
 
-The REPL holds full Python values while the conversation receives selected results. An agent can load a document once, inspect its length, search for a term, and read the relevant passage without printing the whole document on each turn.
+The REPL holds full Python values while the conversation receives selected results. An agent can load a document once, inspect its length, search for a term, and return the relevant passage to the conversation.
 
 For a report with a declared `inspection` source, a typical sequence is:
 
@@ -32,7 +32,9 @@ NOTE("inspection_excerpt", source[:200])
 
 `grep(text, pattern, context=3)` accepts keywords or regular expressions and returns line numbers with surrounding lines. Python slices provide direct peeking into longer values. `SHOW_VARS()` lists retained variables; `NOTE()` and `RECALL()` keep named working notes. Declared subcalls let the agent delegate bounded model work, while `parallel()` runs independent operations within the worker limit.
 
-Large results are displayed as metadata, a head preview, or a tail preview. These previews do not replace the original Python values. Search has a separate display threshold. Stdout capture stops at one million characters per stream; the result distinguishes capture overflow from display truncation and retains the full written-character count. Error displays are also bounded.
+Large results appear as metadata or a head or tail preview, while the full Python values remain available in the REPL for further inspection. Search has its own display threshold, and error displays are bounded.
+
+Stdout capture stops at one million characters per stream. The result identifies capture overflow separately from a shortened display and retains the full written-character count.
 
 ### Compaction
 
@@ -42,7 +44,7 @@ Large results are displayed as metadata, a head preview, or a tail preview. Thes
 0 < compaction_threshold_pct < hard_ceiling_pct <= 1
 ```
 
-Compaction preserves task instructions, system policy, report state, command bindings, and configured persistent data. Summary requests and returned summaries are bounded. If context crosses the threshold again immediately, the run stops instead of repeatedly summarising without progress. [Fixed constitutional parameters](#advisor-and-constitution) control previews and state preservation.
+Compaction preserves task instructions, system policy, report state, command bindings, and configured persistent data. Summary requests and returned summaries are bounded. If context crosses the threshold again immediately, the run stops with its retained progress and diagnostics. [Fixed constitutional parameters](#advisor-and-constitution) control previews and state preservation.
 
 ## Report assets
 
@@ -69,7 +71,7 @@ Template paths resolve relative to the harness configuration file, or the worksp
 
 A section can depend on accepted content from earlier sections. For example, an inspection summary can depend on the findings section. Independent sections can be filled in parallel. Compose sections can combine verbatim, source-filled, and generated blocks; their traces retain how the content was assembled.
 
-Loading rejects duplicate section IDs, missing or cyclic dependencies, invalid fields, unknown keys, and unknown source references. Explicit source mappings make source authority clear. Without one, the loader can discover supported text files in the staged `documents/` directory.
+Loading rejects duplicate section IDs, missing or cyclic dependencies, invalid fields, unknown keys, and unknown source references. Explicit source mappings make source authority clear. By default, the loader discovers supported text files in the staged `documents/` directory.
 
 ## A report run
 
@@ -96,13 +98,13 @@ flowchart TD
 
 </div>
 
-Section work repeats until the report is ready or a run limit stops execution. A rejected fill preserves the previous accepted content. Replacing an accepted section invalidates its filled transitive dependants, so a changed finding cannot leave an accepted summary based on the earlier value. Parallel results are accepted in template order.
+Section work repeats until the report is ready or a run limit stops execution. A rejected fill preserves the previous accepted content. Replacing an accepted section invalidates its filled transitive dependants. Parallel results are accepted in template order.
 
 Lambda-RLM can retry extraction gaps, supplement section evidence, and check generated structure within configured limits. Its task instruction and external system policy reach each model phase, including review, advice, and synthesis. Guided RLM receives the instruction and system policy as it chooses its own next operation.
 
 ## Guided report tools
 
-With a template loaded and `execution.scaffolding = true`, RLM receives the report commands below. They are built into the harness and need no task-owned Python command module.
+With a template loaded and `execution.scaffolding = true`, RLM receives the report commands below.
 
 | Command | Purpose |
 |---------|---------|
@@ -113,23 +115,33 @@ With a template loaded and `execution.scaffolding = true`, RLM receives the repo
 | `GUIDANCE(section_id)` | Read the section's writing guidance |
 | `CONTEXT(section_id)` | Read accepted dependency content |
 | `RULES(section_id)` | Inspect applicable public writing rules |
-| `VALIDATE(section_id, fields)` | Check proposed fields without changing accepted state |
+| `VALIDATE(section_id, fields)` | Validate proposed fields before acceptance |
 | `FILL(section_id, fields)` | Validate and accept fields, or return a typed failure |
 | `SUBMIT()` | Assemble the output and return completeness and diagnostics |
 
-`fill_parallel()` uses the same section state and validation as `FILL()`. Task extensions cannot replace protected report commands. Lambda-RLM performs these report operations through its pipeline rather than exposing the guided REPL interface.
+`fill_parallel()` uses the same section state and validation as `FILL()`. Lambda-RLM performs these report operations through its pipeline.
 
 ## Rubric and review
 
 A rubric marked `visibility = "public"` supplies drafting guidance. Each dimension retains its ID, weight, maximum score, expert persona, and criteria classified as `essential`, `important`, or `optional`. Dimensions can apply to several sections. Empty `eval_sections` applies a dimension to all sections.
 
-Reference scope starts with the already-permitted source pack. Empty `eval_references` includes that pack; explicit selectors use substring matching and each must match a permitted reference. A failed selector produces an error rather than widening access.
+Reference scope starts with the already-permitted source pack. Empty `eval_references` includes that pack; explicit selectors use substring matching and each must match a permitted reference.
 
-Guided RLM receives the applicable criteria in `START()`. Lambda-RLM uses them in drafting, review, and synthesis. A report can also run without a public rubric; section guidance and writing rules still apply.
+Public rubric criteria supplement the section guidance and writing rules that apply to every report. Guided RLM receives the applicable criteria in `START()`, while Lambda-RLM uses them throughout drafting, review, and synthesis.
 
-Lambda-RLM review can run always, on uncertainty, on candidate inconsistency, on both signals, or never. Consistency-based triggers require multiple extraction samples. Retry and supplement limits bound the work. When review is enabled, a final report review also checks public criteria across sections. See [extraction review configuration](/docs/agents/configuration#lambda-rlm-extraction-review).
+Configure Lambda-RLM's [extraction review trigger](/docs/agents/configuration#lambda-rlm-extraction-review) to choose when review runs. Consistency-based triggers compare multiple extraction samples; retry and supplement limits bound any follow-up work. Enabling review also adds a final check of public criteria across the assembled report.
 
-Required fields, field types, error-level writing rules, and unresolved structural checks can block completion. Warnings and grounding findings remain advisory. Prose rules that cannot be checked deterministically remain `unchecked`. Model reviews retain findings and evidence; they do not award benchmark reward. The [task verifier and evaluation](/docs/evaluation/scoring#public-report-rubrics) own that result.
+Completion checks have different effects:
+
+| Check | Effect |
+|-------|--------|
+| Required fields and field types | Invalid or missing values block completion |
+| Error-level writing rules and structural checks | Unresolved failures block completion |
+| Warnings and grounding findings | Remain advisory |
+| Prose rules that require judgement | Remain `unchecked` by deterministic validation |
+| Model review | Retains findings and supporting evidence |
+
+The [task verifier and evaluation](/docs/evaluation/scoring#public-report-rubrics) determine benchmark reward from the submitted artefact.
 
 ## Optional candidates and synthesis
 
@@ -141,37 +153,41 @@ There are three different candidate controls:
 | `fill_section.k_candidates` | Lambda-RLM section drafts | Produce alternatives and synthesise one section |
 | CLI `--best-of` | Isolated whole attempts | Select one attempt before the official verifier runs |
 
-Section generation uses one draft by default. Larger K requires `tournament_mode = "synthesis"`. The optional tournament box in the diagram represents parallel drafts followed by synthesis using public criteria and permitted references. It does not use hidden verifier scores. The synthesiser may combine supported content from the drafts rather than select one unchanged.
+Section generation uses one draft by default. Larger K requires `tournament_mode = "synthesis"`. The optional tournament box in the diagram represents parallel drafts followed by synthesis using public criteria and permitted references. The synthesiser can combine supported content from several drafts.
 
-Use `apply_to_sections` to limit this work to selected sections. Temperature, worker count, synthesiser model, and synthesis input/output limits are explicit. Only `synthesis_mode = "plain"` is supported in this pipeline. See [section candidate configuration](/docs/reference/config#section-candidates).
+Use `apply_to_sections` to limit this work to selected sections. Temperature, worker count, synthesiser model, and synthesis input/output limits are explicit. Set `synthesis_mode = "plain"`. See [section candidate configuration](/docs/reference/config#section-candidates).
 
 ## Advisor and constitution
 
-An [advisor](/docs/advanced/advisor) answers focused questions during the same trial. Guided RLM exposes `ADVISOR()` when advice is enabled. Lambda-RLM requests advice when review retries leave gaps. Disabled or exhausted advice makes no model call. Advice is guidance, not source evidence or permission to change the task.
+An [advisor](/docs/advanced/advisor) answers focused questions during the same trial. Guided RLM exposes `ADVISOR()` when advice is enabled. Lambda-RLM requests advice when review retries leave gaps.
 
 Fixed constitutional parameters control harness behaviour:
 
-| Principle | RLM | Lambda-RLM |
-|-----------|-----|------------|
-| Information minimality | Output thresholds and metadata, head, or tail previews | Bounded information previews |
-| State persistence | Variable and scratchpad preservation during compaction | No REPL state-persistence setting |
-| Progress obligation | Progress nudges and stall thresholds | No REPL progress setting |
-| Source fidelity | Source tracing and gap framing in prompts | Source tracing and gap framing in generation |
-| Earned autonomy | Initial scaffolding mode | No REPL autonomy setting |
+| Harness | Fixed controls |
+|---------|----------------|
+| RLM | Output previews, variable and scratchpad preservation, progress nudges, stall thresholds, source tracing, and initial scaffolding mode |
+| Lambda-RLM | Bounded information previews, source tracing, and gap framing |
 
-Declare these parameters inline or in a constitution file. Unsupported parameter tables fail validation. The initial autonomy mode does not imply automatic promotion during a run. Constitutional model inference is unsupported for report execution. See [fixed constitutional parameters](/docs/reference/config#fixed-constitutional-parameters) for the different inline forms.
+Declare fixed parameters inline or in a constitution file. Choose the settings supported by the selected harness. See [fixed constitutional parameters](/docs/reference/config#fixed-constitutional-parameters) for the different inline forms.
 
 ## Budgets and completion
 
-All main and secondary model work counts towards run usage, including extraction, retries, review, section candidates, synthesis, advice, subcalls, and compaction. `guardrails.token_budget` stops new requests once reported usage reaches the limit. Already admitted parallel calls finish and count towards actual usage, so this is an observed stop limit rather than an exact prepaid cap.
+`guardrails.token_budget` covers all main and secondary model calls throughout the run. Once reported usage reaches the limit, the harness stops new requests. Calls already running in parallel finish and count towards actual usage, which can therefore exceed the stop limit.
 
-Host request limits can tighten the configured limits. A per-call output setting cannot raise the provider client's maximum. RLM `max_turns` limits main iterations; Lambda-RLM `max_turns` limits model calls. [Configuration](/docs/agents/configuration#report-configuration-precedence) explains how condition values and authored defaults combine.
+Host request limits can tighten the configured limits. Per-call output limits are capped by the provider client's maximum. RLM `max_turns` limits main iterations; Lambda-RLM `max_turns` limits model calls. [Configuration](/docs/agents/configuration#report-configuration-precedence) explains how condition values and authored defaults combine.
 
-`SUBMIT()` revalidates accepted sections and writes the requested output. Supported report formats are `markdown`, `json`, `jsonl`, and `markdown_final_fenced_json`. JSON contains a section-ID map; JSONL contains ordered `section_id` and `fields` records. Markdown uses numbered section headings, and the fenced format ends with the section map.
+`SUBMIT()` revalidates accepted sections and writes the requested output format:
 
-Completion requires the output bytes to match the accepted report state. Missing sections, failed required checks, unresolved structural failures, provider errors, and exhausted limits produce a partial result with diagnostics. A file by itself is insufficient. Unknown provider usage remains unknown.
+| Format | Output structure |
+|--------|------------------|
+| `markdown` | Numbered section headings |
+| `json` | A section-ID map |
+| `jsonl` | Ordered `section_id` and `fields` records |
+| `markdown_final_fenced_json` | Markdown ending with the section map in a fenced JSON block |
 
-For guided reports with an explicit output-commitment contract, `COMMIT_OUTPUT()` is an additional step after `SUBMIT()`. Free-form RLM keeps `FINAL` and `FINAL_VAR`. Lambda-RLM submits automatically and rejects explicit commitment contracts. See [Contracts](/docs/core/contracts#agentoutput--what-came-back) and [Traces](/docs/evaluation/traces#report-harness-evidence).
+Completion requires the output bytes to match the accepted report state. Missing sections, failed required checks, unresolved structural failures, provider errors, and exhausted limits produce a partial result with diagnostics. Unknown provider usage remains unknown.
+
+For guided reports with an explicit output-commitment contract, `COMMIT_OUTPUT()` is an additional step after `SUBMIT()`. Free-form RLM keeps `FINAL` and `FINAL_VAR`. Lambda-RLM submits automatically. See [Contracts](/docs/core/contracts#agentoutput--what-came-back) and [Traces](/docs/evaluation/traces#report-harness-evidence).
 
 ## Synthetic inspection example
 
@@ -190,7 +206,7 @@ workspace/
     └── inspection.txt
 ```
 
-The findings section records the observed count. The summary depends on those findings. The rubric weights evidence twice as much as concise presentation and includes essential, important, and optional criteria.
+The summary draws on the accepted findings section, which records the observed count. The rubric weights evidence twice as much as concise presentation and groups its criteria by importance.
 
 From an `aec-bench` source checkout with [local execution dependencies and provider credentials](/docs/start/installation), select either harness:
 
@@ -217,7 +233,7 @@ FILL("summary", {"text": "inspection recorded 12 items."})
 SUBMIT()
 ```
 
-The submitted JSON has `findings` and `summary` objects, each with a `text` field. Passing the public checks does not establish the score: a report could contain the required count and still add an unsupported claim. The independent verifier checks the submitted artefact.
+The submitted JSON has `findings` and `summary` objects, each with a `text` field. The independent verifier checks the submitted artefact.
 
 The library also provides a deterministic replay check for both execution drivers:
 
@@ -225,12 +241,12 @@ The library also provides a deterministic replay check for both execution driver
 uv run pytest tests/templates/test_report_example.py -q
 ```
 
-That check exercises task staging, report execution, and independent scoring without calling a model provider. It does not measure model quality or hosted performance.
+The replay check exercises task staging, report execution, and independent scoring with deterministic model responses.
 
 ## Visibility and isolation
 
 Only public rubric content is exposed by the report loader. Private verifier inputs, hidden criteria, gold answers, and other attempts' outputs must stay outside the actor workspace and actor model requests.
 
-The Python REPL can read its workspace. A source index limits declared report access but is not a filesystem security sandbox. Use the execution environment to enforce isolation, and stage only permitted material. Lambda-RLM's document sandbox supports bounded source and anchor access; `sandbox.tool_use = true` is rejected because this pipeline has no model tool execution loop.
+The Python REPL can read its workspace. The source index controls which documents report tools expose. Use the execution environment to enforce isolation, and stage only permitted material. Lambda-RLM's document sandbox supports bounded source and anchor access.
 
 The library's [report harness protocol](https://github.com/TheodoreGalanos/aec-bench/blob/main/docs/protocols/report-agent-harness.md) defines the shared validation and completion boundary.

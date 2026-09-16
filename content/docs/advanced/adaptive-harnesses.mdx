@@ -29,9 +29,9 @@ If this code changes, the experiment records a new kernel identity. This prevent
 
 ## Harness configuration (`Hx`)
 
-`HarnessSpec` is the declarative input for one harness. It describes runtime capabilities, bindings, contracts, recursion policy, and budgets. The artefact-task runner owns attempt branching, selection, and verification.
+Declare the harness's capabilities and operating limits in `HarnessSpec`, then compile it against a fixed kernel to produce `Hx`. This **compiled harness instance** is the exact configuration used in the experiment.
 
-Compiling a `HarnessSpec` against one fixed kernel produces the **compiled harness instance** (`Hx`). This is the exact harness configuration used in the experiment. It selects the model, bindings, capabilities, and limits while the fixed execution code stays unchanged.
+The artefact-task runner controls attempt branching and selection, then runs verification on the selected output.
 
 Typical fields include:
 
@@ -93,9 +93,9 @@ The compiler fails closed before execution when a candidate:
 - exceeds a declared budget;
 - contains an invalid graph or unreachable node;
 - refers to an incompatible task or harness profile; or
-- cannot bind every execution dependency to the frozen identities.
+- leaves an execution dependency unbound to the frozen identities.
 
-Successful compilation produces an immutable run bundle, which Harbor executes. AEC-Bench still packages the task, isolates the workspace, runs the official verifier, collects outputs, and imports the trial.
+Harbor executes the immutable run bundle produced by compilation. AEC-Bench packages the task into an isolated workspace and, after execution, verifies the output and imports the trial.
 
 ## Evidence and authority
 

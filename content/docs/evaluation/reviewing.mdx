@@ -7,7 +7,7 @@ Automated verification supplies the score. Review adds disagreement, uncertainty
 
 ## Optional post-verifier LLM review
 
-`run` and `run-local` can call an LLM reviewer after the deterministic verifier. The reviewer can inspect the task, agent output, retained files, execution trace, cited sources, and evidence of contradictions:
+`run` and `run-local` can call an LLM reviewer after the deterministic verifier. The reviewer checks the agent's answer against the task and retained evidence, including the execution trace and cited sources:
 
 ```bash
 uv run aec-bench run --config experiment.yaml \
@@ -43,9 +43,7 @@ class Annotation(StrictModel):
     notes: str | None
 ```
 
-An annotation can pass, fail, or defer. The automated reward remains the verifier result.
-Keeping both values makes verifier-reviewer disagreement visible and auditable.
-Human annotations and optional LLM reviewer findings use separate record types.
+Record a human review as `pass`, `fail`, or `defer` alongside the automated reward, so readers can inspect any disagreement with the verifier. Optional LLM reviewer findings have their own record type.
 
 Use structured categories for recurring issues such as:
 
@@ -109,8 +107,8 @@ uv run aec-bench run status <run-id> \
 ```
 
 The CLI, TUI run-progress view, and `GET /api/runs/{run_id}/status` web route
-use the shared `RunProgress` projection. It includes work-item, trial, attempt,
-backend-submission, lease, retry, and completion-blocker counts.
+use the same `RunProgress` projection to show completed work and what remains.
+See [Execution Control](/docs/core/execution-control#progress) for the available counts.
 
 Use the [Evidence Index](/docs/advanced/evidence-index) to page through trial
 metadata, then read the portable record path when a review needs the evidence
@@ -126,10 +124,39 @@ Different audiences need different views:
 | Decision makers | Scope, headline results, limitations, and material failure modes |
 | Public readers | Reproducible aggregate claims from allowlisted public material |
 
+### Model usage and cost
+
+Use an experiment summary to compare model usage and the reported reward:
+
+```bash
+uv run aec-bench report summary --experiment-id exp-001
+uv run aec-bench --json report summary --experiment-id exp-001
+```
+
+For Harbor records with model usage, the summary attributes tokens and cost to each model, including child models. It uses reported costs where available and the repository's pricing table to estimate the rest.
+
+Read cost completeness alongside the amount:
+
+| Field | Meaning |
+|-------|---------|
+| `total_cost_usd` | Total when all costs in the group are known; otherwise `null` |
+| `known_cost_usd` | Subtotal of the known costs |
+| `n_costed`, `n_uncosted` | Records with and without a known cost |
+
+JSON output adds these fields for model attribution:
+
+| Field | Meaning |
+|-------|---------|
+| `by_model_usage` | Model rows with input, output, and cache-read tokens, costs, and counts of reported and estimated costs |
+| `n_trials_without_model_usage` | Number of trials without a model breakdown |
+
+Estimates use the token counts available from Harbor. An explicit reported zero means free usage; an unknown price remains unknown.
+
+Read model rows as a breakdown of the trial total, which already includes cached input. The trial can retain a known aggregate even when only some of its usage is attributed to models.
+
 ## Holdout protection
 
-Reviewers may see holdout-sensitive evidence that must not enter public reports,
-training data, model-visible feedback, or task-generation prompts.
+Keep holdout-sensitive review evidence in the protected review context. Use allowlisted aggregates for public reports and development data for training, model-visible feedback, and task-generation prompts.
 
 Keep these uses separate:
 

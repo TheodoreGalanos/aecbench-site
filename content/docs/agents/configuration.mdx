@@ -126,7 +126,7 @@ max_parallel_workers = 4
 
 ### Report configuration precedence
 
-RLM and Lambda-RLM configuration files live in the staged task workspace. RLM reads `rlm.toml`. Lambda-RLM looks for `lambda-rlm.toml`, then `rlm.toml`. Either harness can use condition values alone when no file is present. A fallback file must contain options supported by the selected harness.
+Place report configuration files in the staged task workspace. RLM reads `rlm.toml`; Lambda-RLM first looks for `lambda-rlm.toml`, then falls back to a compatible `rlm.toml`. You can also supply the complete configuration through condition values.
 
 The experiment manifest selects the harness and model. Nested `parameters` override the corresponding authored TOML defaults. For example, this agent entry changes the report's total token budget and enables consistency-based extraction review:
 
@@ -148,7 +148,9 @@ agents:
 
 Host request limits can only tighten the resolved limits. Unknown file keys, unsupported block options, and incompatible modes fail before model requests. The effective configuration retains the resolved settings and public report assets.
 
-`guardrails.token_budget` counts all model phases, including secondary models and advice. Once reported usage reaches the limit, no further model work is admitted. Already admitted parallel calls finish and count towards actual usage. RLM `max_turns` bounds main iterations; Lambda-RLM `max_turns` bounds model calls.
+`guardrails.token_budget` counts all model phases, including secondary models and advice. Reaching the limit stops new requests, while parallel calls already running finish and count towards actual usage.
+
+Use `max_turns` to bound main iterations in RLM or model calls in Lambda-RLM.
 
 The RLM input-context default is 128,000 tokens; choose a value appropriate for the model. See [RLM and Lambda-RLM](/docs/agents/rlm) for the report workflow and [Harness configs](/docs/reference/config#harness-configs) for asset paths, context controls, fixed constitutional parameters, and section synthesis.
 
@@ -207,4 +209,4 @@ Every harness must preserve the same core responsibilities:
 - report model and advisor usage when available; and
 - classify provider, tool, timeout, truncation, and missing-output conditions as failures.
 
-The shared result shape lets the runner compare harnesses without moving task rules or scoring into harness code.
+The runner compares harnesses through this shared result shape. Task definitions own the rules, and evaluation owns scoring.

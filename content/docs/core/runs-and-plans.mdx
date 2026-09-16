@@ -57,14 +57,9 @@ Every planned trial contains:
 - an attempt recipe; and
 - the evaluation profile.
 
-The plan summary records task, agent, repetition, execution-family, backend,
-visibility, and lifecycle counts.
+Use the plan summary to check coverage by task, agent, and repetition. It also groups trials by execution family and backend, with counts for their visibility and lifecycle policies.
 
-The evidence store persists the resolved specification first, then the draft
-and ready plan. Starting the run fixes the ready plan for that occurrence.
-`OperationalStore` creates mutable work-item, attempt, submission, and lease
-rows for the ready plan. The operational rows coordinate execution; the
-persisted plan remains the authority for planned membership.
+The evidence store saves the resolved specification and its draft and ready plans before execution. Starting a run fixes its ready plan, while `OperationalStore` tracks progress through mutable [execution control records](/docs/core/execution-control#operational-state). Those records coordinate the work against the saved plan's exact membership.
 
 ## Trials, repetitions, and attempts
 
